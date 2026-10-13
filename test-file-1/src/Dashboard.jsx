@@ -321,23 +321,43 @@ export default function Dashboard({ onGoToLogin }) {
   };
 
   const handleFieldChange = (field, value) => {
-    const updated = { ...formData, [field]: value };
-    setFormData(updated);
+    setFormData((prev) => {
+      const updated = { ...prev, [field]: value };
+      return updated;
+    });
     if (touchedFields[field]) {
-      const err = validateField(field, value, updated);
-      setFormErrors((prev) => ({ ...prev, [field]: err }));
+      setFormData((prev) => {
+        const err = validateField(field, value, prev);
+        setFormErrors((ePrev) => ({ ...ePrev, [field]: err }));
+        return prev;
+      });
+    }
+  };
+
+  const handleMeetupChange = (e) => {
+    const val = e.target.value;
+    setFormData((prev) => ({
+      ...prev,
+      meetupSpot: val,
+      customMeetupSpot: val === 'Other' ? prev.customMeetupSpot : ''
+    }));
+    if (touchedFields.meetupSpot) {
+      setFormErrors((prev) => ({
+        ...prev,
+        meetupSpot: val ? '' : 'Please select a meetup spot.',
+        customMeetupSpot: val !== 'Other' ? '' : prev.customMeetupSpot
+      }));
     }
   };
 
   const handleCategoryChange = (e) => {
     const catId = e.target.value;
-    const updated = {
-      ...formData,
+    setFormData((prev) => ({
+      ...prev,
       category_id: catId,
       subcategory_id: null,
-      hasNotes: catId === 'books-notes' ? formData.hasNotes : false
-    };
-    setFormData(updated);
+      hasNotes: catId === 'books-notes' ? prev.hasNotes : false
+    }));
     if (touchedFields.category_id) {
       setFormErrors((prev) => ({
         ...prev,
@@ -347,8 +367,7 @@ export default function Dashboard({ onGoToLogin }) {
   };
 
   const handleSelectCondition = (val) => {
-    const updated = { ...formData, condition: val };
-    setFormData(updated);
+    setFormData((prev) => ({ ...prev, condition: val }));
     setIsConditionOpen(false);
     setTouchedFields((prev) => ({ ...prev, condition: true }));
     setFormErrors((prev) => ({ ...prev, condition: '' }));
@@ -1250,13 +1269,7 @@ export default function Dashboard({ onGoToLogin }) {
                     id="listing-meetup"
                     className={`form-select rounded-3 py-2 ${formErrors.meetupSpot ? 'is-invalid border-danger' : ''}`}
                     value={formData.meetupSpot}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      handleFieldChange('meetupSpot', val);
-                      if (val !== 'Other') {
-                        handleFieldChange('customMeetupSpot', '');
-                      }
-                    }}
+                    onChange={handleMeetupChange}
                     onBlur={() => handleBlur('meetupSpot')}
                   >
                     <option value="">Select campus meetup spot</option>
