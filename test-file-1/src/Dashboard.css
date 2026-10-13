@@ -1016,6 +1016,126 @@
   color: #5b6270;
 }
 
+/* Sell Modal Step Flow & Stage 1 Styles */
+.unimart-step-indicator-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-bottom: 1.25rem;
+}
+
+.unimart-step-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.35rem 0.85rem;
+  background: var(--unimart-maroon-subtle);
+  border: 1px solid var(--unimart-maroon-border);
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.unimart-step-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.unimart-step-pill.active {
+  color: var(--unimart-maroon);
+  font-weight: 700;
+}
+
+.unimart-step-pill.inactive {
+  color: var(--unimart-text-muted);
+  font-weight: 500;
+}
+
+.unimart-step-num {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.unimart-step-pill.active .unimart-step-num {
+  background: var(--unimart-maroon);
+  color: #ffffff;
+}
+
+.unimart-step-pill.inactive .unimart-step-num {
+  background: #e2e8f0;
+  color: #64748b;
+}
+
+.unimart-step-divider {
+  color: #cbd5e1;
+  font-weight: 400;
+}
+
+.unimart-req-asterisk {
+  color: var(--unimart-maroon);
+  font-weight: 700;
+  margin-left: 0.2rem;
+}
+
+.unimart-condition-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border: 1px solid var(--unimart-maroon-border);
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(112, 24, 44, 0.12);
+  z-index: 1060;
+  max-height: 250px;
+  overflow-y: auto;
+  margin-top: 4px;
+}
+
+.unimart-condition-item {
+  padding: 0.6rem 0.9rem;
+  border-bottom: 1px solid #f1f5f9;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.unimart-condition-item:last-child {
+  border-bottom: none;
+}
+
+.unimart-condition-item:hover {
+  background: var(--unimart-maroon-subtle);
+}
+
+.unimart-condition-item.selected {
+  background: rgba(112, 24, 44, 0.08);
+  border-left: 3px solid var(--unimart-maroon);
+}
+
+.unimart-condition-name {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--unimart-text-dark);
+}
+
+.unimart-condition-hint {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.unimart-char-counter {
+  font-size: 0.75rem;
+  color: var(--unimart-text-muted);
+}
+
 /* Footer */
 .unimart-dash-footer {
   padding: 2rem 3rem;

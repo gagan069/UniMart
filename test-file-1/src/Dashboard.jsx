@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import './Dashboard.css';
 
 // Product images
@@ -13,23 +13,49 @@ import imgSolidPerfume from './assets/products/solid_perfume.jpg';
 
 import { categories } from './lib/categories.js';
 
+export const CONDITION_OPTIONS = [
+  { value: 'Brand New', label: 'Brand New', hint: 'Unused, sealed or with tags' },
+  { value: 'Like New', label: 'Like New', hint: 'Used a few times, no visible marks' },
+  { value: 'Good', label: 'Good', hint: 'Normal use, minor scratches or wear' },
+  { value: 'Fair', label: 'Fair', hint: 'Clear signs of use, still works fine' },
+  { value: 'For Parts / Not Working', label: 'For Parts / Not Working', hint: 'Damaged or faulty; useful for repair or parts' }
+];
+
+export const MEETUP_OPTIONS = [
+  'Square One',
+  'Gate No. 4',
+  'Turing Block',
+  'Library Entrance',
+  'Food Court',
+  'Hostel Gate',
+  'Other'
+];
+
 export default function Dashboard({ onGoToLogin }) {
   // Dynamic state for search & category filters
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [isSellModalOpen, setIsSellModalOpen] = useState(false);
-  const [categoryError, setCategoryError] = useState('');
 
-  // Listing form state (in INR)
-  const [newItem, setNewItem] = useState({
+  // Listing flow state (Stage 1 & Stage 2)
+  const [currentStep, setCurrentStep] = useState(1);
+  const [formData, setFormData] = useState({
     title: '',
     category_id: '',
     subcategory_id: null,
     price: '',
-    condition: 'Brand New',
+    condition: '',
+    hasNotes: false,
+    meetupSpot: '',
+    customMeetupSpot: '',
     description: '',
-    seller: 'Satkar (You)'
+    seller: 'Satkar (You)',
+    photos: []
   });
+  const [formErrors, setFormErrors] = useState({});
+  const [touchedFields, setTouchedFields] = useState({});
+  const [isConditionOpen, setIsConditionOpen] = useState(false);
+  const conditionDropdownRef = useRef(null);
 
   
   const staticProducts = [
@@ -190,63 +216,206 @@ export default function Dashboard({ onGoToLogin }) {
     return matchesCategory && matchesSearch;
   });
 
-  const selectedCategoryObj = categories.find((c) => c.id === newItem.category_id);
+  const selectedCategoryObj = categories.find((c) => c.id === formData.category_id);
+  const isBooksCategory = selectedCategoryObj?.name === 'Books & Notes' || selectedCategoryObj?.id === 'books-notes';
+
+  // Close condition dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (conditionDropdownRef.current && !conditionDropdownRef.current.contains(e.target)) {
+        setIsConditionOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Validation function per field
+  const validateField = (field, value, allData = formData) => {
+    let error = '';
+    switch (field) {
+      case 'title': {
+        const trimmed = (value || '').trim();
+        if (!trimmed) {
+          error = 'Item title is required.';
+        } else if (trimmed.length < 5) {
+          error = 'Title must be at least 5 characters.';
+        } else if (trimmed.length > 80) {
+          error = 'Title cannot exceed 80 characters.';
+        }
+        break;
+      }
+      case 'category_id': {
+        if (!value) {
+          error = 'Please select a category.';
+        }
+        break;
+      }
+      case 'price': {
+        const valStr = String(value || '').trim();
+        if (!valStr) {
+          error = 'Price is required.';
+        } else {
+          const num = Number(valStr);
+          if (!/^\d+$/.test(valStr) || isNaN(num) || num < 1 || num > 100000) {
+            error = 'Price must be a whole number between ₹1 and ₹1,00,000.';
+          }
+        }
+        break;
+      }
+      case 'condition': {
+        if (!value) {
+          error = 'Please select a condition.';
+        }
+        break;
+      }
+      case 'meetupSpot': {
+        if (!value) {
+          error = 'Please select a meetup spot.';
+        }
+        break;
+      }
+      case 'customMeetupSpot': {
+        if (allData.meetupSpot === 'Other') {
+          const trimmed = (value || '').trim();
+          if (!trimmed) {
+            error = 'Please specify your meetup spot.';
+          }
+        }
+        break;
+      }
+      case 'description': {
+        const trimmed = (value || '').trim();
+        if (!trimmed) {
+          error = 'Description is required.';
+        } else if (trimmed.length < 20) {
+          error = `Description must be at least 20 characters (currently ${trimmed.length}).`;
+        } else if (trimmed.length > 1000) {
+          error = 'Description cannot exceed 1000 characters.';
+        }
+        break;
+      }
+      default:
+        break;
+    }
+    return error;
+  };
+
+  const validateAll = (data = formData) => {
+    const errors = {};
+    const fields = ['title', 'category_id', 'price', 'condition', 'meetupSpot', 'description'];
+    if (data.meetupSpot === 'Other') {
+      fields.push('customMeetupSpot');
+    }
+    fields.forEach((f) => {
+      const err = validateField(f, data[f], data);
+      if (err) errors[f] = err;
+    });
+    return errors;
+  };
+
+  const handleBlur = (field) => {
+    setTouchedFields((prev) => ({ ...prev, [field]: true }));
+    const err = validateField(field, formData[field], formData);
+    setFormErrors((prev) => ({ ...prev, [field]: err }));
+  };
+
+  const handleFieldChange = (field, value) => {
+    const updated = { ...formData, [field]: value };
+    setFormData(updated);
+    if (touchedFields[field]) {
+      const err = validateField(field, value, updated);
+      setFormErrors((prev) => ({ ...prev, [field]: err }));
+    }
+  };
 
   const handleCategoryChange = (e) => {
     const catId = e.target.value;
-    if (catId) {
-      setCategoryError('');
-    }
-    setNewItem((prev) => ({
-      ...prev,
+    const updated = {
+      ...formData,
       category_id: catId,
-      subcategory_id: null
-    }));
+      subcategory_id: null,
+      hasNotes: catId === 'books-notes' ? formData.hasNotes : false
+    };
+    setFormData(updated);
+    if (touchedFields.category_id) {
+      setFormErrors((prev) => ({
+        ...prev,
+        category_id: catId ? '' : 'Please select a category.'
+      }));
+    }
   };
 
-  const handleSellSubmit = (e) => {
-    e.preventDefault();
-    if (!newItem.category_id) {
-      setCategoryError('Category is required. Please choose a category.');
+  const handleSelectCondition = (val) => {
+    const updated = { ...formData, condition: val };
+    setFormData(updated);
+    setIsConditionOpen(false);
+    setTouchedFields((prev) => ({ ...prev, condition: true }));
+    setFormErrors((prev) => ({ ...prev, condition: '' }));
+  };
+
+  const handleNextStep = (e) => {
+    if (e) e.preventDefault();
+    const allTouched = {
+      title: true,
+      category_id: true,
+      price: true,
+      condition: true,
+      meetupSpot: true,
+      customMeetupSpot: true,
+      description: true
+    };
+    setTouchedFields(allTouched);
+
+    const allErrors = validateAll(formData);
+    setFormErrors(allErrors);
+
+    if (Object.keys(allErrors).length > 0) {
+      // Don't move; show red messages and scroll/focus to first error
+      const errorOrder = [
+        { field: 'title', id: 'listing-title' },
+        { field: 'category_id', id: 'listing-category' },
+        { field: 'price', id: 'listing-price' },
+        { field: 'condition', id: 'listing-condition-trigger' },
+        { field: 'meetupSpot', id: 'listing-meetup' },
+        { field: 'customMeetupSpot', id: 'listing-custom-meetup' },
+        { field: 'description', id: 'listing-description' }
+      ];
+      const firstInvalid = errorOrder.find((item) => allErrors[item.field]);
+      if (firstInvalid) {
+        setTimeout(() => {
+          const el = document.getElementById(firstInvalid.id);
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            el.focus();
+          }
+        }, 50);
+      }
       return;
     }
-    setCategoryError('');
 
-    const selectedCat = categories.find((c) => c.id === newItem.category_id);
-    const selectedSub = selectedCat?.subcategories?.find((s) => s.id === newItem.subcategory_id);
+    // Valid: Advance to Step 2
+    setCurrentStep(2);
+  };
 
-    const newProduct = {
-      id: Date.now(),
-      title: newItem.title,
-      category_id: newItem.category_id,
-      subcategory_id: newItem.subcategory_id || null,
-      category: selectedCat ? selectedCat.name : newItem.category_id,
-      subcategoryName: selectedSub ? selectedSub.name : null,
-      price: parseFloat(newItem.price) || 0,
-      origPrice: Math.round((parseFloat(newItem.price) || 0) * 1.4),
-      condition: newItem.condition,
-      seller: newItem.seller,
-      icon: selectedCat?.icon || 'sell',
-      categoryTheme: 'theme-academic',
-      badge: selectedSub ? selectedSub.name : 'Campus Pick',
-      notes: selectedSub ? selectedSub.name : selectedCat?.name,
-      image: imgCalcBook,
-      description: newItem.description
-    };
-
-    setProductList((prev) => [newProduct, ...prev]);
-    setIsSellModalOpen(false);
-
-    // Reset form
-    setNewItem({
+  const resetForm = () => {
+    setCurrentStep(1);
+    setFormData({
       title: '',
       category_id: '',
       subcategory_id: null,
       price: '',
-      condition: 'Brand New',
+      condition: '',
+      hasNotes: false,
+      meetupSpot: '',
+      customMeetupSpot: '',
       description: '',
-      seller: 'Satkar (You)'
+      seller: 'Satkar (You)',
+      photos: []
     });
+    setFormErrors({});
+    setTouchedFields({});
+    setIsConditionOpen(false);
   };
 
   return (
@@ -869,131 +1038,309 @@ export default function Dashboard({ onGoToLogin }) {
               Sell used semester books, handmade crafts, machinery/lab parts, or fragrances on campus.
             </p>
 
-            <form onSubmit={handleSellSubmit}>
-              <div className="mb-3">
-                <label className="form-label small fw-semibold">Item Title</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Engineering Mathematics Volume 1 / Handmade Crochet Bookmark"
-                  className="form-control rounded-3 py-2"
-                  value={newItem.title}
-                  onChange={(e) => setNewItem({ ...newItem, title: e.target.value })}
-                />
+            {/* Step Progress Indicator */}
+            <div className="unimart-step-indicator-wrapper">
+              <div className="unimart-step-indicator">
+                <span className={`unimart-step-pill ${currentStep === 1 ? 'active' : 'inactive'}`}>
+                  <span className="unimart-step-num">1</span>
+                  <span>Details</span>
+                </span>
+                <span className="unimart-step-divider">—</span>
+                <span className={`unimart-step-pill ${currentStep === 2 ? 'active' : 'inactive'}`}>
+                  <span className="unimart-step-num">2</span>
+                  <span>Photos</span>
+                </span>
               </div>
+            </div>
 
-              {/* Category & Subcategory (optional) Row */}
-              <div className="row g-3 mb-3">
-                <div className={selectedCategoryObj && selectedCategoryObj.subcategories.length === 0 ? "col-12" : "col-md-6"}>
-                  <label className="form-label small fw-semibold" htmlFor="listing-category">
-                    Category <span className="text-danger">*</span>
+            {currentStep === 1 ? (
+              <form onSubmit={handleNextStep} noValidate>
+                {/* Item Title */}
+                <div className="mb-3">
+                  <label className="form-label small fw-semibold" htmlFor="listing-title">
+                    Item Title <span className="unimart-req-asterisk">*</span>
                   </label>
-                  <select 
-                    id="listing-category"
-                    className={`form-select rounded-3 py-2 ${categoryError ? 'is-invalid border-danger' : ''}`}
-                    value={newItem.category_id}
-                    onChange={handleCategoryChange}
-                  >
-                    <option value="">Select a category</option>
-                    {categories.map((cat) => (
-                      <option key={cat.id} value={cat.id}>
-                        {cat.name}
-                      </option>
-                    ))}
-                  </select>
-                  {categoryError && (
+                  <input
+                    type="text"
+                    id="listing-title"
+                    placeholder="e.g. Engineering Mathematics Volume 1 / Handmade Crochet Bookmark"
+                    className={`form-control rounded-3 py-2 ${formErrors.title ? 'is-invalid border-danger' : ''}`}
+                    value={formData.title}
+                    onChange={(e) => handleFieldChange('title', e.target.value)}
+                    onBlur={() => handleBlur('title')}
+                  />
+                  {formErrors.title && (
                     <div className="invalid-feedback d-block text-danger small mt-1" role="alert">
-                      {categoryError}
+                      {formErrors.title}
                     </div>
                   )}
                 </div>
 
-                {/* Subcategory (optional): Hidden when category has no subcategories */}
-                {(!selectedCategoryObj || selectedCategoryObj.subcategories.length > 0) && (
-                  <div className="col-md-6">
-                    <label className="form-label small fw-semibold" htmlFor="listing-subcategory">
-                      Subcategory (optional)
+                {/* Category & Subcategory Row */}
+                <div className="row g-3 mb-3">
+                  <div className={selectedCategoryObj && selectedCategoryObj.subcategories.length === 0 ? "col-12" : "col-md-6"}>
+                    <label className="form-label small fw-semibold" htmlFor="listing-category">
+                      Category <span className="unimart-req-asterisk">*</span>
                     </label>
-                    <select
-                      id="listing-subcategory"
-                      className="form-select rounded-3 py-2"
-                      disabled={!selectedCategoryObj}
-                      value={newItem.subcategory_id || ''}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setNewItem((prev) => ({
-                          ...prev,
-                          subcategory_id: val === '' ? null : val
-                        }));
-                      }}
+                    <select 
+                      id="listing-category"
+                      className={`form-select rounded-3 py-2 ${formErrors.category_id ? 'is-invalid border-danger' : ''}`}
+                      value={formData.category_id}
+                      onChange={handleCategoryChange}
+                      onBlur={() => handleBlur('category_id')}
                     >
-                      {!selectedCategoryObj ? (
-                        <option value="">Choose a category first</option>
-                      ) : (
-                        <>
-                          <option value="">Not sure / skip</option>
-                          {selectedCategoryObj.subcategories.map((sub) => (
-                            <option key={sub.id} value={sub.id}>
-                              {sub.name}
-                            </option>
-                          ))}
-                        </>
-                      )}
+                      <option value="">Select a category</option>
+                      {categories.map((cat) => (
+                        <option key={cat.id} value={cat.id}>
+                          {cat.name}
+                        </option>
+                      ))}
                     </select>
+                    {formErrors.category_id && (
+                      <div className="invalid-feedback d-block text-danger small mt-1" role="alert">
+                        {formErrors.category_id}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Subcategory (optional): Hidden when category has no subcategories */}
+                  {(!selectedCategoryObj || selectedCategoryObj.subcategories.length > 0) && (
+                    <div className="col-md-6">
+                      <label className="form-label small fw-semibold" htmlFor="listing-subcategory">
+                        Subcategory (optional)
+                      </label>
+                      <select
+                        id="listing-subcategory"
+                        className="form-select rounded-3 py-2"
+                        disabled={!selectedCategoryObj}
+                        value={formData.subcategory_id || ''}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setFormData((prev) => ({
+                            ...prev,
+                            subcategory_id: val === '' ? null : val
+                          }));
+                        }}
+                      >
+                        {!selectedCategoryObj ? (
+                          <option value="">Choose a category first</option>
+                        ) : (
+                          <>
+                            <option value="">Not sure / skip</option>
+                            {selectedCategoryObj.subcategories.map((sub) => (
+                              <option key={sub.id} value={sub.id}>
+                                {sub.name}
+                              </option>
+                            ))}
+                          </>
+                        )}
+                      </select>
+                    </div>
+                  )}
+                </div>
+
+                {/* Optional Checkbox for Books & Notes */}
+                {isBooksCategory && (
+                  <div className="form-check mb-3">
+                    <input
+                      className="form-check-input"
+                      type="checkbox"
+                      id="listing-has-notes"
+                      checked={formData.hasNotes}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, hasNotes: e.target.checked }))}
+                      style={{ accentColor: 'var(--unimart-maroon)' }}
+                    />
+                    <label className="form-check-label small text-muted" htmlFor="listing-has-notes">
+                      Has highlighting / handwritten notes
+                    </label>
                   </div>
                 )}
-              </div>
 
-              {/* Price & Condition Row */}
-              <div className="row g-3 mb-3">
-                <div className="col-md-6">
-                  <label className="form-label small fw-semibold">Price (₹ INR)</label>
-                  <div className="input-group">
-                    <span className="input-group-text bg-light text-muted fw-bold">₹</span>
-                    <input
-                      type="number"
-                      required
-                      min="1"
-                      placeholder="e.g. 450"
-                      className="form-control rounded-end-3 py-2"
-                      value={newItem.price}
-                      onChange={(e) => setNewItem({ ...newItem, price: e.target.value })}
-                    />
+                {/* Price & Condition Row */}
+                <div className="row g-3 mb-3">
+                  <div className="col-md-6">
+                    <label className="form-label small fw-semibold" htmlFor="listing-price">
+                      Price (₹ INR) <span className="unimart-req-asterisk">*</span>
+                    </label>
+                    <div className="input-group">
+                      <span className="input-group-text bg-light text-muted fw-bold">₹</span>
+                      <input
+                        type="number"
+                        id="listing-price"
+                        min="1"
+                        max="100000"
+                        placeholder="e.g. 450"
+                        className={`form-control rounded-end-3 py-2 ${formErrors.price ? 'is-invalid border-danger' : ''}`}
+                        value={formData.price}
+                        onChange={(e) => handleFieldChange('price', e.target.value)}
+                        onBlur={() => handleBlur('price')}
+                      />
+                    </div>
+                    {formErrors.price && (
+                      <div className="invalid-feedback d-block text-danger small mt-1" role="alert">
+                        {formErrors.price}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="col-md-6">
+                    <label className="form-label small fw-semibold" htmlFor="listing-condition-trigger">
+                      Condition <span className="unimart-req-asterisk">*</span>
+                    </label>
+                    <div className="position-relative" ref={conditionDropdownRef}>
+                      <button
+                        type="button"
+                        id="listing-condition-trigger"
+                        className={`form-select text-start rounded-3 py-2 d-flex justify-content-between align-items-center ${
+                          formErrors.condition ? 'is-invalid border-danger' : ''
+                        }`}
+                        onClick={() => setIsConditionOpen(!isConditionOpen)}
+                        onBlur={() => handleBlur('condition')}
+                        aria-expanded={isConditionOpen}
+                        style={{
+                          cursor: 'pointer',
+                          background: '#fff',
+                          borderColor: formErrors.condition ? '#dc3545' : isConditionOpen ? 'var(--unimart-maroon)' : '#dee2e6'
+                        }}
+                      >
+                        <span className={formData.condition ? 'text-dark text-truncate' : 'text-muted'}>
+                          {formData.condition ? (
+                            <strong className="fw-semibold">{formData.condition}</strong>
+                          ) : (
+                            <span className="text-muted">Select condition...</span>
+                          )}
+                        </span>
+                        <span className="material-symbols-outlined text-muted" style={{ fontSize: '20px' }}>
+                          {isConditionOpen ? 'expand_less' : 'expand_more'}
+                        </span>
+                      </button>
+
+                      {isConditionOpen && (
+                        <div className="unimart-condition-dropdown">
+                          {CONDITION_OPTIONS.map((opt) => (
+                            <div
+                              key={opt.value}
+                              className={`unimart-condition-item ${formData.condition === opt.value ? 'selected' : ''}`}
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                handleSelectCondition(opt.value);
+                              }}
+                            >
+                              <div className="unimart-condition-name">{opt.label}</div>
+                              <div className="unimart-condition-hint">{opt.hint}</div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    {formErrors.condition && (
+                      <div className="invalid-feedback d-block text-danger small mt-1" role="alert">
+                        {formErrors.condition}
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                <div className="col-md-6">
-                  <label className="form-label small fw-semibold">Condition</label>
-                  <select 
-                    className="form-select rounded-3 py-2"
-                    value={newItem.condition}
-                    onChange={(e) => setNewItem({ ...newItem, condition: e.target.value })}
+                {/* Meetup Spot */}
+                <div className="mb-3">
+                  <label className="form-label small fw-semibold" htmlFor="listing-meetup">
+                    Meetup Spot <span className="unimart-req-asterisk">*</span>
+                  </label>
+                  <select
+                    id="listing-meetup"
+                    className={`form-select rounded-3 py-2 ${formErrors.meetupSpot ? 'is-invalid border-danger' : ''}`}
+                    value={formData.meetupSpot}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      handleFieldChange('meetupSpot', val);
+                      if (val !== 'Other') {
+                        handleFieldChange('customMeetupSpot', '');
+                      }
+                    }}
+                    onBlur={() => handleBlur('meetupSpot')}
                   >
-                    <option value="Brand New">Brand New / Unused</option>
-                    <option value="Handmade">Handmade Craft</option>
-                    <option value="Like New">Pre-Owned: Like New</option>
-                    <option value="Gently Used">Pre-Owned: Gently Used</option>
-                    <option value="Good with notes">Pre-Owned: Highlighted / Notes</option>
+                    <option value="">Select campus meetup spot</option>
+                    {MEETUP_OPTIONS.map((spot) => (
+                      <option key={spot} value={spot}>{spot}</option>
+                    ))}
                   </select>
+                  {formErrors.meetupSpot && (
+                    <div className="invalid-feedback d-block text-danger small mt-1" role="alert">
+                      {formErrors.meetupSpot}
+                    </div>
+                  )}
+
+                  {formData.meetupSpot === 'Other' && (
+                    <div className="mt-2">
+                      <label className="form-label small fw-semibold" htmlFor="listing-custom-meetup">
+                        Specify spot <span className="unimart-req-asterisk">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        id="listing-custom-meetup"
+                        className={`form-control rounded-3 py-2 ${formErrors.customMeetupSpot ? 'is-invalid border-danger' : ''}`}
+                        placeholder="e.g. Block C Common Room / Tennis Court"
+                        value={formData.customMeetupSpot}
+                        onChange={(e) => handleFieldChange('customMeetupSpot', e.target.value)}
+                        onBlur={() => handleBlur('customMeetupSpot')}
+                      />
+                      {formErrors.customMeetupSpot && (
+                        <div className="invalid-feedback d-block text-danger small mt-1" role="alert">
+                          {formErrors.customMeetupSpot}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-              </div>
 
-              <div className="mb-4">
-                <label className="form-label small fw-semibold">Item Description & Campus Pickup Spot</label>
-                <textarea
-                  rows="3"
-                  placeholder="Describe your item, edition/year, notes, or preferred campus meetup spot (e.g. Square one, Gate no. 4, Turing Block)..."
-                  className="form-control rounded-3"
-                  value={newItem.description}
-                  onChange={(e) => setNewItem({ ...newItem, description: e.target.value })}
-                ></textarea>
-              </div>
+                {/* Description */}
+                <div className="mb-4">
+                  <div className="d-flex justify-content-between align-items-center mb-1">
+                    <label className="form-label small fw-semibold mb-0" htmlFor="listing-description">
+                      Description <span className="unimart-req-asterisk">*</span>
+                    </label>
+                    <span className={`unimart-char-counter small ${formData.description.length > 1000 ? 'text-danger' : 'text-muted'}`}>
+                      {formData.description.length} / 1000
+                    </span>
+                  </div>
+                  <textarea
+                    id="listing-description"
+                    rows="3"
+                    placeholder="Provide key details about item condition, edition, features, or reasons for selling (min 20 characters)..."
+                    className={`form-control rounded-3 ${formErrors.description ? 'is-invalid border-danger' : ''}`}
+                    value={formData.description}
+                    onChange={(e) => handleFieldChange('description', e.target.value)}
+                    onBlur={() => handleBlur('description')}
+                  ></textarea>
+                  {formErrors.description && (
+                    <div className="invalid-feedback d-block text-danger small mt-1" role="alert">
+                      {formErrors.description}
+                    </div>
+                  )}
+                </div>
 
-              <button type="submit" className="unimart-sell-btn w-100 justify-content-center py-2 fs-6">
-                <span>Publish Item to Campus</span>
-                <span className="material-symbols-outlined">check_circle</span>
-              </button>
-            </form>
+                {/* Bottom of Step 1: Next Button */}
+                <button 
+                  type="submit" 
+                  className="unimart-sell-btn w-100 justify-content-center py-2 fs-6"
+                >
+                  <span>Next: Add Photos</span>
+                  <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>arrow_forward</span>
+                </button>
+              </form>
+            ) : (
+              /* Step 2 Placeholder for Stage 2 */
+              <div>
+                <p className="text-muted small">Photos step will be enabled in Stage 2.</p>
+                <button
+                  type="button"
+                  className="btn btn-outline-secondary rounded-pill px-3 py-1 btn-sm"
+                  onClick={() => setCurrentStep(1)}
+                >
+                  ← Back to Details
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
