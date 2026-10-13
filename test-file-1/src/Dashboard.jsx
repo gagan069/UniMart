@@ -11,16 +11,20 @@ import imgToteBag from './assets/products/tote_bag.jpg';
 import imgArduinoKit from './assets/products/arduino_kit.jpg';
 import imgSolidPerfume from './assets/products/solid_perfume.jpg';
 
+import { categories } from './lib/categories.js';
+
 export default function Dashboard({ onGoToLogin }) {
   // Dynamic state for search & category filters
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [isSellModalOpen, setIsSellModalOpen] = useState(false);
+  const [categoryError, setCategoryError] = useState('');
 
   // Listing form state (in INR)
   const [newItem, setNewItem] = useState({
     title: '',
-    category: 'Handmade Crafts',
+    category_id: '',
+    subcategory_id: null,
     price: '',
     condition: 'Brand New',
     description: '',
@@ -160,15 +164,17 @@ export default function Dashboard({ onGoToLogin }) {
     { key: 'Perfumes & Scents', name: 'Perfumes & Scents', icon: 'local_florist' }
   ];
 
+  const [productList, setProductList] = useState(staticProducts);
+
   // Dynamic count calculation
   const getCategoryCount = (key) => {
-    if (key === 'All') return `${staticProducts.length} items`;
-    const count = staticProducts.filter((item) => item.category === key).length;
+    if (key === 'All') return `${productList.length} items`;
+    const count = productList.filter((item) => item.category === key).length;
     return `${count} items`;
   };
 
   // Dynamic product filtering by category and live search query
-  const filteredProducts = staticProducts.filter((item) => {
+  const filteredProducts = productList.filter((item) => {
     const matchesCategory = selectedCategory === 'All' || item.category === selectedCategory;
     const q = searchQuery.trim().toLowerCase();
     if (!q) return matchesCategory;
@@ -184,9 +190,63 @@ export default function Dashboard({ onGoToLogin }) {
     return matchesCategory && matchesSearch;
   });
 
+  const selectedCategoryObj = categories.find((c) => c.id === newItem.category_id);
+
+  const handleCategoryChange = (e) => {
+    const catId = e.target.value;
+    if (catId) {
+      setCategoryError('');
+    }
+    setNewItem((prev) => ({
+      ...prev,
+      category_id: catId,
+      subcategory_id: null
+    }));
+  };
+
   const handleSellSubmit = (e) => {
     e.preventDefault();
+    if (!newItem.category_id) {
+      setCategoryError('Category is required. Please choose a category.');
+      return;
+    }
+    setCategoryError('');
+
+    const selectedCat = categories.find((c) => c.id === newItem.category_id);
+    const selectedSub = selectedCat?.subcategories?.find((s) => s.id === newItem.subcategory_id);
+
+    const newProduct = {
+      id: Date.now(),
+      title: newItem.title,
+      category_id: newItem.category_id,
+      subcategory_id: newItem.subcategory_id || null,
+      category: selectedCat ? selectedCat.name : newItem.category_id,
+      subcategoryName: selectedSub ? selectedSub.name : null,
+      price: parseFloat(newItem.price) || 0,
+      origPrice: Math.round((parseFloat(newItem.price) || 0) * 1.4),
+      condition: newItem.condition,
+      seller: newItem.seller,
+      icon: selectedCat?.icon || 'sell',
+      categoryTheme: 'theme-academic',
+      badge: selectedSub ? selectedSub.name : 'Campus Pick',
+      notes: selectedSub ? selectedSub.name : selectedCat?.name,
+      image: imgCalcBook,
+      description: newItem.description
+    };
+
+    setProductList((prev) => [newProduct, ...prev]);
     setIsSellModalOpen(false);
+
+    // Reset form
+    setNewItem({
+      title: '',
+      category_id: '',
+      subcategory_id: null,
+      price: '',
+      condition: 'Brand New',
+      description: '',
+      seller: 'Satkar (You)'
+    });
   };
 
   return (
@@ -822,21 +882,70 @@ export default function Dashboard({ onGoToLogin }) {
                 />
               </div>
 
+              {/* Category & Subcategory (optional) Row */}
               <div className="row g-3 mb-3">
-                <div className="col-md-6">
-                  <label className="form-label small fw-semibold">Category</label>
+                <div className={selectedCategoryObj && selectedCategoryObj.subcategories.length === 0 ? "col-12" : "col-md-6"}>
+                  <label className="form-label small fw-semibold" htmlFor="listing-category">
+                    Category <span className="text-danger">*</span>
+                  </label>
                   <select 
-                    className="form-select rounded-3 py-2"
-                    value={newItem.category}
-                    onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}
+                    id="listing-category"
+                    className={`form-select rounded-3 py-2 ${categoryError ? 'is-invalid border-danger' : ''}`}
+                    value={newItem.category_id}
+                    onChange={handleCategoryChange}
                   >
-                    <option value="Textbooks">Textbooks & Academic</option>
-                    <option value="Handmade Crafts">Handmade Crafts & Art</option>
-                    <option value="Machinery & Tech">Machinery & Tech Gear</option>
-                    <option value="Perfumes & Scents">Perfumes & Scents</option>
+                    <option value="">Select a category</option>
+                    {categories.map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </option>
+                    ))}
                   </select>
+                  {categoryError && (
+                    <div className="invalid-feedback d-block text-danger small mt-1" role="alert">
+                      {categoryError}
+                    </div>
+                  )}
                 </div>
 
+                {/* Subcategory (optional): Hidden when category has no subcategories */}
+                {(!selectedCategoryObj || selectedCategoryObj.subcategories.length > 0) && (
+                  <div className="col-md-6">
+                    <label className="form-label small fw-semibold" htmlFor="listing-subcategory">
+                      Subcategory (optional)
+                    </label>
+                    <select
+                      id="listing-subcategory"
+                      className="form-select rounded-3 py-2"
+                      disabled={!selectedCategoryObj}
+                      value={newItem.subcategory_id || ''}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setNewItem((prev) => ({
+                          ...prev,
+                          subcategory_id: val === '' ? null : val
+                        }));
+                      }}
+                    >
+                      {!selectedCategoryObj ? (
+                        <option value="">Choose a category first</option>
+                      ) : (
+                        <>
+                          <option value="">Not sure / skip</option>
+                          {selectedCategoryObj.subcategories.map((sub) => (
+                            <option key={sub.id} value={sub.id}>
+                              {sub.name}
+                            </option>
+                          ))}
+                        </>
+                      )}
+                    </select>
+                  </div>
+                )}
+              </div>
+
+              {/* Price & Condition Row */}
+              <div className="row g-3 mb-3">
                 <div className="col-md-6">
                   <label className="form-label small fw-semibold">Price (₹ INR)</label>
                   <div className="input-group">
@@ -852,21 +961,21 @@ export default function Dashboard({ onGoToLogin }) {
                     />
                   </div>
                 </div>
-              </div>
 
-              <div className="mb-3">
-                <label className="form-label small fw-semibold">Condition</label>
-                <select 
-                  className="form-select rounded-3 py-2"
-                  value={newItem.condition}
-                  onChange={(e) => setNewItem({ ...newItem, condition: e.target.value })}
-                >
-                  <option value="Brand New">Brand New / Unused</option>
-                  <option value="Handmade">Handmade Craft</option>
-                  <option value="Like New">Pre-Owned: Like New</option>
-                  <option value="Gently Used">Pre-Owned: Gently Used</option>
-                  <option value="Good with notes">Pre-Owned: Highlighted / Notes</option>
-                </select>
+                <div className="col-md-6">
+                  <label className="form-label small fw-semibold">Condition</label>
+                  <select 
+                    className="form-select rounded-3 py-2"
+                    value={newItem.condition}
+                    onChange={(e) => setNewItem({ ...newItem, condition: e.target.value })}
+                  >
+                    <option value="Brand New">Brand New / Unused</option>
+                    <option value="Handmade">Handmade Craft</option>
+                    <option value="Like New">Pre-Owned: Like New</option>
+                    <option value="Gently Used">Pre-Owned: Gently Used</option>
+                    <option value="Good with notes">Pre-Owned: Highlighted / Notes</option>
+                  </select>
+                </div>
               </div>
 
               <div className="mb-4">
