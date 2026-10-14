@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from './context/AuthContext.jsx';
+import { useTheme } from './context/ThemeContext.jsx';
 import './LoginPage.css';
 import welcomeStudentImg from './assets/welcome_student.jpg';
 import campusParkImg from './assets/campus_park.jpg';
 
 export default function LoginPage({ onGoToDashboard }) {
   const auth = useAuth();
+  const { theme, toggleTheme } = useTheme();
   // Page 1 = Welcome Screen (Expansive skater artwork)
   // Page 2 = Campus Gateway (Full campus illustration with Login & Register below)
   const [currentPage, setCurrentPage] = useState(1);
@@ -108,6 +110,31 @@ export default function LoginPage({ onGoToDashboard }) {
         </a>
 
         <div className="d-flex align-items-center gap-2">
+          {/* Theme Toggle Button */}
+          <button
+            type="button"
+            className="unimart-theme-toggle-btn"
+            onClick={toggleTheme}
+            title={theme === 'dark' ? "Switch to light mode" : "Switch to dark mode"}
+            aria-label="Toggle dark/light theme"
+            style={{
+              width: '38px',
+              height: '38px',
+              borderRadius: '50%',
+              border: '1px solid var(--unimart-maroon-border, #e3e6ec)',
+              background: 'rgba(255, 255, 255, 0.85)',
+              color: 'var(--unimart-text-dark, #181b20)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer'
+            }}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: '19px' }}>
+              {theme === 'dark' ? 'light_mode' : 'dark_mode'}
+            </span>
+          </button>
+
           {onGoToDashboard && (
             <button
               type="button"

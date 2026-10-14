@@ -641,3 +641,85 @@ html, body {
 .unimart-page-footer a:hover {
   color: var(--unimart-maroon);
 }
+
+/* --- Dark Theme Landing Page & Auth Modal --- */
+[data-theme="dark"] .unimart-app-shell {
+  background: #090c12;
+}
+
+[data-theme="dark"] .unimart-navbar {
+  background: rgba(9, 12, 18, 0.88);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .unimart-brand-link {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .unimart-theme-toggle-btn {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .unimart-signin-pill {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .unimart-nav-arrow {
+  background: #111622;
+  border-color: rgba(255, 255, 255, 0.14);
+  color: #f8fafc;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .unimart-nav-arrow:hover:not(:disabled) {
+  background: #e11d48;
+  border-color: #e11d48;
+  color: #ffffff;
+}
+
+[data-theme="dark"] .unimart-modal-card {
+  background: #111622;
+  border-color: rgba(255, 255, 255, 0.14);
+  color: #f8fafc;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7);
+}
+
+[data-theme="dark"] .unimart-modal-title {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .unimart-input-wrapper {
+  background: #171f2e;
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+[data-theme="dark"] .unimart-input-wrapper input {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .unimart-input-wrapper:focus-within {
+  border-color: #e11d48;
+  box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.25);
+}
+
+[data-theme="dark"] .unimart-sso-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .unimart-sso-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: #e11d48;
+  color: #fb7185;
+}
+
+[data-theme="dark"] .unimart-page-footer {
+  background: #090c12;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+}

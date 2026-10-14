@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useTheme } from './context/ThemeContext.jsx';
 import './Dashboard.css';
 
 // Product images
@@ -32,6 +33,8 @@ export const MEETUP_OPTIONS = [
 ];
 
 export default function Dashboard({ onGoToLogin }) {
+  const { theme, toggleTheme } = useTheme();
+
   // Dynamic state for search & category filters
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
@@ -507,6 +510,19 @@ export default function Dashboard({ onGoToLogin }) {
             >
               <span className="material-symbols-outlined" style={{ fontSize: '19px' }}>add_circle</span>
               <span>Sell an Item</span>
+            </button>
+
+            {/* Dark/Light Theme Toggle Button */}
+            <button 
+              type="button" 
+              className="unimart-icon-action-btn unimart-theme-toggle-btn" 
+              onClick={toggleTheme}
+              title={theme === 'dark' ? "Switch to light mode" : "Switch to dark mode"}
+              aria-label="Toggle dark/light theme"
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>
+                {theme === 'dark' ? 'light_mode' : 'dark_mode'}
+              </span>
             </button>
 
             {/* Notification Bell */}

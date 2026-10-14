@@ -1190,3 +1190,426 @@
   justify-content: center;
   margin-bottom: 1.25rem;
 }
+
+/* ==========================================================================
+   DARK THEME STYLES ([data-theme="dark"])
+   High-contrast, luxury dark aesthetic that harmonizes with OTT card popups
+   ========================================================================== */
+
+[data-theme="dark"] {
+  --unimart-maroon: #e11d48;
+  --unimart-maroon-dark: #be123c;
+  --unimart-maroon-light: #fb7185;
+  --unimart-maroon-subtle: rgba(225, 29, 72, 0.14);
+  --unimart-maroon-border: rgba(225, 29, 72, 0.32);
+  --unimart-maroon-glow: rgba(225, 29, 72, 0.35);
+  --unimart-text-dark: #f8fafc;
+  --unimart-text-muted: #94a3b8;
+  --unimart-bg: #0b0e14;
+}
+
+[data-theme="dark"] body {
+  background-color: #0b0e14;
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .unimart-dashboard-wrap {
+  background-color: #0b0e14;
+  color: #f8fafc;
+}
+
+/* --- Dark Theme Top Navbar & Search --- */
+[data-theme="dark"] .unimart-dash-nav {
+  background: rgba(11, 14, 20, 0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .unimart-logo-group {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .unimart-search-bar {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+[data-theme="dark"] .unimart-search-bar:focus-within {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: #e11d48;
+  box-shadow: 0 0 0 3.5px rgba(225, 29, 72, 0.25);
+}
+
+[data-theme="dark"] .unimart-search-input {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .unimart-search-input::placeholder {
+  color: #64748b;
+}
+
+[data-theme="dark"] .unimart-search-cat-static {
+  background: rgba(255, 255, 255, 0.1);
+  color: #cbd5e1;
+}
+
+/* --- Dark Theme Header Actions --- */
+[data-theme="dark"] .unimart-icon-action-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #f1f5f9;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+[data-theme="dark"] .unimart-icon-action-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.24);
+  color: #ffffff;
+}
+
+[data-theme="dark"] .unimart-theme-toggle-btn .material-symbols-outlined {
+  color: #facc15;
+}
+
+[data-theme="dark"] .unimart-badge-count {
+  border-color: #0b0e14;
+}
+
+[data-theme="dark"] .unimart-user-chip {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .unimart-user-chip .text-muted {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .unimart-avatar {
+  background: rgba(225, 29, 72, 0.25);
+  color: #fb7185;
+}
+
+/* --- Dark Theme Subnav & Category Tabs --- */
+[data-theme="dark"] .unimart-subnav {
+  background: rgba(15, 20, 29, 0.72);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+[data-theme="dark"] .unimart-pill-tab {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .unimart-pill-tab .unimart-tab-count-tag {
+  background: rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .unimart-pill-tab:hover {
+  background: rgba(225, 29, 72, 0.15);
+  border-color: rgba(225, 29, 72, 0.35);
+  color: #fb7185;
+}
+
+[data-theme="dark"] .unimart-pill-tab:hover .unimart-tab-count-tag {
+  background: rgba(225, 29, 72, 0.22);
+  color: #fb7185;
+}
+
+[data-theme="dark"] .unimart-pill-tab.active {
+  background: linear-gradient(135deg, #e11d48 0%, #be123c 100%);
+  color: #ffffff;
+  border-color: #f43f5e;
+  box-shadow: 0 4px 16px rgba(225, 29, 72, 0.35);
+}
+
+[data-theme="dark"] .unimart-pill-tab.active .unimart-tab-count-tag {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+[data-theme="dark"] .unimart-mobile-search-bar {
+  background: #0b0e14 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+/* --- Dark Theme Hero Section & Spotlight 3D Cards --- */
+[data-theme="dark"] .unimart-dashboard-wrap h1,
+[data-theme="dark"] .unimart-dashboard-wrap h2,
+[data-theme="dark"] .unimart-dashboard-wrap h3,
+[data-theme="dark"] .unimart-dashboard-wrap h4 {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .unimart-dashboard-wrap .text-muted,
+[data-theme="dark"] .unimart-dashboard-wrap p.text-muted {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .unimart-dashboard-wrap .border.rounded-pill {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  color: #cbd5e1 !important;
+}
+
+/* Lime-Yellow Spotlight Card in Dark Mode (Luminous chartreuse on deep olive slate) */
+[data-theme="dark"] .card-lime-yellow {
+  background: linear-gradient(145deg, #172312 0%, #0d170a 100%);
+  border: 1px solid rgba(190, 242, 100, 0.24);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.45), 0 0 28px rgba(190, 242, 100, 0.07);
+}
+
+[data-theme="dark"] .card-lime-yellow .unimart-card-serif-title {
+  color: #f7fee7;
+}
+
+[data-theme="dark"] .card-lime-yellow .unimart-card-subtitle {
+  color: #d9f99d;
+}
+
+[data-theme="dark"] .card-lime-yellow .unimart-card-tag {
+  background: rgba(190, 242, 100, 0.14);
+  color: #ecfccb;
+  border: 1px solid rgba(190, 242, 100, 0.28);
+}
+
+[data-theme="dark"] .card-lime-yellow .unimart-view-all-pill {
+  background: rgba(190, 242, 100, 0.14);
+  border-color: rgba(190, 242, 100, 0.32);
+  color: #f7fee7;
+}
+
+[data-theme="dark"] .card-lime-yellow:hover .unimart-view-all-pill {
+  background: #bef264;
+  border-color: #bef264;
+  color: #14200b;
+}
+
+/* Sky-Blue Spotlight Card in Dark Mode (Electric ice blue on deep midnight ocean) */
+[data-theme="dark"] .card-sky-blue {
+  background: linear-gradient(145deg, #0c2036 0%, #061220 100%);
+  border: 1px solid rgba(56, 189, 248, 0.26);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.45), 0 0 28px rgba(56, 189, 248, 0.07);
+}
+
+[data-theme="dark"] .card-sky-blue .unimart-card-serif-title {
+  color: #f0f9ff;
+}
+
+[data-theme="dark"] .card-sky-blue .unimart-card-subtitle {
+  color: #bae6fd;
+}
+
+[data-theme="dark"] .card-sky-blue .unimart-card-tag {
+  background: rgba(56, 189, 248, 0.14);
+  color: #e0f2fe;
+  border: 1px solid rgba(56, 189, 248, 0.28);
+}
+
+[data-theme="dark"] .card-sky-blue .unimart-view-all-pill {
+  background: rgba(56, 189, 248, 0.14);
+  border-color: rgba(56, 189, 248, 0.32);
+  color: #f0f9ff;
+}
+
+[data-theme="dark"] .card-sky-blue:hover .unimart-view-all-pill {
+  background: #38bdf8;
+  border-color: #38bdf8;
+  color: #082f49;
+}
+
+/* Soft-Pink Spotlight Card in Dark Mode (Neon velvet rose on deep blackberry) */
+[data-theme="dark"] .card-soft-pink {
+  background: linear-gradient(145deg, #2d0e1c 0%, #1a0610 100%);
+  border: 1px solid rgba(244, 114, 182, 0.26);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.45), 0 0 28px rgba(244, 114, 182, 0.07);
+}
+
+[data-theme="dark"] .card-soft-pink .unimart-card-serif-title {
+  color: #fff1f2;
+}
+
+[data-theme="dark"] .card-soft-pink .unimart-card-subtitle {
+  color: #fbcfe8;
+}
+
+[data-theme="dark"] .card-soft-pink .unimart-card-tag {
+  background: rgba(244, 114, 182, 0.14);
+  color: #fdf2f8;
+  border: 1px solid rgba(244, 114, 182, 0.28);
+}
+
+[data-theme="dark"] .card-soft-pink .unimart-view-all-pill {
+  background: rgba(244, 114, 182, 0.14);
+  border-color: rgba(244, 114, 182, 0.32);
+  color: #fff1f2;
+}
+
+[data-theme="dark"] .card-soft-pink:hover .unimart-view-all-pill {
+  background: #f472b6;
+  border-color: #f472b6;
+  color: #2b0b1a;
+}
+
+/* --- Dark Theme Product Resting Cards --- */
+[data-theme="dark"] .unimart-card-resting {
+  background: #111622;
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+}
+
+[data-theme="dark"] .unimart-card-image-wrap {
+  background: #0d111a;
+}
+
+[data-theme="dark"] .unimart-card-image {
+  opacity: 0.65;
+}
+
+[data-theme="dark"] .unimart-condition-badge {
+  background: rgba(17, 22, 34, 0.88);
+  color: #f1f5f9;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+[data-theme="dark"] .unimart-wishlist-btn {
+  background: rgba(17, 22, 34, 0.88);
+  color: #94a3b8;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+[data-theme="dark"] .unimart-wishlist-btn:hover {
+  background: #111622;
+  color: #f43f5e;
+}
+
+[data-theme="dark"] .unimart-card-title {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .unimart-current-price {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .unimart-original-price {
+  color: #64748b;
+}
+
+[data-theme="dark"] .unimart-add-cart-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .unimart-add-cart-btn:hover {
+  background: #e11d48;
+  border-color: #e11d48;
+  color: #ffffff;
+}
+
+[data-theme="dark"] .unimart-section-title {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .badge.bg-light {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #cbd5e1 !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+[data-theme="dark"] .unimart-dash-footer {
+  background: #0d111a;
+  border-top-color: rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+}
+
+/* --- Dark Theme Sell Modal & Dropdowns --- */
+[data-theme="dark"] .unimart-sell-modal-box {
+  background: #111622;
+  border-color: rgba(255, 255, 255, 0.14);
+  color: #f1f5f9;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+}
+
+[data-theme="dark"] .unimart-sell-modal-box h4,
+[data-theme="dark"] .unimart-sell-modal-box h5,
+[data-theme="dark"] .unimart-sell-modal-box .fw-bold {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .unimart-sell-modal-box .text-muted {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .unimart-close-btn {
+  background: rgba(255, 255, 255, 0.08);
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .unimart-close-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+}
+
+[data-theme="dark"] .unimart-sell-modal-box .form-control,
+[data-theme="dark"] .unimart-sell-modal-box .form-select {
+  background-color: #171f2e;
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .unimart-sell-modal-box .form-control:focus,
+[data-theme="dark"] .unimart-sell-modal-box .form-select:focus {
+  background-color: #1d2638;
+  border-color: #e11d48;
+  color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.25);
+}
+
+[data-theme="dark"] .unimart-step-indicator {
+  background: rgba(225, 29, 72, 0.12);
+  border-color: rgba(225, 29, 72, 0.28);
+}
+
+[data-theme="dark"] .unimart-condition-dropdown {
+  background: #171f2e;
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .unimart-condition-item {
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .unimart-condition-item:hover {
+  background: rgba(225, 29, 72, 0.15);
+}
+
+[data-theme="dark"] .unimart-condition-name {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .unimart-condition-hint {
+  color: #94a3b8;
+}
+
+/* --- Theme Toggle Button Micro-Animation --- */
+.unimart-theme-toggle-btn {
+  cursor: pointer;
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.25s ease, border-color 0.25s ease;
+  user-select: none;
+}
+
+.unimart-theme-toggle-btn:hover {
+  transform: rotate(20deg) scale(1.08);
+}
+
+.unimart-theme-toggle-btn .material-symbols-outlined {
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
