@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from './context/AuthContext.jsx';
 import './LoginPage.css';
 import welcomeStudentImg from './assets/welcome_student.jpg';
 import campusParkImg from './assets/campus_park.jpg';
 
 export default function LoginPage({ onGoToDashboard }) {
+  const auth = useAuth();
   // Page 1 = Welcome Screen (Expansive skater artwork)
   // Page 2 = Campus Gateway (Full campus illustration with Login & Register below)
   const [currentPage, setCurrentPage] = useState(1);
@@ -59,6 +61,13 @@ export default function LoginPage({ onGoToDashboard }) {
 
     setTimeout(() => {
       setIsLoading(false);
+      if (auth?.login) {
+        auth.login({
+          email: email || 'student@chitkara.edu.in',
+          name: fullName || (email ? email.split('@')[0] : 'Satkar Singh'),
+          studentId: studentId || '2110990696',
+        });
+      }
       setAlertInfo({
         type: 'success',
         message: modalMode === 'login'
