@@ -1379,262 +1379,217 @@ export default function Dashboard({ onGoToLogin }) {
             {filteredProducts.map((item) => {
               const discountPct = Math.round(((item.origPrice - item.price) / item.origPrice) * 100);
               return (
-                <div key={item.id} className={`unimart-product-card ${item.categoryTheme || ''}`}>
-                  
-                  {/* ================= 1. RESTING CARD VIEW ================= */}
-                  <div className="unimart-card-resting">
-                    {/* Image area with category tint translucency */}
-                    <div className="unimart-card-image-wrap">
-                      <img 
-                        src={item.image} 
-                        alt={item.title} 
-                        className="unimart-card-image"
-                        loading="lazy"
-                      />
+                <div key={item.id} className={`unimart-product-card ${item.categoryTheme || 'theme-academic'}`}>
+                  <div className="unimart-card-inner">
+                    <div className="unimart-card-top-content">
+                      {/* Image and placeholder banner with category theme */}
+                      <div className={`unimart-card-placeholder-wrap ${item.categoryTheme || 'theme-academic'}`}>
+                        <img 
+                          src={item.image} 
+                          className="unimart-card-image" 
+                          alt={item.title} 
+                          loading="lazy"
+                        />
+                        {/* Preserved background translucent category tint */}
+                        <div className="unimart-category-translucent-tint"></div>
 
-                      {/* Translucent tint wash into the category's unique color */}
-                      <div className="unimart-category-translucent-tint"></div>
+                        {/* Category top glow border */}
+                        <div className="unimart-card-glow-border"></div>
 
-                      {/* Purple/Category glow top border */}
-                      <div className="unimart-card-glow-border"></div>
-
-                      {/* Condition badge - top left */}
-                      <span className="unimart-condition-badge">{item.condition}</span>
-
-                      {/* Timer badge for pending approval */}
-                      {item.status === 'pending' && (
-                        <span className="unimart-pending-timer-badge" title="Waiting to be approved by campus admin">
-                          <span className="material-symbols-outlined unimart-timer-pulse">schedule</span>
-                          <span>Waiting to be approved</span>
-                        </span>
-                      )}
-                      
-                      {/* Wishlist heart - top right */}
-                      <button 
-                        type="button" 
-                        className="unimart-wishlist-btn" 
-                        title="Add to wishlist"
-                        onClick={(e) => handleWishlistClick(e, item)}
-                      >
-                        <span className="material-symbols-outlined" style={{ fontSize: '19px' }}>
-                          favorite_border
-                        </span>
-                      </button>
-
-                      {/* Floating center icon box */}
-                      <div className="unimart-floating-icon-box">
-                        <span className="material-symbols-outlined unimart-floating-icon">
-                          {item.icon}
-                        </span>
-                      </div>
-
-                      {/* Floating notes label */}
-                      <span className="unimart-floating-notes-label">
-                        {item.notes || item.category}
-                      </span>
-                    </div>
-
-                    {/* Resting Card Body */}
-                    <div className="unimart-card-body">
-                      {item.status === 'pending' && (
-                        <div className="unimart-pending-strip mb-2">
-                          <div className="d-flex align-items-center gap-1">
-                            <span className="material-symbols-outlined unimart-timer-pulse" style={{ fontSize: '15px', color: '#d97706' }}>schedule</span>
-                            <span className="fw-semibold" style={{ fontSize: '0.72rem', color: '#b45309' }}>Waiting for Approval</span>
-                          </div>
-                          <span className="text-muted" style={{ fontSize: '0.68rem' }}>{item.submittedAt || 'Pending'}</span>
+                        <div className="unimart-placeholder-icon-box">
+                          <span className="material-symbols-outlined unimart-placeholder-icon">
+                            {item.icon || 'sell'}
+                          </span>
                         </div>
-                      )}
-
-                      <div className="d-flex justify-content-between align-items-center mb-1">
-                        <span className="unimart-card-category">{item.category}</span>
-                        <span className={`unimart-badge-chip ${item.status === 'pending' ? 'chip-pending' : ''}`}>
-                          {item.badge}
+                        <span className="unimart-placeholder-label">
+                          {item.notes || item.meetupSpot || item.pickupSpot || item.category} 
                         </span>
-                      </div>
+                        
+                        {/* Condition Badge */}
+                        <span className="unimart-condition-badge">{item.condition}</span>
 
-                      <h6 className="unimart-card-title" title={item.title}>
-                        {item.title}
-                      </h6>
-
-                      <div className="unimart-seller-info">
-                        <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>person</span>
-                        <span>{item.seller}</span>
-                      </div>
-
-                      <div className="unimart-price-row mt-auto pt-2">
-                        <div className="d-flex align-items-baseline gap-2 flex-wrap">
-                          <span className="unimart-current-price">₹{item.price.toLocaleString('en-IN')}</span>
-                          {item.origPrice && (
-                            <span className="unimart-orig-price">₹{item.origPrice.toLocaleString('en-IN')}</span>
-                          )}
-                          <span className="unimart-discount-tag">{discountPct}% OFF</span>
-                        </div>
-
-                        {/* Only inside "My Listings" tab, show ✏️ Edit and 🗑️ Delete where cart button is */}
-                        {catalogTab === 'my' && canManageListing(user, item) && !checkIsAdmin(user) ? (
-                          <div className="d-flex align-items-center gap-1.5 unimart-my-card-actions">
-                            <button
-                              type="button"
-                              className="unimart-card-icon-btn unimart-btn-edit"
-                              title="Edit"
-                              onClick={(e) => handleEditListingClick(e, item)}
-                              aria-label={`Edit ${item.title}`}
-                            >
-                              <span className="material-symbols-outlined" style={{ fontSize: '17px' }}>edit</span>
-                            </button>
-                            <button
-                              type="button"
-                              className="unimart-card-icon-btn unimart-btn-delete"
-                              title="Delete"
-                              onClick={(e) => handleDeleteListingClick(e, item)}
-                              aria-label={`Delete ${item.title}`}
-                            >
-                              <span className="material-symbols-outlined" style={{ fontSize: '17px' }}>delete</span>
-                            </button>
-                          </div>
-                        ) : (
-                          <button 
-                            type="button" 
-                            className="unimart-add-cart-btn"
-                            title="Add to cart"
-                            onClick={(e) => handleBuyClick(e, item)}
-                          >
-                            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add_shopping_cart</span>
-                          </button>
-                        )}
-                      </div>
-
-                    </div>
-                  </div>
-
-                  {/* ================= 2. OTT HOVER POPUP (Styled after Hotstar reference) ================= */}
-                  <div className="unimart-hover-popup">
-                    {/* Top Preview Image Container with smooth dark fade */}
-                    <div className="unimart-popup-image-container">
-                      <img 
-                        src={item.image} 
-                        alt={item.title} 
-                        className="unimart-popup-image" 
-                      />
-                      {/* Smooth dark gradient fading bottom into dark card body */}
-                      <div className="unimart-popup-image-fade"></div>
-
-                      {/* Category tag pill top-right */}
-                      <div className="unimart-popup-top-tag">
-                        <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>{item.icon}</span>
-                        <span>{item.category}</span>
-                      </div>
-
-                      {/* Stylized Logo / Title overlay bottom-left */}
-                      <div className="unimart-popup-title-badge">
-                        <div className="unimart-popup-badge-pill">{item.badge}</div>
-                        <h5 className="unimart-popup-hero-title">{item.title}</h5>
-                      </div>
-                    </div>
-
-                    {/* Lower Card Details */}
-                    <div className="unimart-popup-content">
-                      {/* Action buttons row: [ ▶ Watch Now ]  [ + ]  [ 💬 ] */}
-                      <div className="unimart-popup-actions-row">
-                        {catalogTab === 'my' && canManageListing(user, item) && !checkIsAdmin(user) ? (
-                          <>
-                            <button
-                              type="button"
-                              className="unimart-popup-btn-watch"
-                              title="Edit"
-                              onClick={(e) => handleEditListingClick(e, item)}
-                            >
-                              <span className="material-symbols-outlined">edit</span>
-                              <span>Edit Listing</span>
-                            </button>
-                            <button
-                              type="button"
-                              className="unimart-popup-btn-icon text-danger"
-                              title="Delete"
-                              onClick={(e) => handleDeleteListingClick(e, item)}
-                            >
-                              <span className="material-symbols-outlined">delete</span>
-                            </button>
-                          </>
-                        ) : item.status === 'pending' ? (
-                          <button
-                            type="button"
-                            className="unimart-popup-btn-pending"
-                            disabled
-                            title="Waiting for campus admin approval"
-                          >
+                        {/* Timer badge for pending approval */}
+                        {item.status === 'pending' && (
+                          <span className="unimart-pending-timer-badge" title="Waiting to be approved by campus admin">
                             <span className="material-symbols-outlined unimart-timer-pulse">schedule</span>
-                            <span>Waiting for Approval</span>
-                          </button>
-                        ) : (
-                          <button 
-                            type="button" 
-                            className="unimart-popup-btn-watch"
-                            title={`Buy Now • ₹${item.price.toLocaleString('en-IN')}`}
-                            onClick={(e) => handleBuyClick(e, item)}
-                          >
-                            <span className="material-symbols-outlined">play_arrow</span>
-                            <span>Buy Now</span>
-                          </button>
+                            <span>Waiting to be approved</span>
+                          </span>
                         )}
-
-                        {!(catalogTab === 'my' && canManageListing(user, item) && !checkIsAdmin(user)) && (
-                          <>
-                            <button 
-                              type="button" 
-                              className="unimart-popup-btn-icon"
-                              title="Add to wishlist / cart"
-                              onClick={(e) => handleWishlistClick(e, item)}
-                            >
-                              <span className="material-symbols-outlined">add</span>
-                            </button>
-
-                            <button 
-                              type="button" 
-                              className="unimart-popup-btn-icon"
-                              title="Chat with seller"
-                              onClick={(e) => handleChatClick(e, item)}
-                            >
-                              <span className="material-symbols-outlined">chat</span>
-                            </button>
-                          </>
-                        )}
+                        
+                        {/* Wishlist Icon */}
+                        <button 
+                          type="button" 
+                          className="unimart-wishlist-btn" 
+                          title="Add to wishlist"
+                          onClick={(e) => handleWishlistClick(e, item)}
+                        >
+                          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
+                            favorite_border
+                          </span>
+                        </button>
                       </div>
 
-                      {/* Metadata Row with bullet dots */}
-                      <div className="unimart-popup-meta-row">
-                        <span className="unimart-popup-meta-price">₹{item.price.toLocaleString('en-IN')}</span>
-                        <span className="unimart-popup-meta-dot">•</span>
-                        <span className="unimart-popup-meta-item">{item.condition}</span>
-                        <span className="unimart-popup-meta-dot">•</span>
-                        <span className="unimart-popup-meta-item">{item.notes || 'Semester 1 & 2'}</span>
-                        <span className="unimart-popup-meta-dot">•</span>
-                        <span className="unimart-popup-meta-item">Chitkara</span>
-                        <span className="unimart-popup-meta-dot">•</span>
-                        <span className="unimart-popup-meta-item">{item.category}</span>
-                      </div>
+                      {/* Card Body */}
+                      <div className="unimart-card-body">
+                        {item.status === 'pending' && (
+                          <div className="unimart-pending-strip mb-2">
+                            <div className="d-flex align-items-center gap-1">
+                              <span className="material-symbols-outlined unimart-timer-pulse" style={{ fontSize: '15px', color: '#d97706' }}>schedule</span>
+                              <span className="fw-semibold" style={{ fontSize: '0.72rem', color: '#b45309' }}>Waiting for Approval</span>
+                            </div>
+                            <span className="text-muted" style={{ fontSize: '0.68rem' }}>{item.submittedAt || 'Pending'}</span>
+                          </div>
+                        )}
 
-                      {/* Synopsis / Description */}
-                      <p className="unimart-popup-synopsis">
-                        {item.description}
-                      </p>
+                        <div className="d-flex justify-content-between align-items-center mb-1">
+                          <span className="unimart-card-category">
+                            {item.category}{item.subcategory ? ` • ${item.subcategory}` : ''}
+                          </span>
+                          <span className={`unimart-badge-chip ${item.status === 'pending' ? 'chip-pending' : ''}`}>
+                            {item.badge}
+                          </span>
+                        </div>
 
-                      {/* Seller Footer */}
-                      <div className="unimart-popup-footer">
-                        <div className="d-flex align-items-center gap-1 text-muted">
+                        <h6 className="unimart-card-title" title={item.title}>
+                          {item.title}
+                        </h6>
+
+                        <div className="unimart-seller-info">
                           <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>person</span>
                           <span>{item.seller}</span>
                         </div>
-                        <span className="unimart-popup-verified-tag">
-                          <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>verified</span>
-                          <span>Chitkara Verified</span>
+
+                        {/* Pricing in Indian Rupees (₹) */}
+                        <div className="unimart-price-row mt-auto pt-2">
+                          <div className="d-flex align-items-baseline gap-2 flex-wrap">
+                            <span className="unimart-current-price">
+                              {item.price === 0 ? 'Free' : `₹${item.price.toLocaleString('en-IN')}`}
+                            </span>
+                            {item.origPrice && (
+                              <span className="unimart-orig-price">₹{item.origPrice.toLocaleString('en-IN')}</span>
+                            )}
+                            {discountPct > 0 && (
+                              <span className="unimart-discount-tag">{discountPct}% OFF</span>
+                            )}
+                            {item.isNegotiable && (
+                              <span className="badge bg-light text-dark border ms-1" style={{ fontSize: '0.65rem' }}>
+                                Negotiable
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Only inside "My Listings" tab, show ✏️ Edit and 🗑️ Delete where cart button is */}
+                          {catalogTab === 'my' && canManageListing(user, item) && !checkIsAdmin(user) ? (
+                            <div className="d-flex align-items-center gap-1.5 unimart-my-card-actions">
+                              <button
+                                type="button"
+                                className="unimart-card-icon-btn unimart-btn-edit"
+                                title="Edit"
+                                onClick={(e) => handleEditListingClick(e, item)}
+                                aria-label={`Edit ${item.title}`}
+                              >
+                                <span className="material-symbols-outlined" style={{ fontSize: '17px' }}>edit</span>
+                              </button>
+                              <button
+                                type="button"
+                                className="unimart-card-icon-btn unimart-btn-delete"
+                                title="Delete"
+                                onClick={(e) => handleDeleteListingClick(e, item)}
+                                aria-label={`Delete ${item.title}`}
+                              >
+                                <span className="material-symbols-outlined" style={{ fontSize: '17px' }}>delete</span>
+                              </button>
+                            </div>
+                          ) : (
+                            <button 
+                              type="button" 
+                              className="unimart-add-cart-btn"
+                              title="Add to cart"
+                              onClick={(e) => handleBuyClick(e, item)}
+                            >
+                              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add_shopping_cart</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Expanded Details Section (Visible on Hover with Ambient Light Bleed) */}
+                    <div className="unimart-expanded-details" style={{ '--card-img': `url(${item.image})` }}>
+                      <h6 className="unimart-expanded-title" title={item.title}>
+                        {item.title}
+                      </h6>
+                      <div className="unimart-expanded-meta">
+                        <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>badge</span>
+                        <span style={{ fontSize: '0.78rem', marginLeft: '6px' }}>{item.seller}</span>
+                      </div>
+                      <p className="unimart-expanded-desc">
+                        {item.description || (item.notes ? `Includes: ${item.notes}. ` : '') + `Verified pre-owned item in ${(item.condition || '').toLowerCase()} condition.`}
+                      </p>
+                      <div className="unimart-expanded-price-row">
+                        <span className="unimart-expanded-price">
+                          {item.price === 0 ? 'Free' : `₹${item.price.toLocaleString('en-IN')}`}
+                        </span>
+                        <span className="unimart-expanded-location">
+                          <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>location_on</span>
+                          {item.meetupSpot || item.notes || item.pickupSpot || 'Chitkara Campus'}
                         </span>
                       </div>
-
+                      <div className="unimart-expanded-actions">
+                        {catalogTab === 'my' && canManageListing(user, item) && !checkIsAdmin(user) ? (
+                          <>
+                            <button
+                              type="button"
+                              className="unimart-btn-secondary"
+                              onClick={(e) => handleEditListingClick(e, item)}
+                              title="Edit listing"
+                            >
+                              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>edit</span>
+                              Edit
+                            </button>
+                            <button
+                              type="button"
+                              className="unimart-btn-primary bg-danger border-danger"
+                              onClick={(e) => handleDeleteListingClick(e, item)}
+                              title="Delete listing"
+                            >
+                              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>delete</span>
+                              Delete
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              type="button"
+                              className="unimart-btn-secondary"
+                              onClick={(e) => handleChatClick(e, item)}
+                              title="Chat with seller"
+                            >
+                              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>chat</span>
+                              Chat
+                            </button>
+                            <button
+                              type="button"
+                              className="unimart-btn-primary"
+                              onClick={(e) => handleBuyClick(e, item)}
+                              title="Add to cart"
+                            >
+                              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add_shopping_cart</span>
+                              + Cart
+                            </button>
+                          </>
+                        )}
+                        <button
+                          type="button"
+                          className="unimart-btn-icon"
+                          title="Quick preview"
+                          onClick={(e) => handleBuyClick(e, item)}
+                        >
+                          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>open_in_new</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
-
                 </div>
               );
             })}
