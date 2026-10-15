@@ -59,6 +59,9 @@ export default function Dashboard({ onGoToLogin }) {
   const [touchedFields, setTouchedFields] = useState({});
   const [isConditionOpen, setIsConditionOpen] = useState(false);
   const conditionDropdownRef = useRef(null);
+  const fileInputRef = useRef(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isPublishedSuccess, setIsPublishedSuccess] = useState(false);
 
   
   const staticProducts = [
@@ -420,8 +423,120 @@ export default function Dashboard({ onGoToLogin }) {
     setCurrentStep(2);
   };
 
+  const handlePhotoFiles = (files) => {
+    if (!files || files.length === 0) return;
+    const fileList = Array.from(files);
+    const validImages = fileList.filter((f) => f.type.startsWith('image/'));
+
+    if (validImages.length === 0) {
+      setFormErrors((prev) => ({ ...prev, photos: 'Please select valid image files (JPG, PNG, WebP).' }));
+      return;
+    }
+
+    const availableSlots = 4 - formData.photos.length;
+    if (availableSlots <= 0) {
+      setFormErrors((prev) => ({ ...prev, photos: 'Maximum 4 photos allowed.' }));
+      return;
+    }
+
+    const filesToLoad = validImages.slice(0, availableSlots);
+    let loadedCount = 0;
+    const newPhotos = [];
+
+    filesToLoad.forEach((file) => {
+      if (file.size > 5 * 1024 * 1024) {
+        setFormErrors((prev) => ({ ...prev, photos: `File "${file.name}" exceeds 5MB limit.` }));
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        newPhotos.push(e.target.result);
+        loadedCount++;
+        if (loadedCount === filesToLoad.length) {
+          setFormData((prev) => ({
+            ...prev,
+            photos: [...prev.photos, ...newPhotos]
+          }));
+          setFormErrors((prev) => ({ ...prev, photos: '' }));
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleAddSamplePhoto = (sampleImg) => {
+    if (formData.photos.length >= 4) {
+      setFormErrors((prev) => ({ ...prev, photos: 'Maximum 4 photos allowed.' }));
+      return;
+    }
+    setFormData((prev) => ({
+      ...prev,
+      photos: [...prev.photos, sampleImg]
+    }));
+    setFormErrors((prev) => ({ ...prev, photos: '' }));
+  };
+
+  const handleRemovePhoto = (indexToRemove) => {
+    setFormData((prev) => ({
+      ...prev,
+      photos: prev.photos.filter((_, idx) => idx !== indexToRemove)
+    }));
+  };
+
+  const handlePublishListing = (e) => {
+    if (e) e.preventDefault();
+    if (formData.photos.length === 0) {
+      setFormErrors((prev) => ({
+        ...prev,
+        photos: 'Please upload at least 1 photo of your item (or select a campus sample photo below).'
+      }));
+      return;
+    }
+
+    const catObj = categories.find((c) => c.id === formData.category_id);
+    const categoryName = catObj ? (catObj.id === 'books-notes' ? 'Textbooks' : catObj.name) : 'Textbooks';
+    const categoryThemeMap = {
+      'books-notes': 'theme-academic',
+      'crafts': 'theme-crafts',
+      'tech-tools': 'theme-tech',
+      'fragrance': 'theme-scents'
+    };
+    const iconMap = {
+      'books-notes': 'menu_book',
+      'crafts': 'palette',
+      'tech-tools': 'precision_manufacturing',
+      'fragrance': 'local_florist'
+    };
+
+    const newListing = {
+      id: Date.now(),
+      title: formData.title.trim(),
+      category: categoryName,
+      price: Number(formData.price),
+      origPrice: Math.round(Number(formData.price) * 1.35),
+      condition: formData.condition,
+      seller: formData.seller || 'Satkar (You)',
+      icon: iconMap[formData.category_id] || 'sell',
+      categoryTheme: categoryThemeMap[formData.category_id] || 'theme-academic',
+      badge: 'Student Listing',
+      notes: formData.meetupSpot === 'Other' ? formData.customMeetupSpot : formData.meetupSpot,
+      image: formData.photos[0] || imgCalcBook,
+      description: formData.description
+    };
+
+    setProductList((prev) => [newListing, ...prev]);
+    setIsPublishedSuccess(true);
+    setTimeout(() => {
+      setIsPublishedSuccess(false);
+      setIsSellModalOpen(false);
+      resetForm();
+    }, 2200);
+  };
+
   const resetForm = () => {
     setCurrentStep(1);
+    setIsPublishedSuccess(false);
+    setIsDragging(false);
     setFormData({
       title: '',
       category_id: '',
@@ -1357,17 +1472,216 @@ export default function Dashboard({ onGoToLogin }) {
                   <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>arrow_forward</span>
                 </button>
               </form>
-            ) : (
-              /* Step 2 Placeholder for Stage 2 */
-              <div>
-                <p className="text-muted small">Photos step will be enabled in Stage 2.</p>
-                <button
-                  type="button"
-                  className="btn btn-outline-secondary rounded-pill px-3 py-1 btn-sm"
-                  onClick={() => setCurrentStep(1)}
+            ) : isPublishedSuccess ? (
+              <div className="text-center py-4">
+                <div 
+                  className="rounded-circle d-inline-flex align-items-center justify-content-center mb-3"
+                  style={{ width: '70px', height: '70px', background: '#dcfce7', color: '#16a34a' }}
                 >
-                  ← Back to Details
-                </button>
+                  <span className="material-symbols-outlined" style={{ fontSize: '42px' }}>check_circle</span>
+                </div>
+                <h4 className="fw-bold mb-2">Item Published Successfully!</h4>
+                <p className="text-muted small mb-4" style={{ maxWidth: '380px', margin: '0 auto' }}>
+                  Your listing for <strong>"{formData.title}"</strong> is now live on the campus marketplace.
+                </p>
+                <div className="d-flex justify-content-center gap-2">
+                  <button
+                    type="button"
+                    className="unimart-sell-btn py-2 px-4"
+                    onClick={() => {
+                      setIsPublishedSuccess(false);
+                      setIsSellModalOpen(false);
+                      resetForm();
+                      const catEl = document.getElementById('marketplace-catalog');
+                      if (catEl) catEl.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                  >
+                    <span>View in Catalog</span>
+                    <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_forward</span>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div>
+                {/* Step 2 Form */}
+                <form onSubmit={handlePublishListing} noValidate>
+                  {/* Summary Review Strip */}
+                  <div className="unimart-review-summary-card d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                      <div className="fw-bold text-truncate" style={{ maxWidth: '320px', fontSize: '0.92rem' }}>
+                        {formData.title || 'Untitled Item'}
+                      </div>
+                      <div className="small text-muted d-flex align-items-center gap-2 mt-1">
+                        <span className="badge bg-light text-dark border rounded-pill px-2 py-0.5">
+                          {selectedCategoryObj?.name || 'Category'}
+                        </span>
+                        <span>•</span>
+                        <span className="fw-bold text-success">₹{Number(formData.price || 0).toLocaleString('en-IN')}</span>
+                        <span>•</span>
+                        <span>{formData.condition}</span>
+                        <span>•</span>
+                        <span>📍 {formData.meetupSpot === 'Other' ? formData.customMeetupSpot : formData.meetupSpot}</span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-link text-decoration-none fw-semibold p-0 text-muted"
+                      onClick={() => setCurrentStep(1)}
+                      title="Edit item details"
+                    >
+                      Edit Details
+                    </button>
+                  </div>
+
+                  {/* Dropzone */}
+                  <div className="mb-3">
+                    <label className="form-label small fw-semibold d-flex justify-content-between align-items-center mb-1">
+                      <span>Item Photos <span className="unimart-req-asterisk">*</span></span>
+                      <span className="text-muted small">{formData.photos.length} / 4 photos added</span>
+                    </label>
+
+                    <input 
+                      type="file"
+                      ref={fileInputRef}
+                      className="d-none"
+                      multiple
+                      accept="image/*"
+                      onChange={(e) => handlePhotoFiles(e.target.files)}
+                    />
+
+                    <div
+                      className={`unimart-photo-dropzone ${isDragging ? 'dragging' : ''}`}
+                      onClick={() => fileInputRef.current && fileInputRef.current.click()}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        setIsDragging(true);
+                      }}
+                      onDragLeave={(e) => {
+                        e.preventDefault();
+                        setIsDragging(false);
+                      }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        setIsDragging(false);
+                        handlePhotoFiles(e.dataTransfer.files);
+                      }}
+                    >
+                      <div className="unimart-dropzone-icon-wrap mb-2">
+                        <span className="material-symbols-outlined" style={{ fontSize: '36px' }}>
+                          add_photo_alternate
+                        </span>
+                      </div>
+                      <div className="fw-semibold small mb-1">
+                        Drag & drop photos here, or <span className="text-decoration-underline" style={{ color: 'var(--unimart-maroon)' }}>browse files</span>
+                      </div>
+                      <div className="text-muted" style={{ fontSize: '0.75rem' }}>
+                        Supports JPG, PNG, WebP (Max 5MB each, up to 4 photos)
+                      </div>
+                    </div>
+
+                    {formErrors.photos && (
+                      <div className="invalid-feedback d-block text-danger small mt-1" role="alert">
+                        {formErrors.photos}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Quick Campus Demo Photos */}
+                  <div className="mb-4">
+                    <div className="text-muted small mb-2" style={{ fontSize: '0.78rem' }}>
+                      Don't have photos ready? Pick a campus sample photo:
+                    </div>
+                    <div className="d-flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        className="unimart-sample-photo-pill"
+                        onClick={() => handleAddSamplePhoto(imgCalcBook)}
+                        title="Add Calculus Textbook photo"
+                        disabled={formData.photos.length >= 4}
+                      >
+                        <span>📚 Textbook</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="unimart-sample-photo-pill"
+                        onClick={() => handleAddSamplePhoto(imgMatchaMug)}
+                        title="Add Ceramic Mug photo"
+                        disabled={formData.photos.length >= 4}
+                      >
+                        <span>☕ Ceramic Craft</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="unimart-sample-photo-pill"
+                        onClick={() => handleAddSamplePhoto(imgGraphCalc)}
+                        title="Add Calculator photo"
+                        disabled={formData.photos.length >= 4}
+                      >
+                        <span>🔬 Tech Calculator</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="unimart-sample-photo-pill"
+                        onClick={() => handleAddSamplePhoto(imgRoomSpray)}
+                        title="Add Botanical Room Spray photo"
+                        disabled={formData.photos.length >= 4}
+                      >
+                        <span>🌿 Botanical Spray</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Photo Previews */}
+                  {formData.photos.length > 0 && (
+                    <div className="mb-4">
+                      <div className="small fw-semibold mb-2">Uploaded Photos ({formData.photos.length}/4)</div>
+                      <div className="unimart-photo-previews-grid">
+                        {formData.photos.map((photo, idx) => (
+                          <div key={idx} className="unimart-photo-preview-item">
+                            <img src={photo} alt={`Upload ${idx + 1}`} className="unimart-photo-preview-img" />
+                            {idx === 0 && (
+                              <span className="unimart-cover-badge">★ Cover</span>
+                            )}
+                            <button
+                              type="button"
+                              className="unimart-photo-remove-btn"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRemovePhoto(idx);
+                              }}
+                              title="Remove photo"
+                              aria-label="Remove photo"
+                            >
+                              <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>close</span>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Action Buttons: Back & Publish */}
+                  <div className="d-flex align-items-center justify-content-between gap-3 pt-2">
+                    <button
+                      type="button"
+                      className="btn btn-outline-secondary rounded-pill px-4 py-2"
+                      onClick={() => setCurrentStep(1)}
+                    >
+                      <span className="d-flex align-items-center gap-1">
+                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_back</span>
+                        <span>Back to Details</span>
+                      </span>
+                    </button>
+
+                    <button
+                      type="submit"
+                      className="unimart-sell-btn py-2 px-4 justify-content-center flex-grow-1"
+                    >
+                      <span>Publish Item to Campus</span>
+                      <span className="material-symbols-outlined" style={{ fontSize: '19px' }}>check_circle</span>
+                    </button>
+                  </div>
+                </form>
               </div>
             )}
           </div>
