@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useTheme } from './context/ThemeContext.jsx';
 import { useAuth } from './context/AuthContext.jsx';
+import { canManageListing, isAdmin as checkIsAdmin, isGuest, isStudent } from './lib/permissions.js';
 import './Dashboard.css';
 
 // Product images
@@ -35,8 +37,21 @@ export const MEETUP_OPTIONS = [
 
 export default function Dashboard({ onGoToLogin }) {
   const { theme, toggleTheme } = useTheme();
-  const { user, isAdmin, toggleAdminRole } = useAuth() || {};
+  const { user, login, logout, switchAccount, seededUsers } = useAuth() || {};
   const [adminAlert, setAdminAlert] = useState(null);
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Listen for access denied redirect from /admin route
+  useEffect(() => {
+    if (location.state?.accessDeniedToast) {
+      setAdminAlert({
+        type: 'danger',
+        text: location.state.accessDeniedToast
+      });
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   // Dynamic state for search & category filters
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -70,6 +85,7 @@ export default function Dashboard({ onGoToLogin }) {
   const staticProducts = [
     {
       id: 1,
+      seller_id: 'student_b',
       title: 'Calculus',
       category: 'Textbooks',
       price: 450,
@@ -85,6 +101,7 @@ export default function Dashboard({ onGoToLogin }) {
     },
     {
       id: 2,
+      seller_id: 'student_c',
       title: 'Handcrafted Matcha Mug ',
       category: 'Handmade Crafts',
       price: 350,
@@ -100,6 +117,7 @@ export default function Dashboard({ onGoToLogin }) {
     },
     {
       id: 3,
+      seller_id: 'student_d',
       title: 'Color Graphing Calculator',
       category: 'Machinery & Tech',
       price: 2499,
@@ -115,6 +133,7 @@ export default function Dashboard({ onGoToLogin }) {
     },
     {
       id: 4,
+      seller_id: 'student_e',
       title: 'Botanical Room Spray: Cedar & Wild Lavender (50ml)',
       category: 'Perfumes & Scents',
       price: 299,
@@ -130,12 +149,13 @@ export default function Dashboard({ onGoToLogin }) {
     },
     {
       id: 5,
+      seller_id: 'student_a',
       title: 'Organic Chemistry as a Second Language (Klein)',
       category: 'Textbooks',
       price: 380,
       origPrice: 1100,
       condition: 'Good with notes',
-      seller: 'Dashmanth S. (Pre-Med \'25)',
+      seller: 'Satkar Singh (You)',
       icon: 'menu_book',
       categoryTheme: 'theme-academic',
       badge: 'Annotated',
@@ -145,6 +165,7 @@ export default function Dashboard({ onGoToLogin }) {
     },
     {
       id: 6,
+      seller_id: 'student_f',
       title: 'Hand-Embroidered Canvas Tote Bag',
       category: 'Handmade Crafts',
       price: 320,
@@ -160,12 +181,13 @@ export default function Dashboard({ onGoToLogin }) {
     },
     {
       id: 7,
+      seller_id: 'student_a',
       title: 'Arduino Robotics Starter Kit + Sensor Shield',
       category: 'Machinery & Tech',
       price: 1850,
       origPrice: 3499,
       condition: 'Gently Used',
-      seller: 'Daksh L. (Robotics Club)',
+      seller: 'Satkar Singh (You)',
       icon: 'precision_manufacturing',
       categoryTheme: 'theme-tech',
       badge: 'STEM Kit',
@@ -175,6 +197,7 @@ export default function Dashboard({ onGoToLogin }) {
     },
     {
       id: 8,
+      seller_id: 'student_g',
       title: 'Artisanal Solid Perfume: Amberwood & Bergamot',
       category: 'Perfumes & Scents',
       price: 249,
@@ -522,12 +545,13 @@ export default function Dashboard({ onGoToLogin }) {
 
     const newListing = {
       id: Date.now(),
+      seller_id: user?.id || 'student_a',
       title: formData.title.trim(),
       category: categoryName,
       price: Number(formData.price),
       origPrice: Math.round(Number(formData.price) * 1.35),
       condition: formData.condition,
-      seller: formData.seller || 'Satkar (You)',
+      seller: user?.name ? `${user.name} (You)` : 'Satkar (You)',
       icon: iconMap[formData.category_id] || 'sell',
       categoryTheme: categoryThemeMap[formData.category_id] || 'theme-academic',
       badge: 'Waiting for Approval',
@@ -547,19 +571,82 @@ export default function Dashboard({ onGoToLogin }) {
     }, 2400);
   };
 
-  // Admin Listing Actions
-  const handleAdminRemove = (productId, productTitle) => {
-    if (!isAdmin) return;
+  // Guest interaction handlers (Rules: Guest view only; chat/wishlist/sell prompt login)
+  const handleSellClick = () => {
+    if (!user) {
+      setAdminAlert({
+        type: 'danger',
+        text: 'Please sign in with your college account to sell an item.'
+      });
+      if (onGoToLogin) setTimeout(() => onGoToLogin(), 1000);
+      return;
+    }
+    setIsSellModalOpen(true);
+  };
+
+  const handleWishlistClick = (e, item) => {
+    e.stopPropagation();
+    if (!user) {
+      setAdminAlert({
+        type: 'danger',
+        text: 'Please sign in to add items to your wishlist.'
+      });
+      return;
+    }
+    // Wishlist toggled
+  };
+
+  const handleChatClick = (e, item) => {
+    e.stopPropagation();
+    if (!user) {
+      setAdminAlert({
+        type: 'danger',
+        text: 'Please sign in to chat with campus sellers.'
+      });
+      return;
+    }
+    // Chat action
+  };
+
+  const handleBuyClick = (e, item) => {
+    e.stopPropagation();
+    if (!user) {
+      setAdminAlert({
+        type: 'danger',
+        text: 'Please sign in to buy items on UNIMART.'
+      });
+      return;
+    }
+  };
+
+  // Listing Removal (Strictly enforces canManageListing + confirmation prompt)
+  const handleRemoveProduct = (productId, productTitle) => {
+    const listing = productList.find((p) => p.id === productId);
+    if (!listing) return;
+
+    if (!canManageListing(user, listing)) {
+      setAdminAlert({
+        type: 'danger',
+        text: 'Permission denied: Students can only delete their own listings.'
+      });
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Are you sure you want to remove "${productTitle || 'this listing'}" from the campus marketplace? This action cannot be undone.`
+    );
+    if (!confirmed) return;
+
     setProductList((prev) => prev.filter((p) => p.id !== productId));
     setAdminAlert({
-      type: 'danger',
-      text: `Listing "${productTitle || 'Item'}" removed from campus marketplace by Admin.`
+      type: 'success',
+      text: `Listing "${productTitle || 'Item'}" removed successfully.`
     });
     setTimeout(() => setAdminAlert(null), 4000);
   };
 
   const handleAdminApprove = (productId, productTitle) => {
-    if (!isAdmin) return;
+    if (!checkIsAdmin(user)) return;
     setProductList((prev) =>
       prev.map((p) =>
         p.id === productId ? { ...p, status: 'approved', badge: 'Admin Approved' } : p
@@ -567,7 +654,7 @@ export default function Dashboard({ onGoToLogin }) {
     );
     setAdminAlert({
       type: 'success',
-      text: `Listing "${productTitle || 'Item'}" has been approved by Admin and is now live!`
+      text: `Listing "${productTitle || 'Item'}" has been approved and is now live!`
     });
     setTimeout(() => setAdminAlert(null), 4000);
   };
@@ -656,10 +743,11 @@ export default function Dashboard({ onGoToLogin }) {
           {/* Right Actions */}
           <div className="d-flex align-items-center gap-3">
             {/* Sell Item Button */}
+            {/* Sell Item Button */}
             <button
               type="button"
               className="unimart-sell-btn"
-              onClick={() => setIsSellModalOpen(true)}
+              onClick={handleSellClick}
               title="Listing form"
             >
               <span className="material-symbols-outlined" style={{ fontSize: '19px' }}>add_circle</span>
@@ -699,39 +787,112 @@ export default function Dashboard({ onGoToLogin }) {
               <span className="unimart-badge-count">2</span>
             </button>
 
-            {/* Admin / Student Role Toggle Pill */}
-            <button
-              type="button"
-              className={`unimart-role-toggle-btn ${isAdmin ? 'admin-active' : 'student-mode'}`}
-              onClick={toggleAdminRole}
-              title={isAdmin ? "Currently Admin Mode: Click to switch to Student View" : "Currently Student View: Click to switch to Admin Mode"}
-              aria-label="Toggle user role between Admin and Student"
-            >
-              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
-                {isAdmin ? 'admin_panel_settings' : 'school'}
-              </span>
-              <span className="d-none d-md-inline fw-semibold" style={{ fontSize: '0.78rem' }}>
-                {isAdmin ? 'Campus Admin' : 'Student Mode'}
-              </span>
-              <span className={`unimart-role-pill-indicator ${isAdmin ? 'on' : 'off'}`}>
-                {isAdmin ? 'ADMIN' : 'STUDENT'}
-              </span>
-            </button>
+            {/* Quick Testing Account Switcher */}
+            <div className="dropdown d-inline-block">
+              <button
+                type="button"
+                className={`unimart-role-toggle-btn ${checkIsAdmin(user) ? 'admin-active' : 'student-mode'}`}
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+                title="Switch testing accounts: Student A / Student B / Admin / Guest"
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
+                  {!user ? 'person_off' : checkIsAdmin(user) ? 'admin_panel_settings' : 'school'}
+                </span>
+                <span className="d-none d-md-inline fw-semibold" style={{ fontSize: '0.78rem' }}>
+                  {!user ? 'Guest Mode' : checkIsAdmin(user) ? 'Campus Admin' : user.name.split(' ')[0]}
+                </span>
+                <span className={`unimart-role-pill-indicator ${checkIsAdmin(user) ? 'on' : 'off'}`}>
+                  {!user ? 'GUEST' : user.role.toUpperCase()}
+                </span>
+              </button>
+              <ul className="dropdown-menu dropdown-menu-end shadow-sm" style={{ fontSize: '0.82rem', minWidth: '240px' }}>
+                <li><h6 className="dropdown-header text-uppercase" style={{ fontSize: '0.68rem' }}>Switch Testing Account</h6></li>
+                <li>
+                  <button
+                    type="button"
+                    className={`dropdown-item d-flex align-items-center justify-content-between py-2 ${user?.id === 'student_a' ? 'active' : ''}`}
+                    onClick={() => switchAccount('student_a')}
+                  >
+                    <div>
+                      <div className="fw-bold">🎓 Student A (Satkar)</div>
+                      <div className="small text-muted" style={{ fontSize: '0.72rem' }}>Can delete Items 5 & 7 (own)</div>
+                    </div>
+                  </button>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    className={`dropdown-item d-flex align-items-center justify-content-between py-2 ${user?.id === 'student_b' ? 'active' : ''}`}
+                    onClick={() => switchAccount('student_b')}
+                  >
+                    <div>
+                      <div className="fw-bold">🎓 Student B (Priya)</div>
+                      <div className="small text-muted" style={{ fontSize: '0.72rem' }}>Can delete Item 1 (own)</div>
+                    </div>
+                  </button>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    className={`dropdown-item d-flex align-items-center justify-content-between py-2 ${checkIsAdmin(user) ? 'active' : ''}`}
+                    onClick={() => switchAccount('admin_1')}
+                  >
+                    <div>
+                      <div className="fw-bold">🛡️ Campus Admin</div>
+                      <div className="small text-muted" style={{ fontSize: '0.72rem' }}>Can delete ANY listing</div>
+                    </div>
+                  </button>
+                </li>
+                <li><hr className="dropdown-divider my-1" /></li>
+                <li>
+                  <button
+                    type="button"
+                    className={`dropdown-item d-flex align-items-center justify-content-between py-2 ${!user ? 'active' : ''}`}
+                    onClick={() => switchAccount('guest')}
+                  >
+                    <div>
+                      <div className="fw-bold">👤 Guest Mode</div>
+                      <div className="small text-muted" style={{ fontSize: '0.72rem' }}>View only (chat/wishlist prompt login)</div>
+                    </div>
+                  </button>
+                </li>
+                <li><hr className="dropdown-divider my-1" /></li>
+                <li>
+                  <button
+                    type="button"
+                    className="dropdown-item d-flex align-items-center gap-1.5 py-2 text-primary fw-semibold"
+                    onClick={() => navigate('/admin')}
+                    title="Open /admin route"
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>open_in_new</span>
+                    <span>Test /admin Route</span>
+                  </button>
+                </li>
+              </ul>
+            </div>
 
             {/* User Chip */}
-            <div className="unimart-user-chip d-none d-sm-flex" title={isAdmin ? "Logged in as Campus Admin" : "Your student profile"}>
-              <div className={`unimart-avatar ${isAdmin ? 'admin-avatar' : ''}`}>
-                {isAdmin ? 'A' : 'S'}
+            <div
+              className="unimart-user-chip d-none d-sm-flex"
+              title={!user ? "Guest visitor (Click to Sign In)" : checkIsAdmin(user) ? "Logged in as Campus Admin" : `Logged in as ${user.name}`}
+              onClick={!user ? onGoToLogin : undefined}
+              style={{ cursor: !user ? 'pointer' : 'default' }}
+            >
+              <div className={`unimart-avatar ${checkIsAdmin(user) ? 'admin-avatar' : ''}`}>
+                {!user ? 'G' : checkIsAdmin(user) ? 'A' : user.name.charAt(0)}
               </div>
               <div className="d-flex flex-column text-start">
                 <div className="d-flex align-items-center gap-1">
-                  <span className="fw-bold" style={{ fontSize: '0.8rem', lineHeight: '1.2' }}>Satkar Singh</span>
-                  {isAdmin && (
+                  <span className="fw-bold" style={{ fontSize: '0.8rem', lineHeight: '1.2' }}>
+                    {!user ? 'Guest Student' : user.name}
+                  </span>
+                  {checkIsAdmin(user) && (
                     <span className="badge bg-danger text-white px-1.5 py-0.5 rounded" style={{ fontSize: '0.62rem' }}>ADMIN</span>
                   )}
                 </div>
                 <span className="text-muted" style={{ fontSize: '0.7rem' }}>
-                  {isAdmin ? 'Campus Administrator' : 'Alfred A • Student'}
+                  {!user ? 'Click to Sign In' : checkIsAdmin(user) ? 'Campus Administrator' : (user.studentId || 'Student')}
                 </span>
               </div>
             </div>
@@ -988,7 +1149,7 @@ export default function Dashboard({ onGoToLogin }) {
                   {filteredProducts.length} {filteredProducts.length === 1 ? 'Item' : 'Items'} Available
                 </span>
               </h3>
-              {isAdmin && (
+              {checkIsAdmin(user) && (
                 <span className="badge bg-danger text-white rounded-pill px-3 py-1.5 d-inline-flex align-items-center gap-1 shadow-sm" style={{ fontSize: '0.75rem' }}>
                   <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>admin_panel_settings</span>
                   <span>Admin Mode Active: Listing Removal Enabled</span>
@@ -1102,7 +1263,12 @@ export default function Dashboard({ onGoToLogin }) {
                       )}
                       
                       {/* Wishlist heart - top right */}
-                      <button type="button" className="unimart-wishlist-btn" title="Add to wishlist">
+                      <button 
+                        type="button" 
+                        className="unimart-wishlist-btn" 
+                        title="Add to wishlist"
+                        onClick={(e) => handleWishlistClick(e, item)}
+                      >
                         <span className="material-symbols-outlined" style={{ fontSize: '19px' }}>
                           favorite_border
                         </span>
@@ -1162,15 +1328,16 @@ export default function Dashboard({ onGoToLogin }) {
                           type="button" 
                           className="unimart-add-cart-btn"
                           title="Add to cart"
+                          onClick={(e) => handleBuyClick(e, item)}
                         >
                           <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add_shopping_cart</span>
                         </button>
                       </div>
 
-                      {/* Admin-only Listing Actions (Approve / Remove) */}
-                      {isAdmin && (
+                      {/* Listing Actions - governed by canManageListing(user, item) */}
+                      {canManageListing(user, item) && (
                         <div className="unimart-admin-card-actions mt-2 pt-2 border-top">
-                          {item.status === 'pending' && (
+                          {checkIsAdmin(user) && item.status === 'pending' && (
                             <button
                               type="button"
                               className="unimart-admin-btn-approve"
@@ -1189,12 +1356,12 @@ export default function Dashboard({ onGoToLogin }) {
                             className="unimart-admin-btn-remove"
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleAdminRemove(item.id, item.title);
+                              handleRemoveProduct(item.id, item.title);
                             }}
-                            title="Admin: Remove from listing"
+                            title={checkIsAdmin(user) ? "Admin: Remove from listing" : "Delete my listing"}
                           >
                             <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>delete_forever</span>
-                            <span>Remove from Listing</span>
+                            <span>{checkIsAdmin(user) ? "Remove from Listing" : "Delete My Listing"}</span>
                           </button>
                         </div>
                       )}
@@ -1245,6 +1412,7 @@ export default function Dashboard({ onGoToLogin }) {
                             type="button" 
                             className="unimart-popup-btn-watch"
                             title={`Buy Now • ₹${item.price.toLocaleString('en-IN')}`}
+                            onClick={(e) => handleBuyClick(e, item)}
                           >
                             <span className="material-symbols-outlined">play_arrow</span>
                             <span>Buy Now</span>
@@ -1255,6 +1423,7 @@ export default function Dashboard({ onGoToLogin }) {
                           type="button" 
                           className="unimart-popup-btn-icon"
                           title="Add to wishlist / cart"
+                          onClick={(e) => handleWishlistClick(e, item)}
                         >
                           <span className="material-symbols-outlined">add</span>
                         </button>
@@ -1263,6 +1432,7 @@ export default function Dashboard({ onGoToLogin }) {
                           type="button" 
                           className="unimart-popup-btn-icon"
                           title="Chat with seller"
+                          onClick={(e) => handleChatClick(e, item)}
                         >
                           <span className="material-symbols-outlined">chat</span>
                         </button>
@@ -1298,16 +1468,18 @@ export default function Dashboard({ onGoToLogin }) {
                         </span>
                       </div>
 
-                      {/* Admin Controls in OTT popup */}
-                      {isAdmin && (
+                      {/* Management Controls in OTT popup - governed by canManageListing(user, item) */}
+                      {canManageListing(user, item) && (
                         <div className="unimart-popup-admin-bar mt-2 pt-2 border-top border-secondary border-opacity-25">
                           <div className="d-flex align-items-center justify-content-between gap-2">
                             <span className="unimart-admin-popup-label">
-                              <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>admin_panel_settings</span>
-                              <span>Admin Controls</span>
+                              <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>
+                                {checkIsAdmin(user) ? 'admin_panel_settings' : 'account_circle'}
+                              </span>
+                              <span>{checkIsAdmin(user) ? 'Admin Controls' : 'Your Listing'}</span>
                             </span>
                             <div className="d-flex align-items-center gap-1.5">
-                              {item.status === 'pending' && (
+                              {checkIsAdmin(user) && item.status === 'pending' && (
                                 <button
                                   type="button"
                                   className="btn btn-sm btn-success rounded-pill px-2.5 py-1 d-inline-flex align-items-center gap-1"
@@ -1323,11 +1495,11 @@ export default function Dashboard({ onGoToLogin }) {
                                 type="button"
                                 className="btn btn-sm btn-danger rounded-pill px-2.5 py-1 d-inline-flex align-items-center gap-1"
                                 style={{ fontSize: '0.72rem' }}
-                                onClick={() => handleAdminRemove(item.id, item.title)}
-                                title="Remove from listing"
+                                onClick={() => handleRemoveProduct(item.id, item.title)}
+                                title={checkIsAdmin(user) ? "Remove from listing" : "Delete my listing"}
                               >
                                 <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>delete</span>
-                                <span>Remove from Listing</span>
+                                <span>{checkIsAdmin(user) ? "Remove from Listing" : "Delete My Listing"}</span>
                               </button>
                             </div>
                           </div>

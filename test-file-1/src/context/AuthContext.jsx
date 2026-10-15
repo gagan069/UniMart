@@ -1,35 +1,46 @@
 import React, { createContext, useContext, useState } from 'react';
+import { SEEDED_USERS } from '../lib/mockUsers.js';
+import { isAdmin as checkIsAdmin } from '../lib/permissions.js';
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState({
-    name: 'Satkar Singh',
-    email: 'satkar0696.becse25@chitkara.edu.in',
-    studentId: '2110990696',
-    role: 'student'
-  });
-
-  const [isAdmin, setIsAdmin] = useState(false);
-
-  const toggleAdminRole = () => {
-    setIsAdmin((prev) => !prev);
-  };
+  // Default to Student A (Satkar Singh)
+  const [user, setUser] = useState(SEEDED_USERS[1]);
 
   const login = (userData) => {
     setUser(userData);
-    if (userData?.role === 'admin' || userData?.isAdmin) {
-      setIsAdmin(true);
-    }
   };
 
   const logout = () => {
     setUser(null);
-    setIsAdmin(false);
+  };
+
+  const switchAccount = (accountKey) => {
+    if (accountKey === 'guest' || accountKey === null) {
+      setUser(null);
+      return;
+    }
+    const found = SEEDED_USERS.find(
+      (u) => u.id === accountKey || u.email === accountKey
+    );
+    if (found) {
+      setUser(found);
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAdmin, setIsAdmin, toggleAdminRole, login, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        role: user?.role || 'guest',
+        isAdmin: checkIsAdmin(user),
+        login,
+        logout,
+        switchAccount,
+        seededUsers: SEEDED_USERS
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
