@@ -4,6 +4,12 @@ const ThemeContext = createContext(null);
 
 export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState(() => {
+    try {
+      if (typeof window !== 'undefined' && window.location.search) {
+        const t = new URLSearchParams(window.location.search).get('theme');
+        if (t === 'dark' || t === 'light') return t;
+      }
+    } catch (e) {}
     return localStorage.getItem('unimart-theme') || 'light';
   });
 

@@ -1,5 +1,5 @@
-.card{
-  border: 1px solid rgba(135, 105, 105, 0.27) ;
+.demo-card-legacy {
+  border: 1px solid rgba(135, 105, 105, 0.27);
   border-radius: 10px;
   box-shadow: 5px 5px 5px rgb(209, 168, 168);
   padding: 20px;

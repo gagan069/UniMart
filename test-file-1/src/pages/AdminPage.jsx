@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { useListings } from '../context/ListingsContext.jsx';
 import { useTheme } from '../context/ThemeContext.jsx';
 import { isAdmin } from '../lib/permissions.js';
+import './AdminPage.css';
 
 export default function AdminPage() {
   const { user } = useAuth();
@@ -41,8 +42,8 @@ export default function AdminPage() {
   };
 
   return (
-    <div className="unimart-admin-page py-4 px-3 px-lg-5" style={{ minHeight: '100vh' }}>
-      <div className="container-fluid" style={{ maxWidth: '1400px' }}>
+    <div className="unimart-admin-page py-4 px-3 px-lg-5">
+      <div className="unimart-admin-container">
         
         {/* Top Navigation Bar */}
         <div className="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
@@ -106,7 +107,7 @@ export default function AdminPage() {
         )}
 
         {/* Header Summary Banner */}
-        <div className="card border-0 rounded-4 shadow-sm p-4 mb-4" style={{ background: 'var(--unimart-card-bg, #ffffff)' }}>
+        <div className="unimart-admin-panel unimart-admin-header-panel">
           <div className="row align-items-center g-3">
             <div className="col-md-6">
               <div className="d-inline-flex align-items-center gap-1.5 text-danger small fw-bold mb-1">
@@ -120,11 +121,11 @@ export default function AdminPage() {
             </div>
             <div className="col-md-6">
               <div className="d-flex align-items-center justify-content-md-end gap-3 flex-wrap">
-                <div className="p-3 rounded-3 text-center border" style={{ minWidth: '130px', background: 'rgba(239, 68, 68, 0.05)', borderColor: 'rgba(239, 68, 68, 0.2)' }}>
+                <div className="unimart-stat-card stat-danger">
                   <div className="text-muted small fw-semibold" style={{ fontSize: '0.72rem' }}>TOTAL LISTINGS</div>
                   <div className="fs-4 fw-bold text-danger">{productList.length}</div>
                 </div>
-                <div className="p-3 rounded-3 text-center border" style={{ minWidth: '140px', background: 'rgba(16, 185, 129, 0.05)', borderColor: 'rgba(16, 185, 129, 0.2)' }}>
+                <div className="unimart-stat-card stat-success">
                   <div className="text-muted small fw-semibold" style={{ fontSize: '0.72rem' }}>TOTAL VALUE</div>
                   <div className="fs-4 fw-bold text-success">₹{totalMarketValue.toLocaleString('en-IN')}</div>
                 </div>
@@ -134,7 +135,7 @@ export default function AdminPage() {
         </div>
 
         {/* Listings Table Card */}
-        <div className="card border-0 rounded-4 shadow-sm overflow-hidden mb-4" style={{ background: 'var(--unimart-card-bg, #ffffff)' }}>
+        <div className="unimart-admin-panel unimart-admin-table-panel">
           <div className="p-3 px-4 border-bottom d-flex align-items-center justify-content-between flex-wrap gap-2">
             <div>
               <h5 className="fw-bold mb-0">All Marketplace Listings</h5>
@@ -181,8 +182,8 @@ export default function AdminPage() {
               </p>
             </div>
           ) : (
-            <div className="table-responsive">
-              <table className="table table-hover align-middle mb-0" id="admin-listings-table">
+            <div className="unimart-admin-table-responsive">
+              <table className="table unimart-admin-table table-hover align-middle mb-0" id="admin-listings-table">
                 <thead className="table-light text-uppercase text-muted" style={{ fontSize: '0.72rem', letterSpacing: '0.5px' }}>
                   <tr>
                     <th scope="col" style={{ width: '90px' }} className="ps-4">Photo</th>
@@ -200,8 +201,7 @@ export default function AdminPage() {
                         <img
                           src={item.image}
                           alt={item.title}
-                          className="rounded-3 border object-fit-cover shadow-sm"
-                          style={{ width: '64px', height: '64px', objectFit: 'cover' }}
+                          className="unimart-admin-thumb"
                         />
                       </td>
 

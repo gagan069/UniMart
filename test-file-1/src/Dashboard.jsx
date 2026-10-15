@@ -94,7 +94,15 @@ export default function Dashboard({ onGoToLogin }) {
     { key: 'Perfumes & Scents', name: 'Perfumes & Scents', icon: 'local_florist' }
   ];
 
-  const [catalogTab, setCatalogTab] = useState('all'); // 'all' | 'my'
+  const [catalogTab, setCatalogTab] = useState(() => {
+    try {
+      if (typeof window !== 'undefined' && window.location.search) {
+        const t = new URLSearchParams(window.location.search).get('tab');
+        if (t === 'my' || t === 'all') return t;
+      }
+    } catch (e) {}
+    return 'all';
+  });
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const userMenuRef = useRef(null);
 
