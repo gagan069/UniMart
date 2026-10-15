@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTheme } from './context/ThemeContext.jsx';
 import { useAuth } from './context/AuthContext.jsx';
+import { useListings } from './context/ListingsContext.jsx';
 import { canManageListing, isAdmin as checkIsAdmin, isGuest, isStudent } from './lib/permissions.js';
 import './Dashboard.css';
 
@@ -38,6 +39,7 @@ export const MEETUP_OPTIONS = [
 export default function Dashboard({ onGoToLogin }) {
   const { theme, toggleTheme } = useTheme();
   const { user, login, logout, switchAccount, seededUsers } = useAuth() || {};
+  const { productList, setProductList, addListing, updateListing, removeListing } = useListings();
   const [adminAlert, setAdminAlert] = useState(null);
   const location = useLocation();
   const navigate = useNavigate();
@@ -60,6 +62,8 @@ export default function Dashboard({ onGoToLogin }) {
 
   // Listing flow state (Stage 1 & Stage 2)
   const [currentStep, setCurrentStep] = useState(1);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
     title: '',
     category_id: '',
@@ -81,138 +85,6 @@ export default function Dashboard({ onGoToLogin }) {
   const [isDragging, setIsDragging] = useState(false);
   const [isPublishedSuccess, setIsPublishedSuccess] = useState(false);
 
-  
-  const staticProducts = [
-    {
-      id: 1,
-      seller_id: 'student_b',
-      title: 'Calculus',
-      category: 'Textbooks',
-      price: 450,
-      origPrice: 1499,
-      condition: 'Like New',
-      seller: 'Priya K. (Math Dept)',
-      icon: 'menu_book',
-      categoryTheme: 'theme-academic',
-      badge: 'Academic Pick',
-      notes: 'Semester 1 & 2 Core',
-      image: imgCalcBook,
-      description: 'Single Variable Calculus textbook covering limits, derivatives & integrals. Verified pre-owned in like-new condition with no markings.'
-    },
-    {
-      id: 2,
-      seller_id: 'student_c',
-      title: 'Handcrafted Matcha Mug ',
-      category: 'Handmade Crafts',
-      price: 350,
-      origPrice: 699,
-      condition: 'Handmade',
-      seller: 'Nisha R. (Fine Arts)',
-      icon: 'palette',
-      categoryTheme: 'theme-crafts',
-      badge: 'Student Artisan',
-      notes: 'Hand-thrown Glaze',
-      image: imgMatchaMug,
-      description: 'Hand-thrown ceramic mug with earthy green glaze finish. Perfect for matcha, chai, or as a desk planter. One-of-a-kind artisan piece.'
-    },
-    {
-      id: 3,
-      seller_id: 'student_d',
-      title: 'Color Graphing Calculator',
-      category: 'Machinery & Tech',
-      price: 2499,
-      origPrice: 6999,
-      condition: 'Excellent',
-      seller: 'Madhur T. (Engineering)',
-      icon: 'precision_manufacturing',
-      categoryTheme: 'theme-tech',
-      badge: 'Lab Ready',
-      notes: 'Battery + Cable included',
-      image: imgGraphCalc,
-      description: 'TI-84 Plus CE color graphing calculator. Includes USB cable and fresh batteries. Approved for all engineering exams.'
-    },
-    {
-      id: 4,
-      seller_id: 'student_e',
-      title: 'Botanical Room Spray: Cedar & Wild Lavender (50ml)',
-      category: 'Perfumes & Scents',
-      price: 299,
-      origPrice: 499,
-      condition: 'Freshly Crafted',
-      seller: 'Charlie W. (Biochem Maker)',
-      icon: 'local_florist',
-      categoryTheme: 'theme-scents',
-      badge: 'Organic',
-      notes: 'Natural Essential Oils',
-      image: imgRoomSpray,
-      description: 'Includes: Natural Essential Oils. Verified pre-owned item in freshly crafted condition. Hand-blended botanical fragrance.'
-    },
-    {
-      id: 5,
-      seller_id: 'student_a',
-      title: 'Organic Chemistry as a Second Language (Klein)',
-      category: 'Textbooks',
-      price: 380,
-      origPrice: 1100,
-      condition: 'Good with notes',
-      seller: 'Satkar Singh (You)',
-      icon: 'menu_book',
-      categoryTheme: 'theme-academic',
-      badge: 'Annotated',
-      notes: 'Highlighted Key Concepts',
-      image: imgOrgChem,
-      description: 'Heavily annotated with colour-coded sticky notes and highlighted key mechanisms. Ideal for Pre-Med & Biochem students.'
-    },
-    {
-      id: 6,
-      seller_id: 'student_f',
-      title: 'Hand-Embroidered Canvas Tote Bag',
-      category: 'Handmade Crafts',
-      price: 320,
-      origPrice: 599,
-      condition: 'Handmade',
-      seller: 'Aishwarya N. (Design Club)',
-      icon: 'palette',
-      categoryTheme: 'theme-crafts',
-      badge: 'Eco-Craft',
-      notes: '100% Organic Cotton',
-      image: imgToteBag,
-      description: 'Beautiful floral hand-embroidered tote bag. Made from 100% organic cotton canvas. Sustainable & unique campus accessory.'
-    },
-    {
-      id: 7,
-      seller_id: 'student_a',
-      title: 'Arduino Robotics Starter Kit + Sensor Shield',
-      category: 'Machinery & Tech',
-      price: 1850,
-      origPrice: 3499,
-      condition: 'Gently Used',
-      seller: 'Satkar Singh (You)',
-      icon: 'precision_manufacturing',
-      categoryTheme: 'theme-tech',
-      badge: 'STEM Kit',
-      notes: 'Complete Sensor Modules',
-      image: imgArduinoKit,
-      description: 'Complete Arduino Uno starter kit with sensor shield, breadboard, jumper wires & 12 sensor modules. Perfect for robotics projects.'
-    },
-    {
-      id: 8,
-      seller_id: 'student_g',
-      title: 'Artisanal Solid Perfume: Amberwood & Bergamot',
-      category: 'Perfumes & Scents',
-      price: 249,
-      origPrice: 449,
-      condition: 'Handmade',
-      seller: 'Morgan P. (Campus Alchemist)',
-      icon: 'local_florist',
-      categoryTheme: 'theme-scents',
-      badge: 'Pocket Scent',
-      notes: 'Beeswax & Jojoba Base',
-      image: imgSolidPerfume,
-      description: 'Compact solid perfume in a brass tin. Made with beeswax, jojoba oil & natural essential oils. Warm amber & citrus bergamot notes.'
-    }
-  ];
-
   // Category filter definitions
   const categoryDefs = [
     { key: 'All', name: 'All Categories', icon: 'apps' },
@@ -222,7 +94,6 @@ export default function Dashboard({ onGoToLogin }) {
     { key: 'Perfumes & Scents', name: 'Perfumes & Scents', icon: 'local_florist' }
   ];
 
-  const [productList, setProductList] = useState(staticProducts);
   const [catalogTab, setCatalogTab] = useState('all'); // 'all' | 'my'
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const userMenuRef = useRef(null);
@@ -578,11 +449,46 @@ export default function Dashboard({ onGoToLogin }) {
       'fragrance': 'local_florist'
     };
 
+    const finalMeetup = formData.meetupSpot === 'Other' ? formData.customMeetupSpot : formData.meetupSpot;
+
+    if (isEditing && editingId) {
+      updateListing(editingId, {
+        title: formData.title.trim(),
+        category: categoryName,
+        category_id: formData.category_id,
+        subcategory_id: formData.subcategory_id || null,
+        price: Number(formData.price),
+        origPrice: Math.round(Number(formData.price) * 1.35),
+        condition: formData.condition,
+        icon: iconMap[formData.category_id] || 'sell',
+        categoryTheme: categoryThemeMap[formData.category_id] || 'theme-academic',
+        notes: finalMeetup,
+        image: formData.photos[0] || imgCalcBook,
+        photos: formData.photos,
+        description: formData.description
+      });
+
+      setIsPublishedSuccess(true);
+      setAdminAlert({
+        type: 'success',
+        text: 'Listing updated'
+      });
+      setTimeout(() => {
+        setIsPublishedSuccess(false);
+        setIsSellModalOpen(false);
+        resetForm();
+        setAdminAlert(null);
+      }, 1500);
+      return;
+    }
+
     const newListing = {
       id: Date.now(),
       seller_id: user?.id || 'student_a',
       title: formData.title.trim(),
       category: categoryName,
+      category_id: formData.category_id,
+      subcategory_id: formData.subcategory_id || null,
       price: Number(formData.price),
       origPrice: Math.round(Number(formData.price) * 1.35),
       condition: formData.condition,
@@ -590,20 +496,97 @@ export default function Dashboard({ onGoToLogin }) {
       icon: iconMap[formData.category_id] || 'sell',
       categoryTheme: categoryThemeMap[formData.category_id] || 'theme-academic',
       badge: 'Waiting for Approval',
-      notes: formData.meetupSpot === 'Other' ? formData.customMeetupSpot : formData.meetupSpot,
+      notes: finalMeetup,
       image: formData.photos[0] || imgCalcBook,
+      photos: formData.photos,
       description: formData.description,
       status: 'pending', // ⏳ Marked as waiting to be approved
       submittedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
 
-    setProductList((prev) => [newListing, ...prev]);
+    addListing(newListing);
     setIsPublishedSuccess(true);
     setTimeout(() => {
       setIsPublishedSuccess(false);
       setIsSellModalOpen(false);
       resetForm();
     }, 2400);
+  };
+
+  // Reorder photos in Step 2
+  const handleMovePhoto = (index, direction) => {
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= formData.photos.length) return;
+    const newPhotos = [...formData.photos];
+    const temp = newPhotos[index];
+    newPhotos[index] = newPhotos[targetIndex];
+    newPhotos[targetIndex] = temp;
+    setFormData((prev) => ({ ...prev, photos: newPhotos }));
+  };
+
+  // Edit listing action: opens SAME 2-step form pre-filled with data
+  const handleEditListingClick = (e, item) => {
+    if (e) e.stopPropagation();
+    if (!canManageListing(user, item)) return;
+
+    setIsEditing(true);
+    setEditingId(item.id);
+
+    // Map item.category to category_id
+    const matchedCat = categories.find(
+      (c) =>
+        c.name.toLowerCase() === (item.category || '').toLowerCase() ||
+        (c.id === 'books-notes' && (item.category === 'Textbooks' || item.category === 'Books & Notes')) ||
+        (c.id === 'crafts' && item.category === 'Handmade Crafts') ||
+        (c.id === 'tech-tools' && item.category === 'Machinery & Tech') ||
+        (c.id === 'fragrance' && item.category === 'Perfumes & Scents')
+    );
+    const categoryId = matchedCat ? matchedCat.id : 'books-notes';
+
+    const isKnownSpot = MEETUP_OPTIONS.includes(item.notes);
+    const photosList =
+      item.photos && item.photos.length > 0
+        ? item.photos
+        : item.image
+        ? [item.image]
+        : [];
+
+    setFormData({
+      title: item.title,
+      category_id: categoryId,
+      subcategory_id: item.subcategory_id || '',
+      price: String(item.price),
+      condition: item.condition || 'Like New',
+      hasNotes: Boolean(item.notes),
+      meetupSpot: isKnownSpot ? item.notes : item.notes ? 'Other' : 'Library Entrance',
+      customMeetupSpot: isKnownSpot ? '' : item.notes || '',
+      description: item.description || '',
+      seller: item.seller || (user?.name ? `${user.name} (You)` : 'Satkar (You)'),
+      photos: photosList
+    });
+
+    setFormErrors({});
+    setTouchedFields({});
+    setCurrentStep(1);
+    setIsSellModalOpen(true);
+  };
+
+  // Delete listing action: asks confirmation ("Delete 'title'? This can't be undone.") then toast "Listing deleted"
+  const handleDeleteListingClick = (e, item) => {
+    if (e) e.stopPropagation();
+    if (!canManageListing(user, item)) return;
+
+    const confirmed = window.confirm(
+      `Delete '${item.title}'? This can't be undone.`
+    );
+    if (!confirmed) return;
+
+    removeListing(item.id);
+    setAdminAlert({
+      type: 'success',
+      text: 'Listing deleted'
+    });
+    setTimeout(() => setAdminAlert(null), 3500);
   };
 
   // Guest interaction handlers (Rules: Guest view only; chat/wishlist/sell prompt login)
@@ -616,6 +599,8 @@ export default function Dashboard({ onGoToLogin }) {
       if (onGoToLogin) setTimeout(() => onGoToLogin(), 1000);
       return;
     }
+    setIsEditing(false);
+    setEditingId(null);
     setIsSellModalOpen(true);
   };
 
@@ -628,7 +613,6 @@ export default function Dashboard({ onGoToLogin }) {
       });
       return;
     }
-    // Wishlist toggled
   };
 
   const handleChatClick = (e, item) => {
@@ -640,7 +624,6 @@ export default function Dashboard({ onGoToLogin }) {
       });
       return;
     }
-    // Chat action
   };
 
   const handleBuyClick = (e, item) => {
@@ -654,7 +637,7 @@ export default function Dashboard({ onGoToLogin }) {
     }
   };
 
-  // Listing Removal (Strictly enforces canManageListing + confirmation prompt)
+  // Legacy fallback removal
   const handleRemoveProduct = (productId, productTitle) => {
     const listing = productList.find((p) => p.id === productId);
     if (!listing) return;
@@ -668,25 +651,21 @@ export default function Dashboard({ onGoToLogin }) {
     }
 
     const confirmed = window.confirm(
-      `Are you sure you want to remove "${productTitle || 'this listing'}" from the campus marketplace? This action cannot be undone.`
+      `Delete '${productTitle || 'this listing'}'? This can't be undone.`
     );
     if (!confirmed) return;
 
-    setProductList((prev) => prev.filter((p) => p.id !== productId));
+    removeListing(productId);
     setAdminAlert({
       type: 'success',
-      text: `Listing "${productTitle || 'Item'}" removed successfully.`
+      text: 'Listing deleted'
     });
-    setTimeout(() => setAdminAlert(null), 4000);
+    setTimeout(() => setAdminAlert(null), 3500);
   };
 
   const handleAdminApprove = (productId, productTitle) => {
     if (!checkIsAdmin(user)) return;
-    setProductList((prev) =>
-      prev.map((p) =>
-        p.id === productId ? { ...p, status: 'approved', badge: 'Admin Approved' } : p
-      )
-    );
+    updateListing(productId, { status: 'approved', badge: 'Admin Approved' });
     setAdminAlert({
       type: 'success',
       text: `Listing "${productTitle || 'Item'}" has been approved and is now live!`
@@ -696,6 +675,8 @@ export default function Dashboard({ onGoToLogin }) {
 
   const resetForm = () => {
     setCurrentStep(1);
+    setIsEditing(false);
+    setEditingId(null);
     setIsPublishedSuccess(false);
     setIsDragging(false);
     setFormData({
@@ -708,7 +689,7 @@ export default function Dashboard({ onGoToLogin }) {
       meetupSpot: '',
       customMeetupSpot: '',
       description: '',
-      seller: 'Satkar (You)',
+      seller: user?.name ? `${user.name} (You)` : 'Satkar (You)',
       photos: []
     });
     setFormErrors({});
@@ -1482,14 +1463,38 @@ export default function Dashboard({ onGoToLogin }) {
                           <span className="unimart-discount-tag">{discountPct}% OFF</span>
                         </div>
 
-                        <button 
-                          type="button" 
-                          className="unimart-add-cart-btn"
-                          title="Add to cart"
-                          onClick={(e) => handleBuyClick(e, item)}
-                        >
-                          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add_shopping_cart</span>
-                        </button>
+                        {/* Only inside "My Listings" tab, show ✏️ Edit and 🗑️ Delete where cart button is */}
+                        {catalogTab === 'my' && canManageListing(user, item) && !checkIsAdmin(user) ? (
+                          <div className="d-flex align-items-center gap-1.5 unimart-my-card-actions">
+                            <button
+                              type="button"
+                              className="unimart-card-icon-btn unimart-btn-edit"
+                              title="Edit"
+                              onClick={(e) => handleEditListingClick(e, item)}
+                              aria-label={`Edit ${item.title}`}
+                            >
+                              <span className="material-symbols-outlined" style={{ fontSize: '17px' }}>edit</span>
+                            </button>
+                            <button
+                              type="button"
+                              className="unimart-card-icon-btn unimart-btn-delete"
+                              title="Delete"
+                              onClick={(e) => handleDeleteListingClick(e, item)}
+                              aria-label={`Delete ${item.title}`}
+                            >
+                              <span className="material-symbols-outlined" style={{ fontSize: '17px' }}>delete</span>
+                            </button>
+                          </div>
+                        ) : (
+                          <button 
+                            type="button" 
+                            className="unimart-add-cart-btn"
+                            title="Add to cart"
+                            onClick={(e) => handleBuyClick(e, item)}
+                          >
+                            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add_shopping_cart</span>
+                          </button>
+                        )}
                       </div>
 
                     </div>
@@ -1524,7 +1529,27 @@ export default function Dashboard({ onGoToLogin }) {
                     <div className="unimart-popup-content">
                       {/* Action buttons row: [ ▶ Watch Now ]  [ + ]  [ 💬 ] */}
                       <div className="unimart-popup-actions-row">
-                        {item.status === 'pending' ? (
+                        {catalogTab === 'my' && canManageListing(user, item) && !checkIsAdmin(user) ? (
+                          <>
+                            <button
+                              type="button"
+                              className="unimart-popup-btn-watch"
+                              title="Edit"
+                              onClick={(e) => handleEditListingClick(e, item)}
+                            >
+                              <span className="material-symbols-outlined">edit</span>
+                              <span>Edit Listing</span>
+                            </button>
+                            <button
+                              type="button"
+                              className="unimart-popup-btn-icon text-danger"
+                              title="Delete"
+                              onClick={(e) => handleDeleteListingClick(e, item)}
+                            >
+                              <span className="material-symbols-outlined">delete</span>
+                            </button>
+                          </>
+                        ) : item.status === 'pending' ? (
                           <button
                             type="button"
                             className="unimart-popup-btn-pending"
@@ -1546,23 +1571,27 @@ export default function Dashboard({ onGoToLogin }) {
                           </button>
                         )}
 
-                        <button 
-                          type="button" 
-                          className="unimart-popup-btn-icon"
-                          title="Add to wishlist / cart"
-                          onClick={(e) => handleWishlistClick(e, item)}
-                        >
-                          <span className="material-symbols-outlined">add</span>
-                        </button>
+                        {!(catalogTab === 'my' && canManageListing(user, item) && !checkIsAdmin(user)) && (
+                          <>
+                            <button 
+                              type="button" 
+                              className="unimart-popup-btn-icon"
+                              title="Add to wishlist / cart"
+                              onClick={(e) => handleWishlistClick(e, item)}
+                            >
+                              <span className="material-symbols-outlined">add</span>
+                            </button>
 
-                        <button 
-                          type="button" 
-                          className="unimart-popup-btn-icon"
-                          title="Chat with seller"
-                          onClick={(e) => handleChatClick(e, item)}
-                        >
-                          <span className="material-symbols-outlined">chat</span>
-                        </button>
+                            <button 
+                              type="button" 
+                              className="unimart-popup-btn-icon"
+                              title="Chat with seller"
+                              onClick={(e) => handleChatClick(e, item)}
+                            >
+                              <span className="material-symbols-outlined">chat</span>
+                            </button>
+                          </>
+                        )}
                       </div>
 
                       {/* Metadata Row with bullet dots */}
@@ -1652,13 +1681,17 @@ export default function Dashboard({ onGoToLogin }) {
 
             <div className="d-flex align-items-center gap-2 mb-3">
               <div className="unimart-logo-badge" style={{ width: '32px', height: '32px' }}>
-                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>sell</span>
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
+                  {isEditing ? 'edit_note' : 'sell'}
+                </span>
               </div>
-              <h4 className="fw-bold mb-0">List an Item on UNIMART</h4>
+              <h4 className="fw-bold mb-0">{isEditing ? 'Edit Listing' : 'List an Item on UNIMART'}</h4>
             </div>
 
             <p className="text-muted small mb-4">
-              Sell used semester books, handmade crafts, machinery/lab parts, or fragrances on campus.
+              {isEditing
+                ? 'Update price, title, description, condition, meetup spot, or photos for your listing.'
+                : 'Sell used semester books, handmade crafts, machinery/lab parts, or fragrances on campus.'}
             </p>
 
             {/* Step Progress Indicator */}
@@ -2111,7 +2144,7 @@ export default function Dashboard({ onGoToLogin }) {
                   {/* Photo Previews */}
                   {formData.photos.length > 0 && (
                     <div className="mb-4">
-                      <div className="small fw-semibold mb-2">Uploaded Photos ({formData.photos.length}/4)</div>
+                      <div className="small fw-semibold mb-2">Uploaded Photos ({formData.photos.length}/4) — click arrows to reorder</div>
                       <div className="unimart-photo-previews-grid">
                         {formData.photos.map((photo, idx) => (
                           <div key={idx} className="unimart-photo-preview-item">
@@ -2119,6 +2152,39 @@ export default function Dashboard({ onGoToLogin }) {
                             {idx === 0 && (
                               <span className="unimart-cover-badge">★ Cover</span>
                             )}
+
+                            {/* Reorder buttons: move left / move right */}
+                            <div className="unimart-photo-reorder-bar">
+                              {idx > 0 && (
+                                <button
+                                  type="button"
+                                  className="unimart-photo-move-btn"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleMovePhoto(idx, -1);
+                                  }}
+                                  title="Move photo left"
+                                  aria-label="Move photo left"
+                                >
+                                  <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>arrow_back</span>
+                                </button>
+                              )}
+                              {idx < formData.photos.length - 1 && (
+                                <button
+                                  type="button"
+                                  className="unimart-photo-move-btn"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleMovePhoto(idx, 1);
+                                  }}
+                                  title="Move photo right"
+                                  aria-label="Move photo right"
+                                >
+                                  <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>arrow_forward</span>
+                                </button>
+                              )}
+                            </div>
+
                             <button
                               type="button"
                               className="unimart-photo-remove-btn"
@@ -2137,7 +2203,7 @@ export default function Dashboard({ onGoToLogin }) {
                     </div>
                   )}
 
-                  {/* Action Buttons: Back & Publish */}
+                  {/* Action Buttons: Back & Publish / Save Changes */}
                   <div className="d-flex align-items-center justify-content-between gap-3 pt-2">
                     <button
                       type="button"
@@ -2153,9 +2219,12 @@ export default function Dashboard({ onGoToLogin }) {
                     <button
                       type="submit"
                       className="unimart-sell-btn py-2 px-4 justify-content-center flex-grow-1"
+                      id="save-changes-btn"
                     >
-                      <span>Publish Item to Campus</span>
-                      <span className="material-symbols-outlined" style={{ fontSize: '19px' }}>check_circle</span>
+                      <span>{isEditing ? 'Save Changes' : 'Publish Item to Campus'}</span>
+                      <span className="material-symbols-outlined" style={{ fontSize: '19px' }}>
+                        {isEditing ? 'save' : 'check_circle'}
+                      </span>
                     </button>
                   </div>
                 </form>

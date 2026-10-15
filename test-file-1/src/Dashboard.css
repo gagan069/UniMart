@@ -819,6 +819,51 @@
   border-color: var(--unimart-maroon);
 }
 
+/* My Listings Card Icon Action Buttons (✏️ Edit & 🗑️ Delete) */
+.unimart-my-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.unimart-card-icon-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1.5px solid #e2e8f0;
+  background: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.04);
+}
+
+.unimart-card-icon-btn.unimart-btn-edit {
+  color: #2563eb;
+}
+
+.unimart-card-icon-btn.unimart-btn-edit:hover {
+  background: #eff6ff;
+  border-color: #93c5fd;
+  color: #1d4ed8;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
+}
+
+.unimart-card-icon-btn.unimart-btn-delete {
+  color: #dc2626;
+}
+
+.unimart-card-icon-btn.unimart-btn-delete:hover {
+  background: #fef2f2;
+  border-color: #fca5a5;
+  color: #b91c1c;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(220, 38, 38, 0.2);
+}
+
 /* ================= 2. OTT HOVER POPUP (Styled Exactly Like Hotstar Reference) ================= */
 .unimart-hover-popup {
   position: absolute;
@@ -1391,6 +1436,39 @@
 
 .unimart-photo-remove-btn:hover {
   background: #e11d48;
+  transform: scale(1.15);
+}
+
+/* Photo Reorder Controls */
+.unimart-photo-reorder-bar {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  z-index: 2;
+}
+
+.unimart-photo-move-btn {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(15, 23, 42, 0.75);
+  color: #ffffff;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  padding: 0;
+}
+
+.unimart-photo-move-btn:hover {
+  background: #2563eb;
   transform: scale(1.15);
 }
 
@@ -2050,6 +2128,31 @@
   background: #8e233b;
   border-color: #8e233b;
   color: #ffffff;
+}
+
+[data-theme="dark"] .unimart-card-icon-btn {
+  background: #fbf7ef;
+  border-color: #d9cebe;
+}
+
+[data-theme="dark"] .unimart-card-icon-btn.unimart-btn-edit {
+  color: #2563eb;
+}
+
+[data-theme="dark"] .unimart-card-icon-btn.unimart-btn-edit:hover {
+  background: #eff6ff;
+  border-color: #93c5fd;
+  color: #1d4ed8;
+}
+
+[data-theme="dark"] .unimart-card-icon-btn.unimart-btn-delete {
+  color: #dc2626;
+}
+
+[data-theme="dark"] .unimart-card-icon-btn.unimart-btn-delete:hover {
+  background: #fef2f2;
+  border-color: #fca5a5;
+  color: #b91c1c;
 }
 
 [data-theme="dark"] .unimart-section-title {

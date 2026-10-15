@@ -5,6 +5,7 @@ import { Provider } from 'react-redux'
 import { store } from './store/store.js'
 import { AuthProvider } from './context/AuthContext.jsx'
 import { ThemeProvider } from './context/ThemeContext.jsx'
+import { ListingsProvider } from './context/ListingsContext.jsx'
 import './index.css'
 import App from './App.jsx'
 
@@ -14,7 +15,9 @@ createRoot(document.getElementById('root')).render(
       <BrowserRouter>
         <AuthProvider>
           <ThemeProvider>
-            <App />
+            <ListingsProvider>
+              <App />
+            </ListingsProvider>
           </ThemeProvider>
         </AuthProvider>
       </BrowserRouter>
