@@ -223,19 +223,54 @@ export default function Dashboard({ onGoToLogin }) {
   ];
 
   const [productList, setProductList] = useState(staticProducts);
+  const [catalogTab, setCatalogTab] = useState('all'); // 'all' | 'my'
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const userMenuRef = useRef(null);
 
-  const pendingCount = productList.filter((item) => item.status === 'pending').length;
+  // Close profile dropdown when clicking outside
+  useEffect(() => {
+    const handleMenuClickOutside = (e) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
+        setIsUserMenuOpen(false);
+      }
+    };
+    if (isUserMenuOpen) {
+      document.addEventListener('mousedown', handleMenuClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleMenuClickOutside);
+    };
+  }, [isUserMenuOpen]);
 
-  // Dynamic count calculation
+  // Revert to 'all' if user logs out while on 'my' tab
+  useEffect(() => {
+    if (!user && catalogTab === 'my') {
+      setCatalogTab('all');
+    }
+  }, [user, catalogTab]);
+
+  // Total count of listings owned by current user
+  const myListingsCount = user
+    ? productList.filter((item) => item.seller_id === user.id).length
+    : 0;
+
+  // Active pool of products scoped by catalog tab ('all' vs 'my')
+  const activeScopedProducts = catalogTab === 'my' && user
+    ? productList.filter((item) => item.seller_id === user.id)
+    : productList;
+
+  const pendingCount = activeScopedProducts.filter((item) => item.status === 'pending').length;
+
+  // Dynamic count calculation within the active catalog scope
   const getCategoryCount = (key) => {
-    if (key === 'All') return `${productList.length} items`;
+    if (key === 'All') return `${activeScopedProducts.length} items`;
     if (key === 'Pending') return `${pendingCount} items`;
-    const count = productList.filter((item) => item.category === key).length;
+    const count = activeScopedProducts.filter((item) => item.category === key).length;
     return `${count} items`;
   };
 
-  // Dynamic product filtering by category and live search query
-  const filteredProducts = productList.filter((item) => {
+  // Dynamic product filtering by category and live search query within active scope
+  const filteredProducts = activeScopedProducts.filter((item) => {
     const matchesCategory =
       selectedCategory === 'All'
         ? true
@@ -787,114 +822,183 @@ export default function Dashboard({ onGoToLogin }) {
               <span className="unimart-badge-count">2</span>
             </button>
 
-            {/* Quick Testing Account Switcher */}
-            <div className="dropdown d-inline-block">
-              <button
-                type="button"
-                className={`unimart-role-toggle-btn ${checkIsAdmin(user) ? 'admin-active' : 'student-mode'}`}
-                data-bs-toggle="dropdown"
-                aria-expanded="false"
-                title="Switch testing accounts: Student A / Student B / Admin / Guest"
+            {/* Consolidated Profile Chip with 3 Lines + Dropdown */}
+            <div className="position-relative" ref={userMenuRef}>
+              <div
+                className={`unimart-user-chip ${!user ? 'cursor-pointer' : ''}`}
+                onClick={() => {
+                  if (!user) {
+                    if (onGoToLogin) onGoToLogin();
+                  } else {
+                    setIsUserMenuOpen((prev) => !prev);
+                  }
+                }}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    if (!user) {
+                      if (onGoToLogin) onGoToLogin();
+                    } else {
+                      setIsUserMenuOpen((prev) => !prev);
+                    }
+                  }
+                }}
+                title={
+                  !user
+                    ? 'Guest Mode (Click to Sign In)'
+                    : `${user.name} • ${user.studentId || (checkIsAdmin(user) ? 'ADMIN-001' : '2110990697')} • ${checkIsAdmin(user) ? 'Admin' : 'Student'}`
+                }
+                id="unimart-navbar-profile-chip"
               >
-                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
-                  {!user ? 'person_off' : checkIsAdmin(user) ? 'admin_panel_settings' : 'school'}
-                </span>
-                <span className="d-none d-md-inline fw-semibold" style={{ fontSize: '0.78rem' }}>
-                  {!user ? 'Guest Mode' : checkIsAdmin(user) ? 'Campus Admin' : user.name.split(' ')[0]}
-                </span>
-                <span className={`unimart-role-pill-indicator ${checkIsAdmin(user) ? 'on' : 'off'}`}>
-                  {!user ? 'GUEST' : user.role.toUpperCase()}
-                </span>
-              </button>
-              <ul className="dropdown-menu dropdown-menu-end shadow-sm" style={{ fontSize: '0.82rem', minWidth: '240px' }}>
-                <li><h6 className="dropdown-header text-uppercase" style={{ fontSize: '0.68rem' }}>Switch Testing Account</h6></li>
-                <li>
-                  <button
-                    type="button"
-                    className={`dropdown-item d-flex align-items-center justify-content-between py-2 ${user?.id === 'student_a' ? 'active' : ''}`}
-                    onClick={() => switchAccount('student_a')}
-                  >
-                    <div>
-                      <div className="fw-bold">🎓 Student A (Satkar)</div>
-                      <div className="small text-muted" style={{ fontSize: '0.72rem' }}>Can delete Items 5 & 7 (own)</div>
-                    </div>
-                  </button>
-                </li>
-                <li>
-                  <button
-                    type="button"
-                    className={`dropdown-item d-flex align-items-center justify-content-between py-2 ${user?.id === 'student_b' ? 'active' : ''}`}
-                    onClick={() => switchAccount('student_b')}
-                  >
-                    <div>
-                      <div className="fw-bold">🎓 Student B (Priya)</div>
-                      <div className="small text-muted" style={{ fontSize: '0.72rem' }}>Can delete Item 1 (own)</div>
-                    </div>
-                  </button>
-                </li>
-                <li>
-                  <button
-                    type="button"
-                    className={`dropdown-item d-flex align-items-center justify-content-between py-2 ${checkIsAdmin(user) ? 'active' : ''}`}
-                    onClick={() => switchAccount('admin_1')}
-                  >
-                    <div>
-                      <div className="fw-bold">🛡️ Campus Admin</div>
-                      <div className="small text-muted" style={{ fontSize: '0.72rem' }}>Can delete ANY listing</div>
-                    </div>
-                  </button>
-                </li>
-                <li><hr className="dropdown-divider my-1" /></li>
-                <li>
-                  <button
-                    type="button"
-                    className={`dropdown-item d-flex align-items-center justify-content-between py-2 ${!user ? 'active' : ''}`}
-                    onClick={() => switchAccount('guest')}
-                  >
-                    <div>
-                      <div className="fw-bold">👤 Guest Mode</div>
-                      <div className="small text-muted" style={{ fontSize: '0.72rem' }}>View only (chat/wishlist prompt login)</div>
-                    </div>
-                  </button>
-                </li>
-                <li><hr className="dropdown-divider my-1" /></li>
-                <li>
-                  <button
-                    type="button"
-                    className="dropdown-item d-flex align-items-center gap-1.5 py-2 text-primary fw-semibold"
-                    onClick={() => navigate('/admin')}
-                    title="Open /admin route"
-                  >
-                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>open_in_new</span>
-                    <span>Test /admin Route</span>
-                  </button>
-                </li>
-              </ul>
-            </div>
-
-            {/* User Chip */}
-            <div
-              className="unimart-user-chip d-none d-sm-flex"
-              title={!user ? "Guest visitor (Click to Sign In)" : checkIsAdmin(user) ? "Logged in as Campus Admin" : `Logged in as ${user.name}`}
-              onClick={!user ? onGoToLogin : undefined}
-              style={{ cursor: !user ? 'pointer' : 'default' }}
-            >
-              <div className={`unimart-avatar ${checkIsAdmin(user) ? 'admin-avatar' : ''}`}>
-                {!user ? 'G' : checkIsAdmin(user) ? 'A' : user.name.charAt(0)}
-              </div>
-              <div className="d-flex flex-column text-start">
-                <div className="d-flex align-items-center gap-1">
-                  <span className="fw-bold" style={{ fontSize: '0.8rem', lineHeight: '1.2' }}>
-                    {!user ? 'Guest Student' : user.name}
-                  </span>
-                  {checkIsAdmin(user) && (
-                    <span className="badge bg-danger text-white px-1.5 py-0.5 rounded" style={{ fontSize: '0.62rem' }}>ADMIN</span>
-                  )}
+                {/* Avatar circle with initial */}
+                <div className={`unimart-avatar ${checkIsAdmin(user) ? 'admin-avatar' : ''}`}>
+                  {!user ? 'G' : (user.name ? user.name.charAt(0).toUpperCase() : 'U')}
                 </div>
-                <span className="text-muted" style={{ fontSize: '0.7rem' }}>
-                  {!user ? 'Click to Sign In' : checkIsAdmin(user) ? 'Campus Administrator' : (user.studentId || 'Student')}
-                </span>
+
+                {/* 3 Lines: Line 1 name (bold), Line 2 roll number (small, grey), Line 3 access level (small, maroon) */}
+                <div className="unimart-chip-lines">
+                  <span className="unimart-chip-name">
+                    {!user ? 'Guest' : user.name}
+                  </span>
+                  <span className="unimart-chip-roll">
+                    {!user ? 'Not signed in' : (user.studentId || (checkIsAdmin(user) ? 'ADMIN-001' : '2110990697'))}
+                  </span>
+                  <span className="unimart-chip-role">
+                    {!user ? 'Guest' : checkIsAdmin(user) ? 'Admin' : 'Student'}
+                  </span>
+                </div>
               </div>
+
+              {/* Profile Dropdown Menu for Logged In User */}
+              {isUserMenuOpen && user && (
+                <div className="unimart-profile-dropdown shadow-lg">
+                  {/* 3 lines displayed inside dropdown (visible especially on mobile where navbar hides text) */}
+                  <div className="unimart-dropdown-user-header p-3 border-bottom">
+                    <div className="d-flex align-items-center gap-2.5 mb-1.5">
+                      <div className={`unimart-avatar ${checkIsAdmin(user) ? 'admin-avatar' : ''}`}>
+                        {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                      </div>
+                      <div className="d-flex flex-column text-start">
+                        <span className="fw-bold" style={{ fontSize: '0.88rem', color: 'var(--unimart-text-dark)' }}>
+                          {user.name}
+                        </span>
+                        <span className="text-muted" style={{ fontSize: '0.74rem' }}>
+                          {user.studentId || (checkIsAdmin(user) ? 'ADMIN-001' : '2110990697')}
+                        </span>
+                        <span className="fw-semibold" style={{ fontSize: '0.74rem', color: '#70182c' }}>
+                          {checkIsAdmin(user) ? 'Admin' : 'Student'}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="text-muted" style={{ fontSize: '0.72rem' }}>
+                      {user.email}
+                    </div>
+                  </div>
+
+                  {/* Switch Testing Accounts */}
+                  <div className="py-2 border-bottom">
+                    <div className="dropdown-header text-uppercase text-muted px-3 py-1" style={{ fontSize: '0.66rem', letterSpacing: '0.5px' }}>
+                      Switch Testing Account
+                    </div>
+                    <button
+                      type="button"
+                      className={`dropdown-item d-flex align-items-center justify-content-between px-3 py-1.5 ${user?.id === 'student_b' ? 'active' : ''}`}
+                      onClick={() => {
+                        switchAccount('student_b');
+                        setIsUserMenuOpen(false);
+                      }}
+                    >
+                      <div>
+                        <div className="fw-bold" style={{ fontSize: '0.8rem' }}>🎓 Priya K. (Student B)</div>
+                        <div className="text-muted" style={{ fontSize: '0.7rem' }}>2110990697 • Student</div>
+                      </div>
+                      {user?.id === 'student_b' && (
+                        <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>check</span>
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      className={`dropdown-item d-flex align-items-center justify-content-between px-3 py-1.5 ${user?.id === 'student_a' ? 'active' : ''}`}
+                      onClick={() => {
+                        switchAccount('student_a');
+                        setIsUserMenuOpen(false);
+                      }}
+                    >
+                      <div>
+                        <div className="fw-bold" style={{ fontSize: '0.8rem' }}>🎓 Satkar Singh (Student A)</div>
+                        <div className="text-muted" style={{ fontSize: '0.7rem' }}>2110990696 • Student</div>
+                      </div>
+                      {user?.id === 'student_a' && (
+                        <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>check</span>
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      className={`dropdown-item d-flex align-items-center justify-content-between px-3 py-1.5 ${checkIsAdmin(user) ? 'active' : ''}`}
+                      onClick={() => {
+                        switchAccount('admin_1');
+                        setIsUserMenuOpen(false);
+                      }}
+                    >
+                      <div>
+                        <div className="fw-bold" style={{ fontSize: '0.8rem' }}>🛡️ Campus Admin</div>
+                        <div className="text-muted" style={{ fontSize: '0.7rem' }}>ADMIN-001 • Admin</div>
+                      </div>
+                      {checkIsAdmin(user) && (
+                        <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>check</span>
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      className="dropdown-item d-flex align-items-center justify-content-between px-3 py-1.5"
+                      onClick={() => {
+                        switchAccount('guest');
+                        setIsUserMenuOpen(false);
+                      }}
+                    >
+                      <div>
+                        <div className="fw-bold" style={{ fontSize: '0.8rem' }}>👤 Guest Mode</div>
+                        <div className="text-muted" style={{ fontSize: '0.7rem' }}>Not signed in • Guest</div>
+                      </div>
+                    </button>
+                  </div>
+
+                  {/* Admin route link if admin */}
+                  {checkIsAdmin(user) && (
+                    <div className="py-1 border-bottom">
+                      <button
+                        type="button"
+                        className="dropdown-item d-flex align-items-center gap-2 px-3 py-2 text-danger fw-semibold"
+                        style={{ fontSize: '0.8rem' }}
+                        onClick={() => {
+                          setIsUserMenuOpen(false);
+                          navigate('/admin');
+                        }}
+                      >
+                        <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>admin_panel_settings</span>
+                        <span>Admin Dashboard</span>
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Sign Out */}
+                  <div className="p-2">
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-outline-danger w-100 rounded-pill d-flex align-items-center justify-content-center gap-1 py-1"
+                      style={{ fontSize: '0.78rem' }}
+                      onClick={() => {
+                        logout();
+                        setIsUserMenuOpen(false);
+                      }}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>logout</span>
+                      <span>Sign Out</span>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -1142,19 +1246,50 @@ export default function Dashboard({ onGoToLogin }) {
         {/* ================= FEATURED PRODUCTS SECTION (DYNAMIC FILTERING) ================= */}
         <div id="marketplace-catalog" className="unimart-section-header">
           <div className="d-flex align-items-center justify-content-between flex-wrap gap-3">
-            <div className="d-flex align-items-center gap-3 flex-wrap">
-              <h3 className="unimart-section-title mb-0">
-                <span>Marketplace Catalog</span>
-                <span className="badge rounded-pill bg-light text-muted border fs-6 fw-semibold">
-                  {filteredProducts.length} {filteredProducts.length === 1 ? 'Item' : 'Items'} Available
-                </span>
-              </h3>
-              {checkIsAdmin(user) && (
-                <span className="badge bg-danger text-white rounded-pill px-3 py-1.5 d-inline-flex align-items-center gap-1 shadow-sm" style={{ fontSize: '0.75rem' }}>
-                  <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>admin_panel_settings</span>
-                  <span>Admin Mode Active: Listing Removal Enabled</span>
-                </span>
-              )}
+            <div>
+              <div className="d-flex align-items-center gap-3 flex-wrap">
+                <h3 className="unimart-section-title mb-0">
+                  <span>Marketplace Catalog</span>
+                  <span className="badge rounded-pill bg-light text-muted border fs-6 fw-semibold">
+                    {filteredProducts.length} {filteredProducts.length === 1 ? 'Item' : 'Items'} Available
+                  </span>
+                </h3>
+              </div>
+
+              {/* Catalog Scope Tabs: [ All Listings ] [ My Listings (count) ] */}
+              <div className="d-flex align-items-center gap-2 mt-3" role="tablist" aria-label="Catalog Scope">
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={catalogTab === 'all'}
+                  className={`unimart-pill-tab ${catalogTab === 'all' ? 'active' : ''}`}
+                  onClick={() => setCatalogTab('all')}
+                  id="tab-all-listings"
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>apps</span>
+                  <span>All Listings</span>
+                </button>
+
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={catalogTab === 'my'}
+                  className={`unimart-pill-tab ${catalogTab === 'my' ? 'active' : ''}`}
+                  onClick={() => {
+                    if (!user) {
+                      if (onGoToLogin) onGoToLogin();
+                      return;
+                    }
+                    setCatalogTab('my');
+                  }}
+                  id="tab-my-listings"
+                  title={!user ? "Sign in to view your listings" : "View your active listings"}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>person</span>
+                  <span>My Listings</span>
+                  <span className="unimart-tab-count-tag">{myListingsCount}</span>
+                </button>
+              </div>
             </div>
 
             {/* Active filter tags */}
@@ -1203,30 +1338,53 @@ export default function Dashboard({ onGoToLogin }) {
 
         {/* Product Cards Grid or Empty State */}
         {filteredProducts.length === 0 ? (
-          <div className="unimart-empty-state">
-            <div className="unimart-empty-icon-box">
-              <span className="material-symbols-outlined" style={{ fontSize: '38px', color: 'var(--unimart-maroon)' }}>
-                search_off
-              </span>
+          catalogTab === 'my' && myListingsCount === 0 ? (
+            <div className="unimart-empty-state">
+              <div className="unimart-empty-icon-box">
+                <span className="material-symbols-outlined" style={{ fontSize: '38px', color: 'var(--unimart-maroon)' }}>
+                  storefront
+                </span>
+              </div>
+              <h4 className="fw-bold mb-1">You haven't listed anything yet</h4>
+              <p className="text-muted small mb-3 text-center" style={{ maxWidth: '420px' }}>
+                Share textbooks, handmade crafts, lab tools, or dorm essentials with fellow Chitkara students.
+              </p>
+              <button
+                type="button"
+                className="btn btn-dark rounded-pill px-4 py-2 fw-semibold btn-sm d-inline-flex align-items-center gap-2"
+                onClick={handleSellClick}
+                id="empty-state-sell-btn"
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add_circle</span>
+                <span>Sell an Item</span>
+              </button>
             </div>
-            <h4 className="fw-bold mb-1">No Listings Found</h4>
-            <p className="text-muted small mb-3 text-center" style={{ maxWidth: '420px' }}>
-              {searchQuery.trim()
-                ? `No products match "${searchQuery}" in ${selectedCategory === 'All' ? 'any category' : selectedCategory}.`
-                : `No products available currently in "${selectedCategory}".`}
-            </p>
-            <button
-              type="button"
-              className="btn btn-dark rounded-pill px-4 py-2 fw-semibold btn-sm d-inline-flex align-items-center gap-2"
-              onClick={() => {
-                setSelectedCategory('All');
-                setSearchQuery('');
-              }}
-            >
-              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>refresh</span>
-              <span>Reset All Filters</span>
-            </button>
-          </div>
+          ) : (
+            <div className="unimart-empty-state">
+              <div className="unimart-empty-icon-box">
+                <span className="material-symbols-outlined" style={{ fontSize: '38px', color: 'var(--unimart-maroon)' }}>
+                  search_off
+                </span>
+              </div>
+              <h4 className="fw-bold mb-1">No Listings Found</h4>
+              <p className="text-muted small mb-3 text-center" style={{ maxWidth: '420px' }}>
+                {searchQuery.trim()
+                  ? `No products match "${searchQuery}" in ${selectedCategory === 'All' ? 'any category' : selectedCategory}.`
+                  : `No products available currently in "${selectedCategory}".`}
+              </p>
+              <button
+                type="button"
+                className="btn btn-dark rounded-pill px-4 py-2 fw-semibold btn-sm d-inline-flex align-items-center gap-2"
+                onClick={() => {
+                  setSelectedCategory('All');
+                  setSearchQuery('');
+                }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>refresh</span>
+                <span>Reset All Filters</span>
+              </button>
+            </div>
+          )
         ) : (
           <div className="unimart-products-grid">
             {filteredProducts.map((item) => {
@@ -1334,37 +1492,6 @@ export default function Dashboard({ onGoToLogin }) {
                         </button>
                       </div>
 
-                      {/* Listing Actions - governed by canManageListing(user, item) */}
-                      {canManageListing(user, item) && (
-                        <div className="unimart-admin-card-actions mt-2 pt-2 border-top">
-                          {checkIsAdmin(user) && item.status === 'pending' && (
-                            <button
-                              type="button"
-                              className="unimart-admin-btn-approve"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleAdminApprove(item.id, item.title);
-                              }}
-                              title="Admin: Approve listing to go live"
-                            >
-                              <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>check_circle</span>
-                              <span>Approve</span>
-                            </button>
-                          )}
-                          <button
-                            type="button"
-                            className="unimart-admin-btn-remove"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleRemoveProduct(item.id, item.title);
-                            }}
-                            title={checkIsAdmin(user) ? "Admin: Remove from listing" : "Delete my listing"}
-                          >
-                            <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>delete_forever</span>
-                            <span>{checkIsAdmin(user) ? "Remove from Listing" : "Delete My Listing"}</span>
-                          </button>
-                        </div>
-                      )}
                     </div>
                   </div>
 
@@ -1468,43 +1595,6 @@ export default function Dashboard({ onGoToLogin }) {
                         </span>
                       </div>
 
-                      {/* Management Controls in OTT popup - governed by canManageListing(user, item) */}
-                      {canManageListing(user, item) && (
-                        <div className="unimart-popup-admin-bar mt-2 pt-2 border-top border-secondary border-opacity-25">
-                          <div className="d-flex align-items-center justify-content-between gap-2">
-                            <span className="unimart-admin-popup-label">
-                              <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>
-                                {checkIsAdmin(user) ? 'admin_panel_settings' : 'account_circle'}
-                              </span>
-                              <span>{checkIsAdmin(user) ? 'Admin Controls' : 'Your Listing'}</span>
-                            </span>
-                            <div className="d-flex align-items-center gap-1.5">
-                              {checkIsAdmin(user) && item.status === 'pending' && (
-                                <button
-                                  type="button"
-                                  className="btn btn-sm btn-success rounded-pill px-2.5 py-1 d-inline-flex align-items-center gap-1"
-                                  style={{ fontSize: '0.72rem' }}
-                                  onClick={() => handleAdminApprove(item.id, item.title)}
-                                  title="Approve listing"
-                                >
-                                  <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>check</span>
-                                  <span>Approve</span>
-                                </button>
-                              )}
-                              <button
-                                type="button"
-                                className="btn btn-sm btn-danger rounded-pill px-2.5 py-1 d-inline-flex align-items-center gap-1"
-                                style={{ fontSize: '0.72rem' }}
-                                onClick={() => handleRemoveProduct(item.id, item.title)}
-                                title={checkIsAdmin(user) ? "Remove from listing" : "Delete my listing"}
-                              >
-                                <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>delete</span>
-                                <span>{checkIsAdmin(user) ? "Remove from Listing" : "Delete My Listing"}</span>
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      )}
                     </div>
                   </div>
 

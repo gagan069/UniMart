@@ -163,11 +163,18 @@
   display: flex;
   align-items: center;
   gap: 0.65rem;
-  padding: 0.35rem 0.85rem 0.35rem 0.45rem;
+  padding: 0.3rem 0.85rem 0.3rem 0.45rem;
   border: 1px solid #e3e6ec;
   border-radius: 999px;
   background: #ffffff;
-  cursor: default;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.unimart-user-chip:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
 }
 
 .unimart-avatar {
@@ -181,6 +188,92 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+}
+
+/* 3 Lines inside profile chip */
+.unimart-chip-lines {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  line-height: 1.15;
+}
+
+.unimart-chip-name {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #1e293b;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.unimart-chip-roll {
+  font-size: 0.68rem;
+  color: #64748b;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.unimart-chip-role {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #70182c; /* maroon */
+  white-space: nowrap;
+}
+
+/* On mobile (<768px): Show only avatar circle, 3 lines appear in dropdown */
+@media (max-width: 768px) {
+  .unimart-chip-lines {
+    display: none !important;
+  }
+  .unimart-user-chip {
+    padding: 0.25rem !important;
+    gap: 0 !important;
+  }
+}
+
+/* Profile Dropdown Menu */
+.unimart-profile-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 255px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+  z-index: 1050;
+  overflow: hidden;
+  animation: unimartFadeDown 0.18s ease-out;
+}
+
+@keyframes unimartFadeDown {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.unimart-profile-dropdown .dropdown-item {
+  cursor: pointer;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  transition: background 0.15s ease;
+}
+
+.unimart-profile-dropdown .dropdown-item:hover {
+  background: #f8fafc;
+}
+
+.unimart-profile-dropdown .dropdown-item.active {
+  background: rgba(112, 24, 44, 0.08);
+  color: #70182c;
 }
 
 /* ================= SUB-NAVIGATION CATEGORY TABS (STATIC) ================= */
@@ -1662,8 +1755,45 @@
   color: #f8fafc;
 }
 
-[data-theme="dark"] .unimart-user-chip .text-muted {
-  color: #94a3b8 !important;
+[data-theme="dark"] .unimart-user-chip:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+[data-theme="dark"] .unimart-chip-name {
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .unimart-chip-roll {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .unimart-chip-role {
+  color: #fb7185;
+}
+
+[data-theme="dark"] .unimart-profile-dropdown {
+  background: #1e293b;
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #f8fafc;
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .unimart-profile-dropdown .dropdown-item {
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .unimart-profile-dropdown .dropdown-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .unimart-profile-dropdown .dropdown-item.active {
+  background: rgba(225, 29, 72, 0.18);
+  color: #fb7185;
+}
+
+[data-theme="dark"] .unimart-profile-dropdown .border-bottom {
+  border-color: rgba(255, 255, 255, 0.1) !important;
 }
 
 [data-theme="dark"] .unimart-avatar {
