@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTheme } from './context/ThemeContext.jsx';
+import { useAuth } from './context/AuthContext.jsx';
 import './Dashboard.css';
 
 // Product images
@@ -34,6 +35,8 @@ export const MEETUP_OPTIONS = [
 
 export default function Dashboard({ onGoToLogin }) {
   const { theme, toggleTheme } = useTheme();
+  const { user, isAdmin, toggleAdminRole } = useAuth() || {};
+  const [adminAlert, setAdminAlert] = useState(null);
 
   // Dynamic state for search & category filters
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -198,16 +201,24 @@ export default function Dashboard({ onGoToLogin }) {
 
   const [productList, setProductList] = useState(staticProducts);
 
+  const pendingCount = productList.filter((item) => item.status === 'pending').length;
+
   // Dynamic count calculation
   const getCategoryCount = (key) => {
     if (key === 'All') return `${productList.length} items`;
+    if (key === 'Pending') return `${pendingCount} items`;
     const count = productList.filter((item) => item.category === key).length;
     return `${count} items`;
   };
 
   // Dynamic product filtering by category and live search query
   const filteredProducts = productList.filter((item) => {
-    const matchesCategory = selectedCategory === 'All' || item.category === selectedCategory;
+    const matchesCategory =
+      selectedCategory === 'All'
+        ? true
+        : selectedCategory === 'Pending'
+        ? item.status === 'pending'
+        : item.category === selectedCategory;
     const q = searchQuery.trim().toLowerCase();
     if (!q) return matchesCategory;
 
@@ -217,7 +228,8 @@ export default function Dashboard({ onGoToLogin }) {
       item.seller.toLowerCase().includes(q) ||
       (item.notes && item.notes.toLowerCase().includes(q)) ||
       (item.badge && item.badge.toLowerCase().includes(q)) ||
-      (item.condition && item.condition.toLowerCase().includes(q));
+      (item.condition && item.condition.toLowerCase().includes(q)) ||
+      (item.status && item.status.toLowerCase().includes(q));
 
     return matchesCategory && matchesSearch;
   });
@@ -518,10 +530,12 @@ export default function Dashboard({ onGoToLogin }) {
       seller: formData.seller || 'Satkar (You)',
       icon: iconMap[formData.category_id] || 'sell',
       categoryTheme: categoryThemeMap[formData.category_id] || 'theme-academic',
-      badge: 'Student Listing',
+      badge: 'Waiting for Approval',
       notes: formData.meetupSpot === 'Other' ? formData.customMeetupSpot : formData.meetupSpot,
       image: formData.photos[0] || imgCalcBook,
-      description: formData.description
+      description: formData.description,
+      status: 'pending', // ⏳ Marked as waiting to be approved
+      submittedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
 
     setProductList((prev) => [newListing, ...prev]);
@@ -530,7 +544,32 @@ export default function Dashboard({ onGoToLogin }) {
       setIsPublishedSuccess(false);
       setIsSellModalOpen(false);
       resetForm();
-    }, 2200);
+    }, 2400);
+  };
+
+  // Admin Listing Actions
+  const handleAdminRemove = (productId, productTitle) => {
+    if (!isAdmin) return;
+    setProductList((prev) => prev.filter((p) => p.id !== productId));
+    setAdminAlert({
+      type: 'danger',
+      text: `Listing "${productTitle || 'Item'}" removed from campus marketplace by Admin.`
+    });
+    setTimeout(() => setAdminAlert(null), 4000);
+  };
+
+  const handleAdminApprove = (productId, productTitle) => {
+    if (!isAdmin) return;
+    setProductList((prev) =>
+      prev.map((p) =>
+        p.id === productId ? { ...p, status: 'approved', badge: 'Admin Approved' } : p
+      )
+    );
+    setAdminAlert({
+      type: 'success',
+      text: `Listing "${productTitle || 'Item'}" has been approved by Admin and is now live!`
+    });
+    setTimeout(() => setAdminAlert(null), 4000);
   };
 
   const resetForm = () => {
@@ -660,12 +699,40 @@ export default function Dashboard({ onGoToLogin }) {
               <span className="unimart-badge-count">2</span>
             </button>
 
+            {/* Admin / Student Role Toggle Pill */}
+            <button
+              type="button"
+              className={`unimart-role-toggle-btn ${isAdmin ? 'admin-active' : 'student-mode'}`}
+              onClick={toggleAdminRole}
+              title={isAdmin ? "Currently Admin Mode: Click to switch to Student View" : "Currently Student View: Click to switch to Admin Mode"}
+              aria-label="Toggle user role between Admin and Student"
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
+                {isAdmin ? 'admin_panel_settings' : 'school'}
+              </span>
+              <span className="d-none d-md-inline fw-semibold" style={{ fontSize: '0.78rem' }}>
+                {isAdmin ? 'Campus Admin' : 'Student Mode'}
+              </span>
+              <span className={`unimart-role-pill-indicator ${isAdmin ? 'on' : 'off'}`}>
+                {isAdmin ? 'ADMIN' : 'STUDENT'}
+              </span>
+            </button>
+
             {/* User Chip */}
-            <div className="unimart-user-chip d-none d-sm-flex" title="Your student profile">
-              <div className="unimart-avatar">S</div>
+            <div className="unimart-user-chip d-none d-sm-flex" title={isAdmin ? "Logged in as Campus Admin" : "Your student profile"}>
+              <div className={`unimart-avatar ${isAdmin ? 'admin-avatar' : ''}`}>
+                {isAdmin ? 'A' : 'S'}
+              </div>
               <div className="d-flex flex-column text-start">
-                <span className="fw-bold" style={{ fontSize: '0.8rem', lineHeight: '1.2' }}>Satkar Singh</span>
-                <span className="text-muted" style={{ fontSize: '0.7rem' }}>Alfred A</span>
+                <div className="d-flex align-items-center gap-1">
+                  <span className="fw-bold" style={{ fontSize: '0.8rem', lineHeight: '1.2' }}>Satkar Singh</span>
+                  {isAdmin && (
+                    <span className="badge bg-danger text-white px-1.5 py-0.5 rounded" style={{ fontSize: '0.62rem' }}>ADMIN</span>
+                  )}
+                </div>
+                <span className="text-muted" style={{ fontSize: '0.7rem' }}>
+                  {isAdmin ? 'Campus Administrator' : 'Alfred A • Student'}
+                </span>
               </div>
             </div>
           </div>
@@ -723,6 +790,23 @@ export default function Dashboard({ onGoToLogin }) {
               </button>
             );
           })}
+
+          {pendingCount > 0 && (
+            <button
+              type="button"
+              role="tab"
+              aria-selected={selectedCategory === 'Pending'}
+              className={`unimart-pill-tab unimart-pill-pending ${selectedCategory === 'Pending' ? 'active' : ''}`}
+              onClick={() => setSelectedCategory(selectedCategory === 'Pending' ? 'All' : 'Pending')}
+              title="View items waiting to be approved"
+            >
+              <span className="material-symbols-outlined unimart-timer-pulse" style={{ fontSize: '18px', color: '#d97706' }}>
+                schedule
+              </span>
+              <span>Waiting Approval</span>
+              <span className="unimart-tab-count-tag count-pending">{pendingCount}</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -875,15 +959,42 @@ export default function Dashboard({ onGoToLogin }) {
 
         </div>
 
+        {/* Admin Toast Alert */}
+        {adminAlert && (
+          <div className={`unimart-admin-toast ${adminAlert.type === 'danger' ? 'toast-danger' : 'toast-success'} mb-4`} role="alert">
+            <div className="d-flex align-items-center gap-2">
+              <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>
+                {adminAlert.type === 'danger' ? 'delete_forever' : 'check_circle'}
+              </span>
+              <span className="fw-semibold small">{adminAlert.text}</span>
+              <button
+                type="button"
+                className="btn-close ms-auto"
+                style={{ fontSize: '0.7rem' }}
+                onClick={() => setAdminAlert(null)}
+                aria-label="Dismiss alert"
+              ></button>
+            </div>
+          </div>
+        )}
+
         {/* ================= FEATURED PRODUCTS SECTION (DYNAMIC FILTERING) ================= */}
         <div id="marketplace-catalog" className="unimart-section-header">
-          <div className="d-flex align-items-center gap-3 flex-wrap">
-            <h3 className="unimart-section-title mb-0">
-              <span>Marketplace Catalog</span>
-              <span className="badge rounded-pill bg-light text-muted border fs-6 fw-semibold">
-                {filteredProducts.length} {filteredProducts.length === 1 ? 'Item' : 'Items'} Available
-              </span>
-            </h3>
+          <div className="d-flex align-items-center justify-content-between flex-wrap gap-3">
+            <div className="d-flex align-items-center gap-3 flex-wrap">
+              <h3 className="unimart-section-title mb-0">
+                <span>Marketplace Catalog</span>
+                <span className="badge rounded-pill bg-light text-muted border fs-6 fw-semibold">
+                  {filteredProducts.length} {filteredProducts.length === 1 ? 'Item' : 'Items'} Available
+                </span>
+              </h3>
+              {isAdmin && (
+                <span className="badge bg-danger text-white rounded-pill px-3 py-1.5 d-inline-flex align-items-center gap-1 shadow-sm" style={{ fontSize: '0.75rem' }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>admin_panel_settings</span>
+                  <span>Admin Mode Active: Listing Removal Enabled</span>
+                </span>
+              )}
+            </div>
 
             {/* Active filter tags */}
             {(selectedCategory !== 'All' || searchQuery.trim() !== '') && (
@@ -981,6 +1092,14 @@ export default function Dashboard({ onGoToLogin }) {
 
                       {/* Condition badge - top left */}
                       <span className="unimart-condition-badge">{item.condition}</span>
+
+                      {/* Timer badge for pending approval */}
+                      {item.status === 'pending' && (
+                        <span className="unimart-pending-timer-badge" title="Waiting to be approved by campus admin">
+                          <span className="material-symbols-outlined unimart-timer-pulse">schedule</span>
+                          <span>Waiting to be approved</span>
+                        </span>
+                      )}
                       
                       {/* Wishlist heart - top right */}
                       <button type="button" className="unimart-wishlist-btn" title="Add to wishlist">
@@ -1004,9 +1123,21 @@ export default function Dashboard({ onGoToLogin }) {
 
                     {/* Resting Card Body */}
                     <div className="unimart-card-body">
+                      {item.status === 'pending' && (
+                        <div className="unimart-pending-strip mb-2">
+                          <div className="d-flex align-items-center gap-1">
+                            <span className="material-symbols-outlined unimart-timer-pulse" style={{ fontSize: '15px', color: '#d97706' }}>schedule</span>
+                            <span className="fw-semibold" style={{ fontSize: '0.72rem', color: '#b45309' }}>Waiting for Approval</span>
+                          </div>
+                          <span className="text-muted" style={{ fontSize: '0.68rem' }}>{item.submittedAt || 'Pending'}</span>
+                        </div>
+                      )}
+
                       <div className="d-flex justify-content-between align-items-center mb-1">
                         <span className="unimart-card-category">{item.category}</span>
-                        <span className="unimart-badge-chip">{item.badge}</span>
+                        <span className={`unimart-badge-chip ${item.status === 'pending' ? 'chip-pending' : ''}`}>
+                          {item.badge}
+                        </span>
                       </div>
 
                       <h6 className="unimart-card-title" title={item.title}>
@@ -1035,6 +1166,38 @@ export default function Dashboard({ onGoToLogin }) {
                           <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add_shopping_cart</span>
                         </button>
                       </div>
+
+                      {/* Admin-only Listing Actions (Approve / Remove) */}
+                      {isAdmin && (
+                        <div className="unimart-admin-card-actions mt-2 pt-2 border-top">
+                          {item.status === 'pending' && (
+                            <button
+                              type="button"
+                              className="unimart-admin-btn-approve"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleAdminApprove(item.id, item.title);
+                              }}
+                              title="Admin: Approve listing to go live"
+                            >
+                              <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>check_circle</span>
+                              <span>Approve</span>
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            className="unimart-admin-btn-remove"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAdminRemove(item.id, item.title);
+                            }}
+                            title="Admin: Remove from listing"
+                          >
+                            <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>delete_forever</span>
+                            <span>Remove from Listing</span>
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -1067,14 +1230,26 @@ export default function Dashboard({ onGoToLogin }) {
                     <div className="unimart-popup-content">
                       {/* Action buttons row: [ ▶ Watch Now ]  [ + ]  [ 💬 ] */}
                       <div className="unimart-popup-actions-row">
-                        <button 
-                          type="button" 
-                          className="unimart-popup-btn-watch"
-                          title={`Buy Now • ₹${item.price.toLocaleString('en-IN')}`}
-                        >
-                          <span className="material-symbols-outlined">play_arrow</span>
-                          <span>Buy Now</span>
-                        </button>
+                        {item.status === 'pending' ? (
+                          <button
+                            type="button"
+                            className="unimart-popup-btn-pending"
+                            disabled
+                            title="Waiting for campus admin approval"
+                          >
+                            <span className="material-symbols-outlined unimart-timer-pulse">schedule</span>
+                            <span>Waiting for Approval</span>
+                          </button>
+                        ) : (
+                          <button 
+                            type="button" 
+                            className="unimart-popup-btn-watch"
+                            title={`Buy Now • ₹${item.price.toLocaleString('en-IN')}`}
+                          >
+                            <span className="material-symbols-outlined">play_arrow</span>
+                            <span>Buy Now</span>
+                          </button>
+                        )}
 
                         <button 
                           type="button" 
@@ -1122,6 +1297,42 @@ export default function Dashboard({ onGoToLogin }) {
                           <span>Chitkara Verified</span>
                         </span>
                       </div>
+
+                      {/* Admin Controls in OTT popup */}
+                      {isAdmin && (
+                        <div className="unimart-popup-admin-bar mt-2 pt-2 border-top border-secondary border-opacity-25">
+                          <div className="d-flex align-items-center justify-content-between gap-2">
+                            <span className="unimart-admin-popup-label">
+                              <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>admin_panel_settings</span>
+                              <span>Admin Controls</span>
+                            </span>
+                            <div className="d-flex align-items-center gap-1.5">
+                              {item.status === 'pending' && (
+                                <button
+                                  type="button"
+                                  className="btn btn-sm btn-success rounded-pill px-2.5 py-1 d-inline-flex align-items-center gap-1"
+                                  style={{ fontSize: '0.72rem' }}
+                                  onClick={() => handleAdminApprove(item.id, item.title)}
+                                  title="Approve listing"
+                                >
+                                  <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>check</span>
+                                  <span>Approve</span>
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                className="btn btn-sm btn-danger rounded-pill px-2.5 py-1 d-inline-flex align-items-center gap-1"
+                                style={{ fontSize: '0.72rem' }}
+                                onClick={() => handleAdminRemove(item.id, item.title)}
+                                title="Remove from listing"
+                              >
+                                <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>delete</span>
+                                <span>Remove from Listing</span>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -1476,13 +1687,17 @@ export default function Dashboard({ onGoToLogin }) {
               <div className="text-center py-4">
                 <div 
                   className="rounded-circle d-inline-flex align-items-center justify-content-center mb-3"
-                  style={{ width: '70px', height: '70px', background: '#dcfce7', color: '#16a34a' }}
+                  style={{ width: '72px', height: '72px', background: 'rgba(245, 158, 11, 0.15)', color: '#d97706' }}
                 >
-                  <span className="material-symbols-outlined" style={{ fontSize: '42px' }}>check_circle</span>
+                  <span className="material-symbols-outlined unimart-timer-pulse" style={{ fontSize: '40px' }}>schedule</span>
                 </div>
-                <h4 className="fw-bold mb-2">Item Published Successfully!</h4>
-                <p className="text-muted small mb-4" style={{ maxWidth: '380px', margin: '0 auto' }}>
-                  Your listing for <strong>"{formData.title}"</strong> is now live on the campus marketplace.
+                <h4 className="fw-bold mb-2">Item Submitted for Approval!</h4>
+                <div className="d-inline-flex align-items-center gap-1 px-3 py-1 rounded-pill mb-3" style={{ background: 'rgba(245, 158, 11, 0.12)', color: '#b45309', fontSize: '0.82rem', fontWeight: 600 }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>hourglass_top</span>
+                  <span>⏳ Waiting to be approved (Timer Mark Active)</span>
+                </div>
+                <p className="text-muted small mb-4" style={{ maxWidth: '400px', margin: '0 auto' }}>
+                  Your listing for <strong>"{formData.title}"</strong> has been queued with a timer mark. Campus administrators can review and approve or remove listings.
                 </p>
                 <div className="d-flex justify-content-center gap-2">
                   <button
@@ -1496,7 +1711,7 @@ export default function Dashboard({ onGoToLogin }) {
                       if (catEl) catEl.scrollIntoView({ behavior: 'smooth' });
                     }}
                   >
-                    <span>View in Catalog</span>
+                    <span>View in Submissions / Catalog</span>
                     <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_forward</span>
                   </button>
                 </div>
