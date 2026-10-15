@@ -44,9 +44,37 @@
   border-color: rgba(220, 38, 38, 0.2);
 }
 
+.unimart-stat-card.stat-warning {
+  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
 .unimart-stat-card.stat-success {
   background: rgba(16, 185, 129, 0.05);
   border-color: rgba(16, 185, 129, 0.2);
+}
+
+.unimart-pending-icon-bubble {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: rgba(245, 158, 11, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.unimart-admin-pending-panel {
+  border-left: 4px solid #f59e0b;
+  overflow: hidden;
+}
+
+.unimart-pending-row {
+  background-color: rgba(245, 158, 11, 0.02);
+}
+
+.unimart-pending-row:hover {
+  background-color: rgba(245, 158, 11, 0.06) !important;
 }
 
 /* Admin Table Styles */
@@ -166,6 +194,19 @@
 
 [data-theme="dark"] .unimart-stat-card {
   border-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .unimart-stat-card.stat-warning {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.28);
+}
+
+[data-theme="dark"] .unimart-pending-row {
+  background-color: rgba(245, 158, 11, 0.05);
+}
+
+[data-theme="dark"] .unimart-pending-row:hover {
+  background-color: rgba(245, 158, 11, 0.1) !important;
 }
 
 [data-theme="dark"] .unimart-admin-thumb {

@@ -93,7 +93,7 @@ export const INITIAL_PRODUCTS = [
     badge: 'Semester Bestseller',
     notes: 'Library Entrance',
     image: imgOrgChem,
-    photos: [imgOrgChem],
+    photos: [imgOrgChem, imgCalcBook],
     description: 'David Klein second edition with handwritten summary mind maps in margins. Essential for surviving organic synthesis.'
   },
   {
@@ -168,6 +168,18 @@ export function ListingsProvider({ children }) {
     setProductList((prev) => prev.filter((item) => item.id !== id));
   };
 
+  const approveListing = (id) => {
+    setProductList((prev) =>
+      prev.map((item) =>
+        item.id === id ? { ...item, status: 'approved', badge: 'Admin Approved' } : item
+      )
+    );
+  };
+
+  const rejectListing = (id) => {
+    setProductList((prev) => prev.filter((item) => item.id !== id));
+  };
+
   return (
     <ListingsContext.Provider
       value={{
@@ -175,7 +187,9 @@ export function ListingsProvider({ children }) {
         setProductList,
         addListing,
         updateListing,
-        removeListing
+        removeListing,
+        approveListing,
+        rejectListing
       }}
     >
       {children}

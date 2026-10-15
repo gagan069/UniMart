@@ -84,6 +84,25 @@ export default function Dashboard({ onGoToLogin }) {
   const fileInputRef = useRef(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isPublishedSuccess, setIsPublishedSuccess] = useState(false);
+  const [editResultType, setEditResultType] = useState('price_only'); // 'price_only' | 'pending_approval'
+  const [cardPhotoIndex, setCardPhotoIndex] = useState({});
+
+  // Handlers for navigating through multi-photo cards
+  const handlePrevPhoto = (e, itemId, totalPhotos) => {
+    if (e) e.stopPropagation();
+    setCardPhotoIndex((prev) => ({
+      ...prev,
+      [itemId]: ((prev[itemId] || 0) - 1 + totalPhotos) % totalPhotos
+    }));
+  };
+
+  const handleNextPhoto = (e, itemId, totalPhotos) => {
+    if (e) e.stopPropagation();
+    setCardPhotoIndex((prev) => ({
+      ...prev,
+      [itemId]: ((prev[itemId] || 0) + 1) % totalPhotos
+    }));
+  };
 
   // Category filter definitions
   const categoryDefs = [
@@ -460,33 +479,89 @@ export default function Dashboard({ onGoToLogin }) {
     const finalMeetup = formData.meetupSpot === 'Other' ? formData.customMeetupSpot : formData.meetupSpot;
 
     if (isEditing && editingId) {
+      const existingItem = productList.find((p) => p.id === editingId);
+      const newPrice = Number(formData.price);
+      const oldPrice = Number(existingItem?.price);
+      const isPriceChanged = newPrice !== oldPrice;
+
+      // Check if any fields other than price changed
+      const isTitleChanged = formData.title.trim() !== (existingItem?.title || '').trim();
+      const isCategoryChanged = formData.category_id !== (existingItem?.category_id || '');
+      const isSubcategoryChanged = (formData.subcategory_id || '') !== (existingItem?.subcategory_id || '');
+      const isConditionChanged = formData.condition !== (existingItem?.condition || '');
+      const isDescChanged = (formData.description || '').trim() !== (existingItem?.description || '').trim();
+      const isMeetupChanged = finalMeetup !== (existingItem?.notes || '');
+
+      const oldPhotos = existingItem?.photos || (existingItem?.image ? [existingItem.image] : []);
+      const newPhotos = formData.photos || [];
+      const isPhotosChanged =
+        oldPhotos.length !== newPhotos.length ||
+        oldPhotos.some((p, i) => p !== newPhotos[i]);
+
+      const isContentChanged =
+        isTitleChanged ||
+        isCategoryChanged ||
+        isSubcategoryChanged ||
+        isConditionChanged ||
+        isDescChanged ||
+        isMeetupChanged ||
+        isPhotosChanged;
+
+      // Rule: If ONLY the price was updated, auto-accept immediately and keep listing active
+      if (!isContentChanged && isPriceChanged) {
+        updateListing(editingId, {
+          price: newPrice,
+          origPrice: Math.round(newPrice * 1.35)
+        });
+
+        setEditResultType('price_only');
+        setIsPublishedSuccess(true);
+        setAdminAlert({
+          type: 'success',
+          text: `Price for "${existingItem?.title || 'Listing'}" updated to ₹${newPrice.toLocaleString('en-IN')}`
+        });
+        setTimeout(() => {
+          setIsPublishedSuccess(false);
+          setIsSellModalOpen(false);
+          resetForm();
+          setAdminAlert(null);
+        }, 1800);
+        return;
+      }
+
+      // Rule: Except for price, whenever we edit the product send a request to the admin panel under "Pending Approvals"
       updateListing(editingId, {
         title: formData.title.trim(),
         category: categoryName,
         category_id: formData.category_id,
         subcategory_id: formData.subcategory_id || null,
-        price: Number(formData.price),
-        origPrice: Math.round(Number(formData.price) * 1.35),
+        price: newPrice,
+        origPrice: Math.round(newPrice * 1.35),
         condition: formData.condition,
         icon: iconMap[formData.category_id] || 'sell',
         categoryTheme: categoryThemeMap[formData.category_id] || 'theme-academic',
         notes: finalMeetup,
         image: formData.photos[0] || imgCalcBook,
         photos: formData.photos,
-        description: formData.description
+        description: formData.description,
+        status: 'pending', // ⏳ Sent to admin panel under Pending Approvals!
+        badge: 'Waiting for Approval',
+        pendingType: 'edit',
+        editedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       });
 
+      setEditResultType('pending_approval');
       setIsPublishedSuccess(true);
       setAdminAlert({
-        type: 'success',
-        text: 'Listing updated'
+        type: 'warning',
+        text: `Listing edits for "${formData.title}" submitted to Admin for approval ⏳`
       });
       setTimeout(() => {
         setIsPublishedSuccess(false);
         setIsSellModalOpen(false);
         resetForm();
         setAdminAlert(null);
-      }, 1500);
+      }, 2500);
       return;
     }
 
@@ -509,10 +584,12 @@ export default function Dashboard({ onGoToLogin }) {
       photos: formData.photos,
       description: formData.description,
       status: 'pending', // ⏳ Marked as waiting to be approved
+      pendingType: 'new',
       submittedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
 
     addListing(newListing);
+    setEditResultType('pending_approval');
     setIsPublishedSuccess(true);
     setTimeout(() => {
       setIsPublishedSuccess(false);
@@ -1378,6 +1455,11 @@ export default function Dashboard({ onGoToLogin }) {
           <div className="unimart-products-grid">
             {filteredProducts.map((item) => {
               const discountPct = Math.round(((item.origPrice - item.price) / item.origPrice) * 100);
+              const photosList = item.photos && item.photos.length > 0 ? item.photos : (item.image ? [item.image] : []);
+              const activePhotoIdx = cardPhotoIndex[item.id] || 0;
+              const currentImg = photosList[activePhotoIdx] || item.image;
+              const hasMultiplePhotos = photosList.length > 1;
+
               return (
                 <div key={item.id} className={`unimart-product-card ${item.categoryTheme || 'theme-academic'}`}>
                   <div className="unimart-card-inner">
@@ -1385,7 +1467,7 @@ export default function Dashboard({ onGoToLogin }) {
                       {/* Image and placeholder banner with category theme */}
                       <div className={`unimart-card-placeholder-wrap ${item.categoryTheme || 'theme-academic'}`}>
                         <img 
-                          src={item.image} 
+                          src={currentImg} 
                           className="unimart-card-image" 
                           alt={item.title} 
                           loading="lazy"
@@ -1395,6 +1477,47 @@ export default function Dashboard({ onGoToLogin }) {
 
                         {/* Category top glow border */}
                         <div className="unimart-card-glow-border"></div>
+
+                        {/* Multi-Photo Carousel Arrows & Indicator */}
+                        {hasMultiplePhotos && (
+                          <>
+                            <button
+                              type="button"
+                              className="unimart-card-nav-arrow unimart-card-nav-prev"
+                              onClick={(e) => handlePrevPhoto(e, item.id, photosList.length)}
+                              title="Previous photo"
+                              aria-label="Previous photo"
+                            >
+                              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>chevron_left</span>
+                            </button>
+                            <button
+                              type="button"
+                              className="unimart-card-nav-arrow unimart-card-nav-next"
+                              onClick={(e) => handleNextPhoto(e, item.id, photosList.length)}
+                              title="Next photo"
+                              aria-label="Next photo"
+                            >
+                              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>chevron_right</span>
+                            </button>
+                            <div className="unimart-card-photo-counter" title={`${photosList.length} photos available`}>
+                              <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>photo_library</span>
+                              <span>{activePhotoIdx + 1}/{photosList.length}</span>
+                            </div>
+                            <div className="unimart-card-photo-dots">
+                              {photosList.map((_, pIdx) => (
+                                <span
+                                  key={pIdx}
+                                  className={`unimart-card-photo-dot ${pIdx === activePhotoIdx ? 'active' : ''}`}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setCardPhotoIndex((prev) => ({ ...prev, [item.id]: pIdx }));
+                                  }}
+                                  title={`Photo ${pIdx + 1}`}
+                                />
+                              ))}
+                            </div>
+                          </>
+                        )}
 
                         <div className="unimart-placeholder-icon-box">
                           <span className="material-symbols-outlined unimart-placeholder-icon">
@@ -1514,8 +1637,8 @@ export default function Dashboard({ onGoToLogin }) {
                       </div>
                     </div>
 
-                    {/* Expanded Details Section (Visible on Hover with Ambient Light Bleed) */}
-                    <div className="unimart-expanded-details" style={{ '--card-img': `url(${item.image})` }}>
+                    {/* Expanded Details Section (Visible on Hover with Ambient Light Bleed synced to active photo) */}
+                    <div className="unimart-expanded-details" style={{ '--card-img': `url(${currentImg})` }}>
                       <h6 className="unimart-expanded-title" title={item.title}>
                         {item.title}
                       </h6>
@@ -1942,38 +2065,70 @@ export default function Dashboard({ onGoToLogin }) {
                 </button>
               </form>
             ) : isPublishedSuccess ? (
-              <div className="text-center py-4">
-                <div 
-                  className="rounded-circle d-inline-flex align-items-center justify-content-center mb-3"
-                  style={{ width: '72px', height: '72px', background: 'rgba(245, 158, 11, 0.15)', color: '#d97706' }}
-                >
-                  <span className="material-symbols-outlined unimart-timer-pulse" style={{ fontSize: '40px' }}>schedule</span>
-                </div>
-                <h4 className="fw-bold mb-2">Item Submitted for Approval!</h4>
-                <div className="d-inline-flex align-items-center gap-1 px-3 py-1 rounded-pill mb-3" style={{ background: 'rgba(245, 158, 11, 0.12)', color: '#b45309', fontSize: '0.82rem', fontWeight: 600 }}>
-                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>hourglass_top</span>
-                  <span>⏳ Waiting to be approved (Timer Mark Active)</span>
-                </div>
-                <p className="text-muted small mb-4" style={{ maxWidth: '400px', margin: '0 auto' }}>
-                  Your listing for <strong>"{formData.title}"</strong> has been queued with a timer mark. Campus administrators can review and approve or remove listings.
-                </p>
-                <div className="d-flex justify-content-center gap-2">
-                  <button
-                    type="button"
-                    className="unimart-sell-btn py-2 px-4"
-                    onClick={() => {
-                      setIsPublishedSuccess(false);
-                      setIsSellModalOpen(false);
-                      resetForm();
-                      const catEl = document.getElementById('marketplace-catalog');
-                      if (catEl) catEl.scrollIntoView({ behavior: 'smooth' });
-                    }}
+              editResultType === 'price_only' ? (
+                <div className="text-center py-4">
+                  <div 
+                    className="rounded-circle d-inline-flex align-items-center justify-content-center mb-3"
+                    style={{ width: '72px', height: '72px', background: 'rgba(16, 185, 129, 0.15)', color: '#059669' }}
                   >
-                    <span>View in Submissions / Catalog</span>
-                    <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_forward</span>
-                  </button>
+                    <span className="material-symbols-outlined" style={{ fontSize: '40px' }}>check_circle</span>
+                  </div>
+                  <h4 className="fw-bold mb-2">Price Updated Successfully!</h4>
+                  <div className="d-inline-flex align-items-center gap-1 px-3 py-1 rounded-pill mb-3" style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#047857', fontSize: '0.82rem', fontWeight: 600 }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>verified</span>
+                    <span>Auto-Accepted • Live in Marketplace</span>
+                  </div>
+                  <p className="text-muted small mb-4" style={{ maxWidth: '400px', margin: '0 auto' }}>
+                    The price for <strong>"{formData.title}"</strong> has been updated to <strong>₹{Number(formData.price).toLocaleString('en-IN')}</strong> and remains live for campus buyers.
+                  </p>
+                  <div className="d-flex justify-content-center gap-2">
+                    <button
+                      type="button"
+                      className="unimart-sell-btn py-2 px-4"
+                      onClick={() => {
+                        setIsPublishedSuccess(false);
+                        setIsSellModalOpen(false);
+                        resetForm();
+                      }}
+                    >
+                      <span>Done</span>
+                    </button>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="text-center py-4">
+                  <div 
+                    className="rounded-circle d-inline-flex align-items-center justify-content-center mb-3"
+                    style={{ width: '72px', height: '72px', background: 'rgba(245, 158, 11, 0.15)', color: '#d97706' }}
+                  >
+                    <span className="material-symbols-outlined unimart-timer-pulse" style={{ fontSize: '40px' }}>schedule</span>
+                  </div>
+                  <h4 className="fw-bold mb-2">{isEditing ? 'Edits Submitted for Approval!' : 'Item Submitted for Approval!'}</h4>
+                  <div className="d-inline-flex align-items-center gap-1 px-3 py-1 rounded-pill mb-3" style={{ background: 'rgba(245, 158, 11, 0.12)', color: '#b45309', fontSize: '0.82rem', fontWeight: 600 }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>hourglass_top</span>
+                    <span>⏳ Waiting for Approval (Sent to Admin Panel)</span>
+                  </div>
+                  <p className="text-muted small mb-4" style={{ maxWidth: '400px', margin: '0 auto' }}>
+                    Your updated details for <strong>"{formData.title}"</strong> have been sent to the Admin Panel under <em>Pending Approvals</em>. A campus admin will review and approve the changes.
+                  </p>
+                  <div className="d-flex justify-content-center gap-2">
+                    <button
+                      type="button"
+                      className="unimart-sell-btn py-2 px-4"
+                      onClick={() => {
+                        setIsPublishedSuccess(false);
+                        setIsSellModalOpen(false);
+                        resetForm();
+                        const catEl = document.getElementById('marketplace-catalog');
+                        if (catEl) catEl.scrollIntoView({ behavior: 'smooth' });
+                      }}
+                    >
+                      <span>View in Catalog</span>
+                      <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_forward</span>
+                    </button>
+                  </div>
+                </div>
+              )
             ) : (
               <div>
                 {/* Step 2 Form */}
