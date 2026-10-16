@@ -1,0 +1,214 @@
+/* ================= UNIMART ADMIN DASHBOARD ================= */
+.unimart-admin-page {
+  background-color: #f8fafc;
+  color: #1e293b;
+  min-height: 100vh;
+  width: 100%;
+}
+
+.unimart-admin-container {
+  max-width: 1380px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.unimart-admin-panel {
+  width: 100% !important;
+  display: block !important;
+  text-align: left !important;
+  margin: 0 0 1.5rem 0 !important;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03);
+}
+
+.unimart-admin-header-panel {
+  padding: 1.75rem 2rem;
+}
+
+.unimart-admin-table-panel {
+  overflow: hidden;
+}
+
+.unimart-stat-card {
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  text-align: center;
+  min-width: 150px;
+  border: 1px solid #f1f5f9;
+}
+
+.unimart-stat-card.stat-danger {
+  background: rgba(220, 38, 38, 0.05);
+  border-color: rgba(220, 38, 38, 0.2);
+}
+
+.unimart-stat-card.stat-warning {
+  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.unimart-stat-card.stat-success {
+  background: rgba(16, 185, 129, 0.05);
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+.unimart-pending-icon-bubble {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: rgba(245, 158, 11, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.unimart-admin-pending-panel {
+  border-left: 4px solid #f59e0b;
+  overflow: hidden;
+}
+
+.unimart-pending-row {
+  background-color: rgba(245, 158, 11, 0.02);
+}
+
+.unimart-pending-row:hover {
+  background-color: rgba(245, 158, 11, 0.06) !important;
+}
+
+/* Admin Table Styles */
+.unimart-admin-table-responsive {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.unimart-admin-table {
+  width: 100%;
+  margin-bottom: 0;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.unimart-admin-table thead th {
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap;
+}
+
+.unimart-admin-table tbody td {
+  padding: 1.15rem 1.25rem;
+  vertical-align: middle;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 0.88rem;
+}
+
+.unimart-admin-table tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+.unimart-admin-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.unimart-admin-thumb {
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+  object-fit: cover;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+/* Dark Theme Support */
+[data-theme="dark"] .unimart-admin-page {
+  background-color: #0b0f17;
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .unimart-admin-panel {
+  background: #141b27 !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .unimart-admin-panel .border-bottom {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-theme="dark"] .unimart-admin-panel input.form-control {
+  background-color: #1e293b !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] .unimart-admin-panel input.form-control::placeholder {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .unimart-admin-panel .input-group-text {
+  color: #94a3b8;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+[data-theme="dark"] .unimart-admin-table {
+  --bs-table-bg: transparent;
+  --bs-table-color: #f1f5f9;
+  --bs-table-hover-bg: rgba(255, 255, 255, 0.04);
+  --bs-table-hover-color: #f1f5f9;
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .unimart-admin-table thead th {
+  background: #0f1520 !important;
+  color: #94a3b8 !important;
+  border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-theme="dark"] .unimart-admin-table tbody td {
+  background: transparent !important;
+  border-bottom-color: rgba(255, 255, 255, 0.06) !important;
+  color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] .unimart-admin-table tbody td .text-dark {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .unimart-admin-table tbody td .badge.bg-light {
+  background-color: rgba(255, 255, 255, 0.07) !important;
+  color: #cbd5e1 !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+[data-theme="dark"] .unimart-admin-table tbody td .rounded-circle {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] .unimart-stat-card {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .unimart-stat-card.stat-warning {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.28);
+}
+
+[data-theme="dark"] .unimart-pending-row {
+  background-color: rgba(245, 158, 11, 0.05);
+}
+
+[data-theme="dark"] .unimart-pending-row:hover {
+  background-color: rgba(245, 158, 11, 0.1) !important;
+}
+
+[data-theme="dark"] .unimart-admin-thumb {
+  border-color: rgba(255, 255, 255, 0.1);
+}

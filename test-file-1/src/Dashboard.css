@@ -1,0 +1,2463 @@
+/* UNIMART - Desktop E-Commerce Campus Dashboard
+   Palette: Subtle Maroon (#70182c) + Clean White + Soft Pastel Category Tones
+   Completely Static Edition: No zooming/movement animations, no images, Indian Rupee (₹), static tabs
+*/
+
+:root {
+  --unimart-maroon: #70182c;
+  --unimart-maroon-dark: #4e0f1e;
+  --unimart-maroon-light: #8e233b;
+  --unimart-maroon-subtle: #fbf3f5;
+  --unimart-maroon-border: #edd2d7;
+  --unimart-maroon-glow: rgba(112, 24, 44, 0.12);
+  --unimart-text-dark: #181b20;
+  --unimart-text-muted: #646b79;
+  --unimart-bg: #faf7f8;
+  --card-radius: 22px;
+}
+
+.unimart-dashboard-wrap {
+  min-height: 100vh;
+  background-color: #fafbfc;
+  color: var(--unimart-text-dark);
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ================= DASHBOARD TOP NAVBAR ================= */
+.unimart-dash-nav {
+  position: sticky;
+  top: 0;
+  background: rgba(255, 255, 255, 0.98);
+  border-bottom: 1px solid rgba(112, 24, 44, 0.08);
+  padding: 0.85rem 2.5rem;
+  z-index: 100;
+}
+
+.unimart-logo-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  text-decoration: none;
+  font-weight: 800;
+  font-size: 1.35rem;
+  color: var(--unimart-text-dark);
+  letter-spacing: -0.02em;
+}
+
+.unimart-logo-badge {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--unimart-maroon) 0%, var(--unimart-maroon-dark) 100%);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px var(--unimart-maroon-glow);
+}
+
+/* Search bar with category select (Interactive & Responsive) */
+.unimart-search-bar {
+  display: flex;
+  align-items: center;
+  background: #f3f5f8;
+  border: 1.5px solid #e3e7ee;
+  border-radius: 999px;
+  padding: 0.3rem 0.6rem 0.3rem 1.25rem;
+  width: 100%;
+  max-width: 520px;
+  transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.unimart-search-bar:focus-within {
+  background: #ffffff;
+  border-color: var(--unimart-maroon);
+  box-shadow: 0 0 0 3.5px var(--unimart-maroon-glow);
+}
+
+.unimart-search-input {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 0.92rem;
+  color: var(--unimart-text-dark);
+  flex: 1;
+  padding: 0.35rem 0;
+  cursor: text;
+}
+
+.unimart-search-cat-static {
+  background: #e5e9ef;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #4b5260;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  margin-right: 0.35rem;
+  user-select: none;
+}
+
+.unimart-search-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: none;
+  background: var(--unimart-maroon);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: default;
+}
+
+/* Sell button & nav actions (No movement transforms) */
+.unimart-sell-btn {
+  background: linear-gradient(135deg, var(--unimart-maroon) 0%, var(--unimart-maroon-dark) 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.885rem;
+  padding: 0.55rem 1.25rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+  box-shadow: 0 4px 14px var(--unimart-maroon-glow);
+}
+
+.unimart-icon-action-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid #e3e6ec;
+  background: #ffffff;
+  color: var(--unimart-text-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  cursor: default;
+}
+
+.unimart-badge-count {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  background: var(--unimart-maroon);
+  color: #ffffff;
+  font-size: 0.65rem;
+  font-weight: 800;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #ffffff;
+}
+
+.unimart-user-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.3rem 0.85rem 0.3rem 0.45rem;
+  border: 1px solid #e3e6ec;
+  border-radius: 999px;
+  background: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.unimart-user-chip:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.unimart-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #ffd6df;
+  color: var(--unimart-maroon);
+  font-weight: 800;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* 3 Lines inside profile chip */
+.unimart-chip-lines {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  line-height: 1.15;
+}
+
+.unimart-chip-name {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #1e293b;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.unimart-chip-roll {
+  font-size: 0.68rem;
+  color: #64748b;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.unimart-chip-role {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #70182c; /* maroon */
+  white-space: nowrap;
+}
+
+/* On mobile (<768px): Show only avatar circle, 3 lines appear in dropdown */
+@media (max-width: 768px) {
+  .unimart-chip-lines {
+    display: none !important;
+  }
+  .unimart-user-chip {
+    padding: 0.25rem !important;
+    gap: 0 !important;
+  }
+}
+
+/* Profile Dropdown Menu */
+.unimart-profile-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 255px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+  z-index: 1050;
+  overflow: hidden;
+  animation: unimartFadeDown 0.18s ease-out;
+}
+
+@keyframes unimartFadeDown {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.unimart-profile-dropdown .dropdown-item {
+  cursor: pointer;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  transition: background 0.15s ease;
+}
+
+.unimart-profile-dropdown .dropdown-item:hover {
+  background: #f8fafc;
+}
+
+.unimart-profile-dropdown .dropdown-item.active {
+  background: rgba(112, 24, 44, 0.08);
+  color: #70182c;
+}
+
+/* ================= SUB-NAVIGATION CATEGORY TABS (STATIC) ================= */
+.unimart-subnav {
+  background: #ffffff;
+  border-bottom: 1px solid rgba(112, 24, 44, 0.06);
+  padding: 0.75rem 2.5rem;
+}
+
+.unimart-cat-pills {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.unimart-pill-tab {
+  border: 1.5px solid #eaedf3;
+  background: #ffffff;
+  color: var(--unimart-text-dark);
+  font-size: 0.865rem;
+  font-weight: 600;
+  padding: 0.45rem 1rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  user-select: none;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.unimart-pill-tab:hover {
+  background: var(--unimart-maroon-subtle);
+  border-color: var(--unimart-maroon-border);
+  color: var(--unimart-maroon);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 18px rgba(112, 24, 44, 0.15), 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.unimart-pill-tab:hover .unimart-tab-count-tag {
+  background: rgba(112, 24, 44, 0.12);
+  color: var(--unimart-maroon);
+}
+
+.static-tab {
+  cursor: pointer !important;
+}
+
+.unimart-tab-count-tag {
+  font-size: 0.72rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--unimart-text-muted);
+  font-weight: 700;
+  margin-left: 0.25rem;
+  transition: all 0.2s ease;
+}
+
+.unimart-pill-tab.active {
+  background: var(--unimart-maroon);
+  color: #ffffff;
+  border-color: var(--unimart-maroon);
+  box-shadow: 0 4px 12px var(--unimart-maroon-glow);
+}
+
+.unimart-pill-tab.active:hover {
+  background: linear-gradient(135deg, var(--unimart-maroon-light) 0%, var(--unimart-maroon) 100%);
+  border-color: var(--unimart-maroon-light);
+  color: #ffffff;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(112, 24, 44, 0.28);
+}
+
+.unimart-pill-tab.active .unimart-tab-count-tag {
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+}
+
+.unimart-pill-tab.active:hover .unimart-tab-count-tag {
+  background: rgba(255, 255, 255, 0.32);
+  color: #ffffff;
+}
+
+/* ================= HERO SPOTLIGHT: PASTEL 3D CARDS (STATIC, NO HOVER MOVEMENT) ================= */
+.unimart-hero-grid {
+  display: grid;
+  grid-template-columns: 1.25fr 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+}
+
+@media (max-width: 1100px) {
+  .unimart-hero-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .unimart-hero-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.unimart-spotlight-card {
+  border-radius: var(--card-radius);
+  padding: 2rem 2.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 310px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.03);
+  cursor: pointer;
+  transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.32s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.28s ease;
+}
+
+.unimart-spotlight-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.08);
+}
+
+.unimart-spotlight-card.active-spotlight {
+  box-shadow: 0 0 0 2.5px var(--unimart-maroon), 0 16px 32px rgba(112, 24, 44, 0.15);
+}
+
+/* Specific pastel palettes */
+.card-lime-yellow {
+  background: linear-gradient(145deg, #eef6ca 0%, #e6f1b8 100%);
+  border: 1px solid #dbe89f;
+}
+
+.card-sky-blue {
+  background: linear-gradient(145deg, #dcf0fb 0%, #cce8f8 100%);
+  border: 1px solid #b7ddf5;
+}
+
+.card-soft-pink {
+  background: linear-gradient(145deg, #fcdde6 0%, #f9cad7 100%);
+  border: 1px solid #f2b3c4;
+}
+
+.unimart-card-serif-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-style: italic;
+  font-weight: 700;
+  font-size: 2.25rem;
+  color: #1e2229;
+  line-height: 1.15;
+  margin-bottom: 0.35rem;
+}
+
+.unimart-card-subtitle {
+  font-size: 0.95rem;
+  color: #4b5363;
+  font-weight: 500;
+}
+
+.unimart-card-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: rgba(255, 255, 255, 0.85);
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #1e2025;
+  margin-bottom: 1rem;
+}
+
+.unimart-view-all-pill {
+  border: 1.5px solid rgba(30, 32, 37, 0.25);
+  background: rgba(255, 255, 255, 0.85);
+  color: #1e2025;
+  font-weight: 700;
+  font-size: 0.885rem;
+  padding: 0.55rem 1.35rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  align-self: flex-start;
+  margin-top: auto;
+  user-select: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.unimart-spotlight-card:hover .unimart-view-all-pill {
+  background: #ffffff;
+  border-color: var(--unimart-maroon);
+  color: var(--unimart-maroon);
+}
+
+.unimart-card-art-icon {
+  position: absolute;
+  bottom: 1.25rem;
+  right: 1.5rem;
+  font-size: 6rem;
+  opacity: 0.85;
+  user-select: none;
+  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.08));
+}
+
+/* ================= PRODUCTS GRID ================= */
+.unimart-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.unimart-section-title {
+  font-size: 1.45rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--unimart-text-dark);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.unimart-products-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 3rem;
+}
+
+@media (max-width: 1180px) {
+  .unimart-products-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 920px) {
+  .unimart-products-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 680px) {
+  .unimart-products-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.85rem;
+  }
+}
+
+@media (max-width: 460px) {
+  .unimart-products-grid {
+    grid-template-columns: 1fr;
+    gap: 0.85rem;
+  }
+}
+
+/* ================= PRODUCT CARD (Category Translucency + Hotstar OTT Hover Popup) ================= */
+.unimart-product-card {
+  --cat-accent: #a855f7;
+  --cat-tint-bg: #9333ea;
+  --cat-glow-grad: linear-gradient(90deg, #e9d5ff 0%, #c084fc 60%, #9333ea 100%);
+  --cat-glow-rgb: 168, 85, 247;
+  --cat-badge-bg: #faf5ff;
+  --cat-badge-color: #7e22ce;
+  position: relative;
+  overflow: visible;
+  cursor: pointer;
+  z-index: 1;
+}
+
+/* Category: Textbooks (Academic - Warm Golden Yellow) */
+.unimart-product-card.theme-academic {
+  --cat-accent: #eab308;
+  --cat-tint-bg: #ca8a04;
+  --cat-glow-grad: linear-gradient(90deg, #fef08a 0%, #facc15 60%, #ca8a04 100%);
+  --cat-glow-rgb: 234, 179, 8;
+  --cat-badge-bg: #fefce8;
+  --cat-badge-color: #a16207;
+}
+
+/* Category: Handmade Crafts (Artisan - Rose / Soft Pink) */
+.unimart-product-card.theme-crafts {
+  --cat-accent: #ec4899;
+  --cat-tint-bg: #db2777;
+  --cat-glow-grad: linear-gradient(90deg, #fbcfe8 0%, #f472b6 60%, #db2777 100%);
+  --cat-glow-rgb: 236, 72, 153;
+  --cat-badge-bg: #fdf2f8;
+  --cat-badge-color: #be185d;
+}
+
+/* Category: Machinery & Tech (Tools & Lab - Electric Sky Blue) */
+.unimart-product-card.theme-tech {
+  --cat-accent: #0ea5e9;
+  --cat-tint-bg: #0284c7;
+  --cat-glow-grad: linear-gradient(90deg, #bae6fd 0%, #38bdf8 60%, #0284c7 100%);
+  --cat-glow-rgb: 14, 165, 233;
+  --cat-badge-bg: #f0f9ff;
+  --cat-badge-color: #0369a1;
+}
+
+/* Category: Perfumes & Scents (Fragrance - Royal Violet / Purple) */
+.unimart-product-card.theme-scents {
+  --cat-accent: #a855f7;
+  --cat-tint-bg: #9333ea;
+  --cat-glow-grad: linear-gradient(90deg, #e9d5ff 0%, #c084fc 60%, #9333ea 100%);
+  --cat-glow-rgb: 168, 85, 247;
+  --cat-badge-bg: #faf5ff;
+  --cat-badge-color: #7e22ce;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .unimart-product-card:is(:hover, .is-hovered) {
+    z-index: 50;
+  }
+}
+.unimart-product-card.is-hovered {
+  z-index: 50;
+}
+
+.unimart-card-inner {
+  background: #ffffff;
+  border: 1px solid #e7ebf0;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  height: 100%;
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), border-radius 0.3s, border-color 0.3s;
+  cursor: pointer;
+}
+
+.unimart-card-top-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  border-radius: 20px;
+  overflow: hidden;
+  background: #ffffff;
+  transition: border-radius 0.3s;
+}
+
+.unimart-product-card:is(:hover, .is-hovered) .unimart-card-inner {
+  transform: scale(1.1) translateY(-6px);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.25);
+  border-bottom-left-radius: 20px;
+  border-bottom-right-radius: 20px;
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.unimart-product-card:is(:hover, .is-hovered) .unimart-card-top-content {
+  background: transparent;
+  border-bottom-left-radius: 20px;
+  border-bottom-right-radius: 20px;
+}
+
+.unimart-product-card:is(:hover, .is-hovered) .unimart-card-body {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Academic (Green - Dark Forest Gradient) */
+.unimart-product-card:has(.theme-academic):is(:hover, .is-hovered) .unimart-expanded-details,
+.unimart-product-card.theme-academic:is(:hover, .is-hovered) .unimart-expanded-details {
+  background: linear-gradient(180deg, #101913 0%, #060b08 100%);
+  border-color: #16261d;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.45), 0 16px 28px rgba(52, 211, 153, 0.16);
+}
+
+/* Crafts (Pink - Dark Plum/Wine Gradient) */
+.unimart-product-card:has(.theme-crafts):is(:hover, .is-hovered) .unimart-expanded-details,
+.unimart-product-card.theme-crafts:is(:hover, .is-hovered) .unimart-expanded-details {
+  background: linear-gradient(180deg, #1a0d16 0%, #0a0408 100%);
+  border-color: #2b1424;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.45), 0 16px 28px rgba(244, 114, 182, 0.16);
+}
+
+/* Tech (Blue - Dark Midnight Cyan/Navy Gradient) */
+.unimart-product-card:has(.theme-tech):is(:hover, .is-hovered) .unimart-expanded-details,
+.unimart-product-card.theme-tech:is(:hover, .is-hovered) .unimart-expanded-details {
+  background: linear-gradient(180deg, #09131d 0%, #04080d 100%);
+  border-color: #0f1d2b;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.45), 0 16px 28px rgba(56, 189, 248, 0.16);
+}
+
+/* Scents (Purple - Dark Violet Gradient) */
+.unimart-product-card:has(.theme-scents):is(:hover, .is-hovered) .unimart-expanded-details,
+.unimart-product-card.theme-scents:is(:hover, .is-hovered) .unimart-expanded-details {
+  background: linear-gradient(180deg, #140c1e 0%, #07030c 100%);
+  border-color: #211332;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.45), 0 16px 28px rgba(192, 132, 252, 0.16);
+}
+
+/* --- Image & Graphic Placeholder Area --- */
+.unimart-card-placeholder-wrap,
+.unimart-card-image-wrap {
+  height: 175px;
+  position: relative;
+  overflow: hidden;
+  background: #ffffff;
+  /* Clean white backdrop keeps the image bright and crisp */
+}
+
+/* Translucent picture with delicate category infusion */
+.unimart-card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.35;
+  filter: contrast(0.98) brightness(1.02);
+  transition: transform 0.4s ease;
+}
+
+/* Translucent category color tint wash (Soft & delicate, exactly like screenshot) */
+.unimart-category-translucent-tint {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg,
+      rgba(var(--cat-glow-rgb), 0.12) 0%,
+      rgba(var(--cat-glow-rgb), 0.26) 100%);
+  pointer-events: none;
+  mix-blend-mode: multiply;
+}
+
+/* Clean category top border strip */
+.unimart-card-glow-border {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3.5px;
+  background: var(--cat-accent);
+  border-radius: 20px 20px 0 0;
+  z-index: 5;
+  opacity: 1;
+}
+
+/* Condition badge - top left (Freshly Crafted) */
+.unimart-condition-badge {
+  position: absolute;
+  top: 0.85rem;
+  left: 0.85rem;
+  background: #ffffff;
+  color: #111827;
+  font-size: 0.735rem;
+  font-weight: 700;
+  padding: 0.32rem 0.8rem;
+  border-radius: 999px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  z-index: 3;
+}
+
+/* Wishlist heart - top right (Outline heart) */
+.unimart-wishlist-btn {
+  position: absolute;
+  top: 0.85rem;
+  right: 0.85rem;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: #ffffff;
+  color: #334155;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 3;
+  transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.unimart-wishlist-btn:hover {
+  color: #ef4444;
+  background: #ffffff;
+  transform: scale(1.1);
+}
+
+/* Multi-photo card navigation arrows & indicator */
+.unimart-card-nav-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(4px);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 12;
+  transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  padding: 0;
+}
+
+.unimart-card-nav-arrow:hover {
+  background: rgba(15, 23, 42, 0.95);
+  color: #ffffff;
+  transform: translateY(-50%) scale(1.1);
+  border-color: rgba(255, 255, 255, 0.85);
+}
+
+.unimart-card-nav-prev {
+  left: 8px;
+}
+
+.unimart-card-nav-next {
+  right: 8px;
+}
+
+.unimart-card-photo-counter {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(4px);
+  color: #ffffff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.18rem 0.5rem;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  z-index: 10;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.unimart-card-photo-dots {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  z-index: 10;
+}
+
+.unimart-card-photo-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.45);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.unimart-card-photo-dot.active {
+  width: 14px;
+  border-radius: 999px;
+  background: #ffffff;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.8);
+}
+
+/* Floating center icon box */
+.unimart-floating-icon-box {
+  position: absolute;
+  bottom: 46px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  z-index: 3;
+}
+
+.unimart-floating-icon {
+  font-size: 28px !important;
+  color: var(--cat-accent);
+}
+
+/* Floating notes label */
+.unimart-floating-notes-label {
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  padding: 0.26rem 0.85rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(6px);
+  color: #374151;
+  white-space: nowrap;
+  z-index: 3;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* ================= RESTING CARD BODY ================= */
+.unimart-card-body {
+  padding: 1rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  background: #ffffff;
+  min-height: 220px;
+}
+
+.unimart-card-category {
+  font-size: 0.735rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--unimart-maroon);
+}
+
+.unimart-badge-chip {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  background: #f0f4f8;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+
+.unimart-card-title {
+  font-size: 0.985rem;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1.36;
+  margin-top: 0.4rem;
+  margin-bottom: 0.4rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.unimart-seller-info {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-bottom: 0.6rem;
+}
+
+.unimart-price-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+  padding-top: 0.5rem;
+}
+
+.unimart-current-price {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--unimart-maroon);
+}
+
+.unimart-orig-price {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  text-decoration: line-through;
+  margin-left: 0.45rem;
+}
+
+.unimart-discount-tag {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #15803d;
+  background: #dcfce7;
+  padding: 0.15rem 0.45rem;
+  border-radius: 6px;
+  margin-left: 0.45rem;
+}
+
+.unimart-add-cart-btn {
+  border: 1.5px solid #fee2e2;
+  background: #ffffff;
+  color: var(--unimart-maroon);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.unimart-add-cart-btn:hover {
+  background: var(--unimart-maroon);
+  color: #ffffff;
+  border-color: var(--unimart-maroon);
+}
+
+/* My Listings Card Icon Action Buttons (✏️ Edit & 🗑️ Delete) */
+.unimart-my-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.unimart-card-icon-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1.5px solid #e2e8f0;
+  background: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.04);
+}
+
+.unimart-card-icon-btn.unimart-btn-edit {
+  color: #2563eb;
+}
+
+.unimart-card-icon-btn.unimart-btn-edit:hover {
+  background: #eff6ff;
+  border-color: #93c5fd;
+  color: #1d4ed8;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
+}
+
+.unimart-card-icon-btn.unimart-btn-delete {
+  color: #dc2626;
+}
+
+.unimart-card-icon-btn.unimart-btn-delete:hover {
+  background: #fef2f2;
+  border-color: #fca5a5;
+  color: #b91c1c;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(220, 38, 38, 0.2);
+}
+
+/* ================= EXPANDED DETAILS SECTION (bhrigav-react HOVER CARDS) ================= */
+.unimart-expanded-details {
+  position: absolute;
+  top: 175px;
+  bottom: -1px;
+  margin-top: -1px;
+  left: -1px;
+  right: -1px;
+  background: linear-gradient(180deg, #101713 0%, #060a08 100%);
+  border: 1px solid #141f18;
+  border-top: none;
+  border-radius: 0 0 20px 20px;
+  padding: 1rem 1.1rem;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0.3s, border-color 0.3s, box-shadow 0.3s;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.35);
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Synced ambient light bleeding from the image into the description */
+.unimart-expanded-details::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 85px;
+  background-image: var(--card-img);
+  background-size: cover;
+  background-position: bottom;
+  filter: blur(16px);
+  opacity: 0.25;
+  z-index: 0;
+  -webkit-mask-image: linear-gradient(to bottom, black 0%, transparent 100%);
+  mask-image: linear-gradient(to bottom, black 0%, transparent 100%);
+  pointer-events: none;
+}
+
+.unimart-product-card:is(:hover, .is-hovered) .unimart-expanded-details {
+  opacity: 1;
+  visibility: visible;
+}
+
+.unimart-expanded-title,
+.unimart-expanded-meta,
+.unimart-expanded-desc,
+.unimart-expanded-price-row,
+.unimart-expanded-actions {
+  position: relative;
+  z-index: 1;
+}
+
+.unimart-expanded-title {
+  color: #ffffff;
+  font-size: 0.985rem;
+  font-weight: 700;
+  line-height: 1.3;
+  margin: 0 0 0.35rem 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.unimart-expanded-meta {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.45rem;
+  color: #a0aec0;
+}
+
+.unimart-expanded-desc {
+  font-size: 0.8rem;
+  color: #b0b8bc;
+  line-height: 1.35;
+  margin: 0 0 0.65rem 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.unimart-expanded-price-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.85rem;
+}
+
+.unimart-expanded-price {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.unimart-expanded-location {
+  font-size: 0.725rem;
+  color: #b0b8bc;
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.unimart-expanded-actions {
+  display: flex;
+  gap: 0.35rem;
+  align-items: center;
+  margin-top: auto;
+}
+
+.unimart-btn-secondary {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 0.48rem 0.35rem;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  transition: background 0.2s;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.unimart-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.unimart-btn-primary {
+  flex: 1;
+  background: var(--unimart-maroon);
+  color: #fff;
+  border: 1px solid var(--unimart-maroon);
+  padding: 0.48rem 0.35rem;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  transition: background 0.2s;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.unimart-btn-primary:hover {
+  background: var(--unimart-maroon-dark);
+}
+
+.unimart-btn-icon {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.unimart-btn-icon:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* ================= SELL MODAL ================= */
+.unimart-sell-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(18, 10, 14, 0.55);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050;
+  padding: 1.5rem;
+}
+
+.unimart-sell-modal-box {
+  width: 100%;
+  max-width: 580px;
+  background: #ffffff;
+  border-radius: 28px;
+  border: 1px solid var(--unimart-maroon-border);
+  box-shadow: 0 24px 60px rgba(112, 24, 44, 0.16);
+  padding: 2.5rem 2.25rem;
+  position: relative;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.unimart-close-btn {
+  background: #f1f3f7;
+  border: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #5b6270;
+}
+
+/* Sell Modal Step Flow & Stage 1 Styles */
+.unimart-step-indicator-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-bottom: 1.25rem;
+}
+
+.unimart-step-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.35rem 0.85rem;
+  background: var(--unimart-maroon-subtle);
+  border: 1px solid var(--unimart-maroon-border);
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.unimart-step-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.unimart-step-pill.active {
+  color: var(--unimart-maroon);
+  font-weight: 700;
+}
+
+.unimart-step-pill.inactive {
+  color: var(--unimart-text-muted);
+  font-weight: 500;
+}
+
+.unimart-step-num {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.unimart-step-pill.active .unimart-step-num {
+  background: var(--unimart-maroon);
+  color: #ffffff;
+}
+
+.unimart-step-pill.inactive .unimart-step-num {
+  background: #e2e8f0;
+  color: #64748b;
+}
+
+.unimart-step-divider {
+  color: #cbd5e1;
+  font-weight: 400;
+}
+
+.unimart-req-asterisk {
+  color: var(--unimart-maroon);
+  font-weight: 700;
+  margin-left: 0.2rem;
+}
+
+.unimart-condition-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border: 1px solid var(--unimart-maroon-border);
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(112, 24, 44, 0.12);
+  z-index: 1060;
+  max-height: 250px;
+  overflow-y: auto;
+  margin-top: 4px;
+}
+
+.unimart-condition-item {
+  padding: 0.6rem 0.9rem;
+  border-bottom: 1px solid #f1f5f9;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.unimart-condition-item:last-child {
+  border-bottom: none;
+}
+
+.unimart-condition-item:hover {
+  background: var(--unimart-maroon-subtle);
+}
+
+.unimart-condition-item.selected {
+  background: rgba(112, 24, 44, 0.08);
+  border-left: 3px solid var(--unimart-maroon);
+}
+
+.unimart-condition-name {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--unimart-text-dark);
+}
+
+.unimart-condition-hint {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.unimart-char-counter {
+  font-size: 0.75rem;
+  color: var(--unimart-text-muted);
+}
+
+/* Stage 2 Photo Upload & Review Summary Styles */
+.unimart-review-summary-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 0.85rem 1.15rem;
+  transition: all 0.2s ease;
+}
+
+.unimart-review-summary-card:hover {
+  border-color: #cbd5e1;
+}
+
+.unimart-photo-dropzone {
+  border: 2px dashed #cbd5e1;
+  border-radius: 16px;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  background: #ffffff;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.unimart-photo-dropzone:hover,
+.unimart-photo-dropzone.dragging {
+  border-color: var(--unimart-maroon);
+  background: var(--unimart-maroon-subtle);
+  transform: translateY(-1px);
+}
+
+.unimart-dropzone-icon-wrap {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: var(--unimart-maroon-subtle);
+  color: var(--unimart-maroon);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.25s ease;
+}
+
+.unimart-photo-dropzone:hover .unimart-dropzone-icon-wrap {
+  transform: scale(1.08);
+}
+
+.unimart-sample-photo-pill {
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #334155;
+  border-radius: 999px;
+  padding: 0.35rem 0.8rem;
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.unimart-sample-photo-pill:hover:not(:disabled) {
+  background: var(--unimart-maroon-subtle);
+  border-color: var(--unimart-maroon-border);
+  color: var(--unimart-maroon);
+  transform: translateY(-1px);
+}
+
+.unimart-sample-photo-pill:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.unimart-photo-previews-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+}
+
+.unimart-photo-preview-item {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  background: #f1f5f9;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.unimart-photo-preview-item:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.unimart-photo-preview-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.unimart-cover-badge {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  background: rgba(15, 23, 42, 0.85);
+  color: #facc15;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 6px;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  letter-spacing: 0.4px;
+}
+
+.unimart-photo-remove-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(15, 23, 42, 0.75);
+  color: #ffffff;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.unimart-photo-remove-btn:hover {
+  background: #e11d48;
+  transform: scale(1.15);
+}
+
+/* Photo Reorder Controls */
+.unimart-photo-reorder-bar {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  z-index: 2;
+}
+
+.unimart-photo-move-btn {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(15, 23, 42, 0.75);
+  color: #ffffff;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  padding: 0;
+}
+
+.unimart-photo-move-btn:hover {
+  background: #2563eb;
+  transform: scale(1.15);
+}
+
+/* ================= WAITING TO BE APPROVED (TIMER MARK) & ADMIN CONTROLS ================= */
+
+/* Timer Pulse Micro-Animation */
+@keyframes unimartTimerPulse {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.14); opacity: 0.82; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.unimart-timer-pulse {
+  animation: unimartTimerPulse 2s ease-in-out infinite;
+  display: inline-block;
+}
+
+/* Timer Badge on Card Image */
+.unimart-pending-timer-badge {
+  position: absolute;
+  top: 12px;
+  right: 48px;
+  background: rgba(245, 158, 11, 0.94);
+  color: #78350f;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.4);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  z-index: 5;
+  letter-spacing: 0.2px;
+}
+
+/* Pending Notice Strip in Resting Card Body */
+.unimart-pending-strip {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 10px;
+  padding: 0.4rem 0.65rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.chip-pending {
+  background: #fef3c7 !important;
+  color: #92400e !important;
+  border-color: #fde68a !important;
+}
+
+/* Subnav Pending Pill */
+.unimart-pill-pending {
+  border-color: #fde68a !important;
+  background: #fffbeb !important;
+  color: #92400e !important;
+}
+
+.unimart-pill-pending.active {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+  color: #ffffff !important;
+  border-color: #f59e0b !important;
+}
+
+.unimart-pill-pending .count-pending {
+  background: #fde68a !important;
+  color: #78350f !important;
+}
+
+.unimart-pill-pending.active .count-pending {
+  background: rgba(255, 255, 255, 0.25) !important;
+  color: #ffffff !important;
+}
+
+/* Admin / Student Role Toggle Pill in Navbar */
+.unimart-role-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.32rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  border: 1.5px solid #e2e8f0;
+  background: #ffffff;
+  color: #475569;
+}
+
+.unimart-role-toggle-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.unimart-role-toggle-btn.admin-active {
+  background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+  border-color: #ef4444;
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.35);
+}
+
+.unimart-role-pill-indicator {
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 6px;
+  letter-spacing: 0.5px;
+}
+
+.unimart-role-pill-indicator.on {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+.unimart-role-pill-indicator.off {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.admin-avatar {
+  background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%) !important;
+  color: #ffffff !important;
+  font-weight: 800 !important;
+}
+
+/* Admin Card Actions (Resting Card) */
+.unimart-admin-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-top-color: #f1f5f9 !important;
+}
+
+.unimart-admin-btn-remove {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 8px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.unimart-admin-btn-remove:hover {
+  background: #dc2626;
+  border-color: #dc2626;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
+}
+
+.unimart-admin-btn-approve {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 8px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #16a34a;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.unimart-admin-btn-approve:hover {
+  background: #16a34a;
+  border-color: #16a34a;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(22, 163, 74, 0.3);
+}
+
+/* OTT Popup Pending and Admin Bar */
+.unimart-popup-btn-pending {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1rem;
+  border-radius: 999px;
+  background: rgba(245, 158, 11, 0.2);
+  border: 1px solid rgba(245, 158, 11, 0.5);
+  color: #fde68a;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: not-allowed;
+}
+
+.unimart-popup-admin-bar {
+  border-top-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+.unimart-admin-popup-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #f87171;
+}
+
+/* Admin Toast Alert Banner */
+.unimart-admin-toast {
+  padding: 0.85rem 1.25rem;
+  border-radius: 14px;
+  animation: fadeInDown 0.3s ease;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+
+.unimart-admin-toast.toast-danger {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+}
+
+.unimart-admin-toast.toast-success {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+}
+
+/* Footer */
+.unimart-dash-footer {
+  padding: 2rem 3rem;
+  background: #ffffff;
+  border-top: 1px solid rgba(112, 24, 44, 0.08);
+  font-size: 0.85rem;
+  color: var(--unimart-text-muted);
+  margin-top: auto;
+}
+
+/* ================= EMPTY STATE ================= */
+.unimart-empty-state {
+  background: #ffffff;
+  border: 1.5px dashed #cbd5e1;
+  border-radius: 24px;
+  padding: 4.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 3rem;
+  text-align: center;
+}
+
+.unimart-empty-icon-box {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--unimart-maroon-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.25rem;
+}
+
+/* ==========================================================================
+   DARK THEME STYLES ([data-theme="dark"])
+   High-contrast, luxury dark aesthetic that harmonizes with OTT card popups
+   ========================================================================== */
+
+[data-theme="dark"] {
+  --unimart-maroon: #e11d48;
+  --unimart-maroon-dark: #be123c;
+  --unimart-maroon-light: #fb7185;
+  --unimart-maroon-subtle: rgba(225, 29, 72, 0.14);
+  --unimart-maroon-border: rgba(225, 29, 72, 0.32);
+  --unimart-maroon-glow: rgba(225, 29, 72, 0.35);
+  --unimart-text-dark: #f8fafc;
+  --unimart-text-muted: #94a3b8;
+  --unimart-bg: #0b0e14;
+}
+
+[data-theme="dark"] body {
+  background-color: #0b0e14;
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .unimart-dashboard-wrap {
+  background-color: #0b0e14;
+  color: #f8fafc;
+}
+
+/* --- Dark Theme Top Navbar & Search --- */
+[data-theme="dark"] .unimart-dash-nav {
+  background: rgba(11, 14, 20, 0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .unimart-logo-group {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .unimart-search-bar {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+[data-theme="dark"] .unimart-search-bar:focus-within {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: #e11d48;
+  box-shadow: 0 0 0 3.5px rgba(225, 29, 72, 0.25);
+}
+
+[data-theme="dark"] .unimart-search-input {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .unimart-search-input::placeholder {
+  color: #64748b;
+}
+
+[data-theme="dark"] .unimart-search-cat-static {
+  background: rgba(255, 255, 255, 0.1);
+  color: #cbd5e1;
+}
+
+/* --- Dark Theme Header Actions --- */
+[data-theme="dark"] .unimart-icon-action-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #f1f5f9;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+[data-theme="dark"] .unimart-icon-action-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.24);
+  color: #ffffff;
+}
+
+[data-theme="dark"] .unimart-theme-toggle-btn .material-symbols-outlined {
+  color: #facc15;
+}
+
+[data-theme="dark"] .unimart-badge-count {
+  border-color: #0b0e14;
+}
+
+[data-theme="dark"] .unimart-user-chip {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .unimart-user-chip:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+[data-theme="dark"] .unimart-chip-name {
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .unimart-chip-roll {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .unimart-chip-role {
+  color: #fb7185;
+}
+
+[data-theme="dark"] .unimart-profile-dropdown {
+  background: #1e293b;
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #f8fafc;
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .unimart-profile-dropdown .dropdown-item {
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .unimart-profile-dropdown .dropdown-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .unimart-profile-dropdown .dropdown-item.active {
+  background: rgba(225, 29, 72, 0.18);
+  color: #fb7185;
+}
+
+[data-theme="dark"] .unimart-profile-dropdown .border-bottom {
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+[data-theme="dark"] .unimart-avatar {
+  background: rgba(225, 29, 72, 0.25);
+  color: #fb7185;
+}
+
+/* --- Dark Theme Subnav & Category Tabs --- */
+[data-theme="dark"] .unimart-subnav {
+  background: rgba(15, 20, 29, 0.72);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+[data-theme="dark"] .unimart-pill-tab {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .unimart-pill-tab .unimart-tab-count-tag {
+  background: rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .unimart-pill-tab:hover {
+  background: rgba(225, 29, 72, 0.15);
+  border-color: rgba(225, 29, 72, 0.35);
+  color: #fb7185;
+}
+
+[data-theme="dark"] .unimart-pill-tab:hover .unimart-tab-count-tag {
+  background: rgba(225, 29, 72, 0.22);
+  color: #fb7185;
+}
+
+[data-theme="dark"] .unimart-pill-tab.active {
+  background: linear-gradient(135deg, #e11d48 0%, #be123c 100%);
+  color: #ffffff;
+  border-color: #f43f5e;
+  box-shadow: 0 4px 16px rgba(225, 29, 72, 0.35);
+}
+
+[data-theme="dark"] .unimart-pill-tab.active .unimart-tab-count-tag {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+[data-theme="dark"] .unimart-mobile-search-bar {
+  background: #0b0e14 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+/* --- Dark Theme Hero Section & Spotlight 3D Cards --- */
+[data-theme="dark"] .unimart-dashboard-wrap h1,
+[data-theme="dark"] .unimart-dashboard-wrap h2,
+[data-theme="dark"] .unimart-dashboard-wrap h3,
+[data-theme="dark"] .unimart-dashboard-wrap h4 {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .unimart-dashboard-wrap .text-muted,
+[data-theme="dark"] .unimart-dashboard-wrap p.text-muted {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .unimart-dashboard-wrap .border.rounded-pill {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  color: #cbd5e1 !important;
+}
+
+/* Lime-Yellow Spotlight Card in Dark Mode (Luminous chartreuse on deep olive slate) */
+[data-theme="dark"] .card-lime-yellow {
+  background: linear-gradient(145deg, #172312 0%, #0d170a 100%);
+  border: 1px solid rgba(190, 242, 100, 0.24);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.45), 0 0 28px rgba(190, 242, 100, 0.07);
+}
+
+[data-theme="dark"] .card-lime-yellow .unimart-card-serif-title {
+  color: #f7fee7;
+}
+
+[data-theme="dark"] .card-lime-yellow .unimart-card-subtitle {
+  color: #d9f99d;
+}
+
+[data-theme="dark"] .card-lime-yellow .unimart-card-tag {
+  background: rgba(190, 242, 100, 0.14);
+  color: #ecfccb;
+  border: 1px solid rgba(190, 242, 100, 0.28);
+}
+
+[data-theme="dark"] .card-lime-yellow .unimart-view-all-pill {
+  background: rgba(190, 242, 100, 0.14);
+  border-color: rgba(190, 242, 100, 0.32);
+  color: #f7fee7;
+}
+
+[data-theme="dark"] .card-lime-yellow:hover .unimart-view-all-pill {
+  background: #bef264;
+  border-color: #bef264;
+  color: #14200b;
+}
+
+/* Sky-Blue Spotlight Card in Dark Mode (Electric ice blue on deep midnight ocean) */
+[data-theme="dark"] .card-sky-blue {
+  background: linear-gradient(145deg, #0c2036 0%, #061220 100%);
+  border: 1px solid rgba(56, 189, 248, 0.26);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.45), 0 0 28px rgba(56, 189, 248, 0.07);
+}
+
+[data-theme="dark"] .card-sky-blue .unimart-card-serif-title {
+  color: #f0f9ff;
+}
+
+[data-theme="dark"] .card-sky-blue .unimart-card-subtitle {
+  color: #bae6fd;
+}
+
+[data-theme="dark"] .card-sky-blue .unimart-card-tag {
+  background: rgba(56, 189, 248, 0.14);
+  color: #e0f2fe;
+  border: 1px solid rgba(56, 189, 248, 0.28);
+}
+
+[data-theme="dark"] .card-sky-blue .unimart-view-all-pill {
+  background: rgba(56, 189, 248, 0.14);
+  border-color: rgba(56, 189, 248, 0.32);
+  color: #f0f9ff;
+}
+
+[data-theme="dark"] .card-sky-blue:hover .unimart-view-all-pill {
+  background: #38bdf8;
+  border-color: #38bdf8;
+  color: #082f49;
+}
+
+/* Soft-Pink Spotlight Card in Dark Mode (Neon velvet rose on deep blackberry) */
+[data-theme="dark"] .card-soft-pink {
+  background: linear-gradient(145deg, #2d0e1c 0%, #1a0610 100%);
+  border: 1px solid rgba(244, 114, 182, 0.26);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.45), 0 0 28px rgba(244, 114, 182, 0.07);
+}
+
+[data-theme="dark"] .card-soft-pink .unimart-card-serif-title {
+  color: #fff1f2;
+}
+
+[data-theme="dark"] .card-soft-pink .unimart-card-subtitle {
+  color: #fbcfe8;
+}
+
+[data-theme="dark"] .card-soft-pink .unimart-card-tag {
+  background: rgba(244, 114, 182, 0.14);
+  color: #fdf2f8;
+  border: 1px solid rgba(244, 114, 182, 0.28);
+}
+
+[data-theme="dark"] .card-soft-pink .unimart-view-all-pill {
+  background: rgba(244, 114, 182, 0.14);
+  border-color: rgba(244, 114, 182, 0.32);
+  color: #fff1f2;
+}
+
+[data-theme="dark"] .card-soft-pink:hover .unimart-view-all-pill {
+  background: #f472b6;
+  border-color: #f472b6;
+  color: #2b0b1a;
+}
+
+/* --- Dark Theme Product Resting Cards (Warm Off-White / Cream Tone) --- */
+[data-theme="dark"] .unimart-card-resting,
+[data-theme="dark"] .unimart-card-inner {
+  background: #f4ede3;
+  border: 1px solid #dfd6c8;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .unimart-card-top-content,
+[data-theme="dark"] .unimart-card-body {
+  background: #f4ede3;
+}
+
+[data-theme="dark"] .unimart-card-placeholder-wrap,
+[data-theme="dark"] .unimart-card-image-wrap {
+  background: #eae2d5;
+  border-bottom-color: #dfd6c8;
+}
+
+[data-theme="dark"] .unimart-expanded-details {
+  background: #111827;
+  border-color: #1f2937;
+}
+
+[data-theme="dark"] .unimart-card-image {
+  opacity: 0.85;
+}
+
+[data-theme="dark"] .unimart-condition-badge {
+  background: rgba(244, 237, 227, 0.95);
+  color: #292524;
+  border: 1px solid rgba(200, 185, 168, 0.55);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="dark"] .unimart-wishlist-btn {
+  background: rgba(244, 237, 227, 0.95);
+  color: #57534e;
+  border: 1px solid rgba(200, 185, 168, 0.55);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="dark"] .unimart-wishlist-btn:hover {
+  background: #ffffff;
+  color: #ef4444;
+}
+
+[data-theme="dark"] .unimart-floating-icon-box {
+  background: #f4ede3;
+  border: 2px solid #e5dcce;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="dark"] .unimart-floating-notes-label {
+  background: rgba(244, 237, 227, 0.96);
+  color: #292524;
+  border: 1px solid rgba(200, 185, 168, 0.55);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="dark"] .unimart-badge-chip {
+  background: #e7dfd1;
+  color: #44403c;
+  border: 1px solid #d9cebe;
+}
+
+[data-theme="dark"] .unimart-card-title {
+  color: #1c1917;
+}
+
+[data-theme="dark"] .unimart-seller-info {
+  color: #57534e;
+}
+
+[data-theme="dark"] .unimart-current-price {
+  color: #1c1917;
+}
+
+[data-theme="dark"] .unimart-original-price {
+  color: #78716c;
+}
+
+[data-theme="dark"] .unimart-add-cart-btn {
+  background: var(--unimart-maroon, #70182c);
+  border-color: var(--unimart-maroon, #70182c);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(112, 24, 44, 0.25);
+}
+
+[data-theme="dark"] .unimart-add-cart-btn:hover {
+  background: #8e233b;
+  border-color: #8e233b;
+  color: #ffffff;
+}
+
+[data-theme="dark"] .unimart-card-icon-btn {
+  background: #fbf7ef;
+  border-color: #d9cebe;
+}
+
+[data-theme="dark"] .unimart-card-icon-btn.unimart-btn-edit {
+  color: #2563eb;
+}
+
+[data-theme="dark"] .unimart-card-icon-btn.unimart-btn-edit:hover {
+  background: #eff6ff;
+  border-color: #93c5fd;
+  color: #1d4ed8;
+}
+
+[data-theme="dark"] .unimart-card-icon-btn.unimart-btn-delete {
+  color: #dc2626;
+}
+
+[data-theme="dark"] .unimart-card-icon-btn.unimart-btn-delete:hover {
+  background: #fef2f2;
+  border-color: #fca5a5;
+  color: #b91c1c;
+}
+
+[data-theme="dark"] .unimart-section-title {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .badge.bg-light {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #cbd5e1 !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+[data-theme="dark"] .unimart-dash-footer {
+  background: #0d111a;
+  border-top-color: rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+}
+
+/* --- Dark Theme Sell Modal & Dropdowns --- */
+[data-theme="dark"] .unimart-sell-modal-box {
+  background: #111622;
+  border-color: rgba(255, 255, 255, 0.14);
+  color: #f1f5f9;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+}
+
+[data-theme="dark"] .unimart-sell-modal-box h4,
+[data-theme="dark"] .unimart-sell-modal-box h5,
+[data-theme="dark"] .unimart-sell-modal-box .fw-bold {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .unimart-sell-modal-box .text-muted {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .unimart-close-btn {
+  background: rgba(255, 255, 255, 0.08);
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .unimart-close-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+}
+
+[data-theme="dark"] .unimart-sell-modal-box .form-control,
+[data-theme="dark"] .unimart-sell-modal-box .form-select {
+  background-color: #171f2e;
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .unimart-sell-modal-box .form-control:focus,
+[data-theme="dark"] .unimart-sell-modal-box .form-select:focus {
+  background-color: #1d2638;
+  border-color: #e11d48;
+  color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.25);
+}
+
+[data-theme="dark"] .unimart-step-indicator {
+  background: rgba(225, 29, 72, 0.12);
+  border-color: rgba(225, 29, 72, 0.28);
+}
+
+[data-theme="dark"] .unimart-condition-dropdown {
+  background: #171f2e;
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .unimart-condition-item {
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .unimart-condition-item:hover {
+  background: rgba(225, 29, 72, 0.15);
+}
+
+[data-theme="dark"] .unimart-condition-name {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .unimart-condition-hint {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .unimart-review-summary-card {
+  background: #171f2e;
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .unimart-review-summary-card:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+[data-theme="dark"] .unimart-photo-dropzone {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .unimart-photo-dropzone:hover,
+[data-theme="dark"] .unimart-photo-dropzone.dragging {
+  border-color: #e11d48;
+  background: rgba(225, 29, 72, 0.12);
+}
+
+[data-theme="dark"] .unimart-sample-photo-pill {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .unimart-sample-photo-pill:hover:not(:disabled) {
+  background: rgba(225, 29, 72, 0.2);
+  border-color: rgba(225, 29, 72, 0.4);
+  color: #fb7185;
+}
+
+[data-theme="dark"] .unimart-photo-preview-item {
+  border-color: rgba(255, 255, 255, 0.15);
+  background: #171f2e;
+}
+
+/* --- Dark Theme Pending & Admin Controls --- */
+[data-theme="dark"] .unimart-pending-timer-badge {
+  background: rgba(217, 119, 6, 0.95);
+  color: #fffbeb;
+  border-color: rgba(253, 230, 138, 0.4);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .unimart-pending-strip {
+  background: #231c0e;
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+[data-theme="dark"] .unimart-pending-strip span {
+  color: #fde68a !important;
+}
+
+[data-theme="dark"] .chip-pending {
+  background: rgba(245, 158, 11, 0.18) !important;
+  color: #fde68a !important;
+  border-color: rgba(245, 158, 11, 0.35) !important;
+}
+
+[data-theme="dark"] .unimart-pill-pending {
+  background: rgba(245, 158, 11, 0.12) !important;
+  border-color: rgba(245, 158, 11, 0.3) !important;
+  color: #fde68a !important;
+}
+
+[data-theme="dark"] .unimart-role-toggle-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .unimart-role-toggle-btn.admin-active {
+  background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+  border-color: #f87171;
+  color: #ffffff;
+  box-shadow: 0 4px 16px rgba(220, 38, 38, 0.45);
+}
+
+[data-theme="dark"] .unimart-admin-card-actions {
+  border-top-color: #dfd6c8 !important;
+}
+
+[data-theme="dark"] .unimart-admin-btn-remove {
+  background: rgba(220, 38, 38, 0.14);
+  border-color: rgba(220, 38, 38, 0.35);
+  color: #dc2626;
+}
+
+[data-theme="dark"] .unimart-admin-btn-remove:hover {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+[data-theme="dark"] .unimart-admin-btn-approve {
+  background: rgba(22, 163, 74, 0.15);
+  border-color: rgba(22, 163, 74, 0.35);
+  color: #15803d;
+}
+
+[data-theme="dark"] .unimart-admin-btn-approve:hover {
+  background: #16a34a;
+  color: #ffffff;
+}
+
+[data-theme="dark"] .unimart-admin-toast.toast-danger {
+  background: #2a1215;
+  border-color: rgba(239, 68, 68, 0.35);
+  color: #fca5a5;
+}
+
+[data-theme="dark"] .unimart-admin-toast.toast-success {
+  background: #0f241a;
+  border-color: rgba(34, 197, 94, 0.35);
+  color: #86efac;
+}
+
+/* --- Theme Toggle Button Micro-Animation --- */
+.unimart-theme-toggle-btn {
+  cursor: pointer;
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.25s ease, border-color 0.25s ease;
+  user-select: none;
+}
+
+.unimart-theme-toggle-btn:hover {
+  transform: rotate(20deg) scale(1.08);
+}
+
+.unimart-theme-toggle-btn .material-symbols-outlined {
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
