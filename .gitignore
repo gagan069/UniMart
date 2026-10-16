@@ -25,3 +25,7 @@ Thumbs.db
 .vscode/
 .idea/
 *.local
+
+# Ignored Folders & Private Notes
+bhrigav-react/
+**/VIVA_AND_NOTES.md
