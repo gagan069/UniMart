@@ -16,7 +16,45 @@ import imgToteBag from './assets/products/tote_bag.jpg';
 import imgArduinoKit from './assets/products/arduino_kit.jpg';
 import imgSolidPerfume from './assets/products/solid_perfume.jpg';
 
-import { categories } from './lib/categories.js';
+import { categories, getCategoryMeta } from './lib/categories.js';
+import { GlowCard } from './components/ui/spotlight-card.tsx';
+
+export function matchesCategoryFilter(itemCategory, filterKey) {
+  if (!filterKey || filterKey === 'All') return true;
+  if (!itemCategory) return false;
+  const p = itemCategory.toLowerCase().trim();
+  const f = filterKey.toLowerCase().trim();
+  if (p === f) return true;
+  if (f === 'books-notes' || f === 'textbooks' || f.includes('book') || f.includes('note')) {
+    return p.includes('book') || p.includes('textbook') || p.includes('note');
+  }
+  if (f === 'electronics-gadgets' || f.includes('electr') || f.includes('gadget')) {
+    return p.includes('electr') || p.includes('gadget') || p.includes('phone') || p.includes('laptop') || p.includes('tech');
+  }
+  if (f === 'lab-engineering-gear' || f === 'machinery & tech' || f.includes('lab') || f.includes('machin')) {
+    return p.includes('lab') || p.includes('machin') || p.includes('calc') || p.includes('gear');
+  }
+  if (f === 'stationery-supplies' || f.includes('station')) {
+    return p.includes('station') || p.includes('suppl');
+  }
+  if (f === 'hostel-room-essentials' || f.includes('hostel') || f.includes('room')) {
+    return p.includes('hostel') || p.includes('room') || p.includes('bed');
+  }
+  if (f === 'fashion-accessories' || f.includes('fashion') || f.includes('cloth')) {
+    return p.includes('fashion') || p.includes('cloth') || p.includes('access');
+  }
+  if (f === 'perfumes-grooming' || f === 'perfumes & scents' || f.includes('perfume') || f.includes('scent')) {
+    return p.includes('perfume') || p.includes('scent') || p.includes('groom');
+  }
+  if (f === 'handmade-art' || f === 'handmade crafts' || f.includes('art') || f.includes('craft') || f.includes('handmade')) {
+    return p.includes('art') || p.includes('craft') || p.includes('handmade');
+  }
+  if (f === 'sports-fitness-cycles' || f.includes('sport') || f.includes('fit') || f.includes('cycle')) {
+    return p.includes('sport') || p.includes('fit') || p.includes('cycle');
+  }
+  return p.includes(f);
+}
+
 
 export const CONDITION_OPTIONS = [
   { value: 'Brand New', label: 'Brand New', hint: 'Unused, sealed or with tags' },
@@ -104,13 +142,14 @@ export default function Dashboard({ onGoToLogin }) {
     }));
   };
 
-  // Category filter definitions
-  const categoryDefs = [
-    { key: 'All', name: 'All Categories', icon: 'apps' },
-    { key: 'Textbooks', name: 'Textbooks & Notes', icon: 'menu_book' },
-    { key: 'Handmade Crafts', name: 'Handmade Crafts', icon: 'palette' },
-    { key: 'Machinery & Tech', name: 'Machinery & Tech', icon: 'precision_manufacturing' },
-    { key: 'Perfumes & Scents', name: 'Perfumes & Scents', icon: 'local_florist' }
+  const [isAllCategoriesModalOpen, setIsAllCategoriesModalOpen] = useState(false);
+
+  // Category filter definitions: Top 3 categories on main page + All Categories
+  const topCategories = [
+    { key: 'All', name: 'All Categories', icon: 'apps', color: '#6366f1' },
+    { key: 'books-notes', name: 'Books & Notes', icon: 'menu_book', color: '#d97706' },
+    { key: 'electronics-gadgets', name: 'Electronics & Gadgets', icon: 'devices', color: '#0284c7' },
+    { key: 'lab-engineering-gear', name: 'Lab & Engineering Gear', icon: 'precision_manufacturing', color: '#7c3aed' }
   ];
 
   const [catalogTab, setCatalogTab] = useState(() => {
@@ -159,11 +198,14 @@ export default function Dashboard({ onGoToLogin }) {
 
   const pendingCount = activeScopedProducts.filter((item) => item.status === 'pending').length;
 
+  const isSelectedInTop = topCategories.some((c) => c.key === selectedCategory);
+  const activeCategoryMeta = !isSelectedInTop && selectedCategory !== 'Pending' ? getCategoryMeta(selectedCategory) : null;
+
   // Dynamic count calculation within the active catalog scope
   const getCategoryCount = (key) => {
     if (key === 'All') return `${activeScopedProducts.length} items`;
     if (key === 'Pending') return `${pendingCount} items`;
-    const count = activeScopedProducts.filter((item) => item.category === key).length;
+    const count = activeScopedProducts.filter((item) => matchesCategoryFilter(item.category || item.category_id, key)).length;
     return `${count} items`;
   };
 
@@ -174,7 +216,7 @@ export default function Dashboard({ onGoToLogin }) {
         ? true
         : selectedCategory === 'Pending'
         ? item.status === 'pending'
-        : item.category === selectedCategory;
+        : matchesCategoryFilter(item.category || item.category_id, selectedCategory);
     const q = searchQuery.trim().toLowerCase();
     if (!q) return matchesCategory;
 
@@ -1102,7 +1144,7 @@ export default function Dashboard({ onGoToLogin }) {
 
       <div className="unimart-subnav">
         <div className="unimart-cat-pills" role="tablist" aria-label="Category Filters">
-          {categoryDefs.map((cat) => {
+          {topCategories.map((cat) => {
             const isActive = selectedCategory === cat.key;
             return (
               <button
@@ -1112,8 +1154,9 @@ export default function Dashboard({ onGoToLogin }) {
                 aria-selected={isActive}
                 className={`unimart-pill-tab ${isActive ? 'active' : ''}`}
                 onClick={() => setSelectedCategory(cat.key)}
+                style={isActive && cat.color ? { background: cat.color, borderColor: cat.color } : {}}
               >
-                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '18px', color: !isActive && cat.color ? cat.color : undefined }}>
                   {cat.icon}
                 </span>
                 <span>{cat.name}</span>
@@ -1121,6 +1164,27 @@ export default function Dashboard({ onGoToLogin }) {
               </button>
             );
           })}
+
+          {/* If a category outside top 3 is selected from modal, display an active pill */}
+          {activeCategoryMeta && (
+            <button
+              type="button"
+              role="tab"
+              aria-selected="true"
+              className="unimart-pill-tab active"
+              style={{ background: activeCategoryMeta.color, borderColor: activeCategoryMeta.color }}
+              onClick={() => setSelectedCategory('All')}
+              title="Click to clear category filter"
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
+                {activeCategoryMeta.icon}
+              </span>
+              <span>{activeCategoryMeta.name}</span>
+              <span className="unimart-tab-count-tag">{getCategoryCount(selectedCategory)}</span>
+              <span className="material-symbols-outlined ms-1" style={{ fontSize: '15px' }}>close</span>
+            </button>
+          )}
+
 
           {pendingCount > 0 && (
             <button
@@ -1159,9 +1223,17 @@ export default function Dashboard({ onGoToLogin }) {
             </p>
           </div>
           <div className="d-flex align-items-center gap-2">
-            <span className="badge bg-light text-dark border px-3 py-2 rounded-pill fw-semibold">
-              Verified Campus Exchange
-            </span>
+            <button
+              type="button"
+              className="unimart-view-all-header-btn"
+              onClick={() => setIsAllCategoriesModalOpen(true)}
+              title="Explore all 10 campus categories"
+              id="view-all-categories-header-btn"
+            >
+              <span className="material-symbols-outlined icon-grid" style={{ fontSize: '18px', color: '#e11d48' }}>grid_view</span>
+              <span>View All Categories</span>
+              <span className="count-badge">10</span>
+            </button>
           </div>
         </div>
 
@@ -1461,7 +1533,15 @@ export default function Dashboard({ onGoToLogin }) {
               const hasMultiplePhotos = photosList.length > 1;
 
               return (
-                <div key={item.id} className={`unimart-product-card ${item.categoryTheme || 'theme-academic'}`}>
+                <GlowCard 
+                  key={item.id} 
+                  category={item.category || item.category_id}
+                  customSize={true}
+                  className={`unimart-product-card ${item.categoryTheme || 'theme-academic'}`}
+                  style={{
+                    '--card-img': `url(${currentImg})`
+                  }}
+                >
                   <div className="unimart-card-inner">
                     <div className="unimart-card-top-content">
                       {/* Image and placeholder banner with category theme */}
@@ -1475,8 +1555,6 @@ export default function Dashboard({ onGoToLogin }) {
                         {/* Preserved background translucent category tint */}
                         <div className="unimart-category-translucent-tint"></div>
 
-                        {/* Category top glow border */}
-                        <div className="unimart-card-glow-border"></div>
 
                         {/* Multi-Photo Carousel Arrows & Indicator */}
                         {hasMultiplePhotos && (
@@ -1713,7 +1791,7 @@ export default function Dashboard({ onGoToLogin }) {
                       </div>
                     </div>
                   </div>
-                </div>
+                </GlowCard>
               );
             })}
           </div>
@@ -2348,6 +2426,120 @@ export default function Dashboard({ onGoToLogin }) {
                 </form>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* ================= ALL 10 CATEGORIES EXPLORER MODAL ================= */}
+      {isAllCategoriesModalOpen && (
+        <div 
+          className="unimart-categories-modal-overlay" 
+          onClick={() => setIsAllCategoriesModalOpen(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="all-categories-modal-title"
+        >
+          <div 
+            className="unimart-categories-modal" 
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="unimart-cat-modal-header">
+              <div className="d-flex align-items-center gap-2.5">
+                <div className="unimart-cat-modal-icon-badge">
+                  <span className="material-symbols-outlined">category</span>
+                </div>
+                <div>
+                  <h4 id="all-categories-modal-title" className="fw-bold mb-0">Browse All Categories</h4>
+                  <span className="text-muted small">Explore 10 student exchange departments across Chitkara campus</span>
+                </div>
+              </div>
+              <button 
+                type="button" 
+                className="btn-close" 
+                onClick={() => setIsAllCategoriesModalOpen(false)}
+                aria-label="Close categories modal"
+              />
+            </div>
+
+            <div className="unimart-cat-modal-grid">
+              {categories.map((cat) => {
+                const isSelected = selectedCategory === cat.slug || selectedCategory === cat.id;
+                const count = getCategoryCount(cat.slug);
+
+                return (
+                  <div
+                    key={cat.id}
+                    className={`unimart-cat-modal-card ${isSelected ? 'active' : ''}`}
+                    style={{ '--cat-theme-color': cat.color, '--cat-bg-soft': cat.bgSoft }}
+                    onClick={() => {
+                      setSelectedCategory(cat.slug);
+                      setIsAllCategoriesModalOpen(false);
+                      document.getElementById('marketplace-catalog')?.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        setSelectedCategory(cat.slug);
+                        setIsAllCategoriesModalOpen(false);
+                        document.getElementById('marketplace-catalog')?.scrollIntoView({ behavior: 'smooth' });
+                      }
+                    }}
+                  >
+                    <div className="d-flex align-items-center justify-content-between mb-2">
+                      <div 
+                        className="unimart-cat-card-icon-box"
+                        style={{ backgroundColor: cat.bgSoft, color: cat.color }}
+                      >
+                        <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>{cat.icon}</span>
+                      </div>
+                      <span className="unimart-cat-card-count" style={{ color: cat.color, backgroundColor: cat.bgSoft }}>
+                        {count}
+                      </span>
+                    </div>
+
+                    <div className="flex-grow-1">
+                      <h5 className="unimart-cat-card-title">{cat.name}</h5>
+                      <div className="unimart-cat-card-subtext">
+                        {cat.subcategories && cat.subcategories.length > 0
+                          ? cat.subcategories.slice(0, 2).map((s) => s.name).join(' • ')
+                          : 'Pre-owned items'}
+                      </div>
+                    </div>
+
+                    <div className="unimart-cat-card-footer mt-2 pt-2 border-top border-light-subtle">
+                      <div className="d-flex align-items-center gap-1.5">
+                        <span className="unimart-cat-color-badge" style={{ backgroundColor: cat.color }}></span>
+                        <span className="cat-color-label">{cat.colorName}</span>
+                      </div>
+                      <span className="material-symbols-outlined ms-auto arrow-icon" style={{ fontSize: '16px', color: cat.color }}>
+                        arrow_forward
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="unimart-cat-modal-footer">
+              <button
+                type="button"
+                className="btn btn-outline-secondary rounded-pill px-4 py-2 small fw-semibold"
+                onClick={() => {
+                  setSelectedCategory('All');
+                  setIsAllCategoriesModalOpen(false);
+                }}
+              >
+                Reset to All Categories
+              </button>
+              <button
+                type="button"
+                className="btn btn-dark rounded-pill px-4 py-2 small fw-semibold"
+                onClick={() => setIsAllCategoriesModalOpen(false)}
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}

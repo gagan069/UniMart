@@ -2461,3 +2461,262 @@
 .unimart-theme-toggle-btn .material-symbols-outlined {
   transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
+
+/* Hide category top glow border strip completely */
+.unimart-card-glow-border {
+  display: none !important;
+}
+
+/* ================= HEADER VIEW ALL CATEGORIES BUTTON ================= */
+.unimart-view-all-header-btn {
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  color: #1e293b;
+  font-weight: 600;
+  font-size: 0.85rem;
+  padding: 0.45rem 1.15rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.unimart-view-all-header-btn:hover {
+  background: #f8fafc;
+  border-color: var(--unimart-maroon);
+  color: var(--unimart-maroon);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(112, 24, 44, 0.12);
+}
+
+.unimart-view-all-header-btn .count-badge {
+  background: var(--unimart-maroon-subtle);
+  color: var(--unimart-maroon);
+  font-weight: 700;
+  font-size: 0.72rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid var(--unimart-maroon-border);
+}
+
+[data-theme="dark"] .unimart-view-all-header-btn {
+  background: #1e293b;
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .unimart-view-all-header-btn:hover {
+  background: #273549;
+  border-color: #f43f5e;
+  color: #fb7185;
+}
+
+[data-theme="dark"] .unimart-view-all-header-btn .count-badge {
+  background: rgba(225, 29, 72, 0.2);
+  border-color: rgba(225, 29, 72, 0.4);
+  color: #fca5a5;
+}
+
+/* ================= ALL 10 CATEGORIES EXPLORER MODAL ================= */
+.unimart-categories-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(10px);
+  z-index: 1050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  animation: unimartModalFadeIn 0.25s ease-out;
+}
+
+@keyframes unimartModalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.unimart-categories-modal {
+  background: #ffffff;
+  border-radius: 24px;
+  width: 100%;
+  max-width: 1060px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  animation: unimartModalSlideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes unimartModalSlideUp {
+  from { transform: translateY(20px) scale(0.97); }
+  to { transform: translateY(0) scale(1); }
+}
+
+.unimart-cat-modal-header {
+  padding: 1.25rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #f1f5f9;
+  background: #ffffff;
+}
+
+.unimart-cat-modal-icon-badge {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--unimart-maroon) 0%, var(--unimart-maroon-light) 100%);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.unimart-cat-modal-grid {
+  padding: 1.5rem 2rem;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 14px;
+  overflow-y: auto;
+}
+
+@media (max-width: 1024px) {
+  .unimart-cat-modal-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .unimart-cat-modal-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.unimart-cat-modal-card {
+  border-radius: 16px;
+  padding: 1.15rem 1rem;
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 155px;
+  transition: all 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.unimart-cat-modal-card:hover {
+  transform: translateY(-3px);
+  background: #ffffff;
+  border-color: var(--cat-theme-color);
+  box-shadow: 0 10px 24px -4px rgba(0, 0, 0, 0.08), 0 0 0 1.5px var(--cat-theme-color);
+}
+
+.unimart-cat-modal-card.active {
+  border-color: var(--cat-theme-color);
+  background: var(--cat-bg-soft);
+  box-shadow: 0 0 0 2px var(--cat-theme-color);
+}
+
+.unimart-cat-card-icon-box {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.unimart-cat-card-count {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.18rem 0.55rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.unimart-cat-card-title {
+  font-size: 0.92rem;
+  font-weight: 700;
+  margin-top: 0.45rem;
+  margin-bottom: 0.25rem;
+  color: #0f172a;
+  line-height: 1.25;
+}
+
+.unimart-cat-card-subtext {
+  font-size: 0.73rem;
+  color: #64748b;
+  line-height: 1.35;
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.unimart-cat-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.6rem;
+}
+
+.cat-color-label {
+  font-size: 0.72rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.unimart-cat-color-badge {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.unimart-cat-modal-footer {
+  padding: 1rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1rem;
+  border-top: 1px solid #f1f5f9;
+  background: #f8fafc;
+}
+
+/* Dark theme overrides */
+[data-theme="dark"] .unimart-categories-modal {
+  background: #111827;
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #f9fafb;
+}
+
+[data-theme="dark"] .unimart-cat-modal-header,
+[data-theme="dark"] .unimart-cat-modal-footer {
+  background: #0f172a;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .unimart-cat-modal-card {
+  background: #1f2937;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .unimart-cat-modal-card:hover {
+  background: #283548;
+}
+
+[data-theme="dark"] .unimart-cat-card-title {
+  color: #f9fafb;
+}
+
