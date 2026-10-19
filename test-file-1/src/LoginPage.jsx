@@ -1,21 +1,27 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from './context/AuthContext.jsx';
 import { useTheme } from './context/ThemeContext.jsx';
-import { SEEDED_USERS, findUserByCredentials, registerNewStudent } from './lib/mockUsers.js';
+import { SEEDED_USERS, findUserByCredentials, registerNewStudent, deriveStudentId } from './lib/mockUsers.js';
 import './LoginPage.css';
 import welcomeStudentImg from './assets/welcome_student.jpg';
 import campusParkImg from './assets/campus_park.jpg';
 
-export default function LoginPage({ onGoToDashboard }) {
+export default function LoginPage({ onGoToDashboard, initialMode }) {
+  const navigate = useNavigate();
+  const location = useLocation();
   const auth = useAuth();
   const { theme, toggleTheme } = useTheme();
+
+  const isRegisterRoute = initialMode === 'register' || location?.pathname === '/register';
+
   // Page 1 = Welcome Screen (Expansive skater artwork)
   // Page 2 = Campus Gateway (Full campus illustration with Login & Register below)
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(isRegisterRoute ? 2 : 1);
 
   // Popup Modal states
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState('login'); // 'login' | 'register'
+  const [isModalOpen, setIsModalOpen] = useState(isRegisterRoute);
+  const [modalMode, setModalMode] = useState(isRegisterRoute ? 'register' : 'login');
 
   // Form states
   const [email, setEmail] = useState('');
@@ -117,6 +123,7 @@ export default function LoginPage({ onGoToDashboard }) {
         });
         setTimeout(() => {
           if (onGoToDashboard) onGoToDashboard();
+          else navigate('/');
         }, 800);
       }, 700);
       return;
@@ -140,13 +147,12 @@ export default function LoginPage({ onGoToDashboard }) {
       if (!sessionUser) {
         // Fallback demo for custom student logins with valid chitkara email
         if (email.trim().toLowerCase().endsWith('@chitkara.edu.in')) {
-          sessionUser = {
-            id: `student_${Date.now()}`,
+          sessionUser = registerNewStudent({
             name: email.split('@')[0],
-            email: email.trim().toLowerCase(),
-            studentId: '2110990696',
-            role: 'student'
-          };
+            email,
+            studentId: deriveStudentId(email),
+            password
+          });
         } else {
           setAlertInfo({
             type: 'danger',
@@ -164,6 +170,7 @@ export default function LoginPage({ onGoToDashboard }) {
       });
       setTimeout(() => {
         if (onGoToDashboard) onGoToDashboard();
+        else navigate('/');
       }, 700);
     }, 600);
   };
@@ -171,12 +178,11 @@ export default function LoginPage({ onGoToDashboard }) {
   const handleSkip = () => {
     // Guest mode: log out any current user so user === null
     if (auth?.logout) auth.logout();
-    if (onGoToDashboard) {
-      onGoToDashboard();
-    } else {
-      setGuestNotice(true);
-      setTimeout(() => setGuestNotice(false), 3500);
-    }
+    setGuestNotice(true);
+    setTimeout(() => {
+      if (onGoToDashboard) onGoToDashboard();
+      else navigate('/');
+    }, 400);
   };
 
   return (
