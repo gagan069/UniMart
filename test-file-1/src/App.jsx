@@ -29,12 +29,10 @@ function App() {
   const dispatch = useDispatch();
   const listingsStatus = useSelector(selectListingsStatus);
 
-  // Dispatch fetchListings on app start; listingsSlice handles loading status
+  // Dispatch fetchListings on app start to ensure store is synced with storage
   useEffect(() => {
-    if (listingsStatus === 'idle') {
-      dispatch(fetchListings());
-    }
-  }, [dispatch, listingsStatus]);
+    dispatch(fetchListings());
+  }, [dispatch]);
 
   return (
     <Routes>

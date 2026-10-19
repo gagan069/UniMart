@@ -41,9 +41,26 @@ export const fetchListings = createAsyncThunk(
   }
 );
 
+export function getInitialListings() {
+  try {
+    if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+      const saved = localStorage.getItem(STORAGE_KEY_LISTINGS);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('Failed to parse initial listings from localStorage', e);
+  }
+  return mockListings;
+}
+
 const initialState = {
-  items: [],
-  status: 'idle', // 'idle' | 'loading' | 'succeeded' | 'failed'
+  items: getInitialListings(),
+  status: 'succeeded', // Ready immediately on startup
   error: null,
 };
 
