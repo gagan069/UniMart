@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useTheme } from '../context/ThemeContext.jsx';
-import { removeListing, approveListing, rejectListing } from '../store/slices/listingsSlice.js';
+import { removeListing, approveListing, rejectListing, resetDemoListings } from '../store/slices/listingsSlice.js';
 import { selectAllListings } from '../store/selectors.js';
 import './AdminPage.css';
 
@@ -102,6 +102,25 @@ export default function AdminPage() {
                 {theme === 'dark' ? 'light_mode' : 'dark_mode'}
               </span>
               <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
+            </button>
+
+            <button
+              type="button"
+              className="btn btn-sm btn-outline-danger rounded-pill px-3 py-1.5 d-inline-flex align-items-center gap-1.5 shadow-sm"
+              onClick={() => {
+                const confirmed = window.confirm(
+                  "Reset all marketplace catalog data to the 8 default seed items? This will remove custom listings from storage."
+                );
+                if (!confirmed) return;
+                dispatch(resetDemoListings());
+                setToastMessage("Marketplace catalog reset to 8 default seed items!");
+                setTimeout(() => setToastMessage(null), 3500);
+              }}
+              title="Reset to 8 default seed items"
+              id="admin-reset-demo-btn"
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>restart_alt</span>
+              <span>Reset Demo Data</span>
             </button>
 
             <button

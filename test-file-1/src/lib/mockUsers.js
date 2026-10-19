@@ -33,7 +33,8 @@ export function getCustomUsers() {
   try {
     const raw = localStorage.getItem('unimart_users');
     if (!raw) return [];
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
   } catch (e) {
     console.error('Failed to load unimart_users from localStorage', e);
     return [];
@@ -42,25 +43,34 @@ export function getCustomUsers() {
 
 export function getAllUsers() {
   const custom = getCustomUsers();
-  // Merge seeded and custom without duplicate IDs
   const map = new Map();
   SEEDED_USERS.forEach((u) => map.set(u.id, u));
   custom.forEach((u) => map.set(u.id, u));
   return Array.from(map.values());
 }
 
-export function findUserByCredentials(email, password) {
-  const normalizedEmail = (email || '').trim().toLowerCase();
+export function findUserByEmail(email) {
+  if (!email) return null;
+  const normalizedEmail = email.trim().toLowerCase();
   const all = getAllUsers();
-  return all.find(
-    (u) => u.email.toLowerCase() === normalizedEmail && u.password === password
-  );
+  return all.find((u) => u.email.toLowerCase() === normalizedEmail) || null;
+}
+
+export function findUserByCredentials(email, password) {
+  const user = findUserByEmail(email);
+  if (!user) return null;
+  if (user.password === password) return user;
+  return null;
 }
 
 export function findUserById(id) {
   if (!id) return null;
   const all = getAllUsers();
   return all.find((u) => u.id === id) || null;
+}
+
+export function checkEmailExists(email) {
+  return Boolean(findUserByEmail(email));
 }
 
 export function deriveStudentId(email) {
@@ -73,6 +83,11 @@ export function deriveStudentId(email) {
 
 export function registerNewStudent({ name, email, studentId, password }) {
   const normalizedEmail = email.trim().toLowerCase();
+
+  if (checkEmailExists(normalizedEmail)) {
+    throw new Error('An account with this email already exists.');
+  }
+
   const localPart = normalizedEmail.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '_');
   const stableId = `student_${localPart}`;
 
@@ -90,9 +105,8 @@ export function registerNewStudent({ name, email, studentId, password }) {
 
   try {
     const existing = getCustomUsers();
-    const updated = existing.filter((u) => u.id !== stableId && u.email !== normalizedEmail);
-    updated.push(newStudent);
-    localStorage.setItem('unimart_users', JSON.stringify(updated));
+    existing.push(newStudent);
+    localStorage.setItem('unimart_users', JSON.stringify(existing));
   } catch (e) {
     console.error('Failed to persist new student in unimart_users', e);
   }

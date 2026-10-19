@@ -15,6 +15,7 @@ import {
   selectListingsStatus,
 } from './store/selectors.js';
 import { canManageListing, isAdmin as checkIsAdmin } from './lib/permissions.js';
+import { compressImage } from './lib/imageCompressor.js';
 import './Dashboard.css';
 
 // Product images
@@ -90,7 +91,7 @@ export default function Dashboard({ onGoToLogin, initialTab }) {
     meetupSpot: '',
     customMeetupSpot: '',
     description: '',
-    seller: 'Satkar (You)',
+    seller: user?.name ? `${user.name} (You)` : 'Student (You)',
     photos: []
   });
   const [formErrors, setFormErrors] = useState({});
@@ -406,45 +407,45 @@ export default function Dashboard({ onGoToLogin, initialTab }) {
     setCurrentStep(2);
   };
 
-  const handlePhotoFiles = (files) => {
+  const handlePhotoFiles = async (files) => {
     if (!files || files.length === 0) return;
     const fileList = Array.from(files);
-    const validImages = fileList.filter((f) => f.type.startsWith('image/'));
+    const validImages = fileList.filter((f) => f.type && f.type.startsWith('image/'));
 
     if (validImages.length === 0) {
       setFormErrors((prev) => ({ ...prev, photos: 'Please select valid image files (JPG, PNG, WebP).' }));
       return;
     }
 
-    const availableSlots = 4 - formData.photos.length;
+    const availableSlots = 5 - formData.photos.length;
     if (availableSlots <= 0) {
-      setFormErrors((prev) => ({ ...prev, photos: 'Maximum 4 photos allowed.' }));
+      setFormErrors((prev) => ({ ...prev, photos: 'Maximum 5 photos allowed.' }));
       return;
     }
 
     const filesToLoad = validImages.slice(0, availableSlots);
-    let loadedCount = 0;
-    const newPhotos = [];
-
-    filesToLoad.forEach((file) => {
-      if (file.size > 5 * 1024 * 1024) {
-        setFormErrors((prev) => ({ ...prev, photos: `File "${file.name}" exceeds 5MB limit.` }));
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        newPhotos.push(e.target.result);
-        loadedCount++;
-        if (loadedCount === filesToLoad.length) {
-          setFormData((prev) => ({
-            ...prev,
-            photos: [...prev.photos, ...newPhotos]
-          }));
-          setFormErrors((prev) => ({ ...prev, photos: '' }));
+    try {
+      const compressedPhotos = [];
+      for (const file of filesToLoad) {
+        if (file.size > 10 * 1024 * 1024) {
+          setFormErrors((prev) => ({ ...prev, photos: `File "${file.name}" exceeds 10MB limit.` }));
+          continue;
         }
-      };
-      reader.readAsDataURL(file);
-    });
+        const compressed = await compressImage(file, 1024, 0.7);
+        compressedPhotos.push(compressed);
+      }
+
+      if (compressedPhotos.length > 0) {
+        setFormData((prev) => ({
+          ...prev,
+          photos: [...prev.photos, ...compressedPhotos]
+        }));
+        setFormErrors((prev) => ({ ...prev, photos: '' }));
+      }
+    } catch (err) {
+      console.error('Failed to compress photos', err);
+      setFormErrors((prev) => ({ ...prev, photos: 'Failed to process images. Please try different files.' }));
+    }
   };
 
   const handleAddSamplePhoto = (sampleImg) => {
@@ -592,7 +593,7 @@ export default function Dashboard({ onGoToLogin, initialTab }) {
 
     const newListing = {
       id: Date.now(),
-      seller_id: user?.id || 'student_a',
+      seller_id: user?.id || 'guest_seller',
       title: formData.title.trim(),
       category: categoryName,
       category_id: formData.category_id,
@@ -600,7 +601,7 @@ export default function Dashboard({ onGoToLogin, initialTab }) {
       price: Number(formData.price),
       origPrice: Math.round(Number(formData.price) * 1.35),
       condition: formData.condition,
-      seller: user?.name ? `${user.name} (You)` : 'Satkar (You)',
+      seller: user?.name ? `${user.name} (You)` : 'Student (You)',
       icon: iconMap[formData.category_id] || 'sell',
       categoryTheme: categoryThemeMap[formData.category_id] || 'theme-academic',
       badge: 'Waiting for Approval',
@@ -613,14 +614,22 @@ export default function Dashboard({ onGoToLogin, initialTab }) {
       submittedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
 
-    dispatch(addListing(newListing));
-    setEditResultType('pending_approval');
-    setIsPublishedSuccess(true);
-    setTimeout(() => {
-      setIsPublishedSuccess(false);
-      setIsSellModalOpen(false);
-      resetForm();
-    }, 2400);
+    try {
+      dispatch(addListing(newListing));
+      setEditResultType('pending_approval');
+      setIsPublishedSuccess(true);
+      setTimeout(() => {
+        setIsPublishedSuccess(false);
+        setIsSellModalOpen(false);
+        resetForm();
+      }, 2400);
+    } catch (err) {
+      console.error('Storage full while saving listing', err);
+      setAdminAlert({
+        type: 'danger',
+        text: 'Storage full — remove some photos'
+      });
+    }
   };
 
   // Reorder photos in Step 2
@@ -671,7 +680,7 @@ export default function Dashboard({ onGoToLogin, initialTab }) {
       meetupSpot: isKnownSpot ? item.notes : item.notes ? 'Other' : 'Library Entrance',
       customMeetupSpot: isKnownSpot ? '' : item.notes || '',
       description: item.description || '',
-      seller: item.seller || (user?.name ? `${user.name} (You)` : 'Satkar (You)'),
+      seller: item.seller || (user?.name ? `${user.name} (You)` : 'Student (You)'),
       photos: photosList
     });
 
@@ -799,7 +808,7 @@ export default function Dashboard({ onGoToLogin, initialTab }) {
       meetupSpot: '',
       customMeetupSpot: '',
       description: '',
-      seller: user?.name ? `${user.name} (You)` : 'Satkar (You)',
+      seller: user?.name ? `${user.name} (You)` : 'Student (You)',
       photos: []
     });
     setFormErrors({});
@@ -900,7 +909,6 @@ export default function Dashboard({ onGoToLogin, initialTab }) {
               title="Campus alerts"
             >
               <span className="material-symbols-outlined" style={{ fontSize: '21px' }}>notifications</span>
-              <span className="unimart-badge-count">1</span>
             </button>
 
             {/* Cart Button */}
@@ -910,7 +918,6 @@ export default function Dashboard({ onGoToLogin, initialTab }) {
               title="Cart items"
             >
               <span className="material-symbols-outlined" style={{ fontSize: '21px' }}>shopping_cart</span>
-              <span className="unimart-badge-count">2</span>
             </button>
 
             {/* Consolidated Profile Chip with 3 Lines + Dropdown */}
@@ -1177,7 +1184,7 @@ export default function Dashboard({ onGoToLogin, initialTab }) {
               <span>Chitkara Campus Student Exchange</span>
             </div>
             <h2 className="fw-bolder mb-1" style={{ letterSpacing: '-0.025em' }}>
-              Hi Satkar! What are you looking for today?
+              {user ? `Hi ${user.name.split(' ')[0]}! What are you looking for today?` : 'Hi there! What are you looking for today?'}
             </h2>
             <p className="text-muted mb-0">
               Explore pre-owned textbooks, handmade crafts, campus tech tools, and student-crafted products.

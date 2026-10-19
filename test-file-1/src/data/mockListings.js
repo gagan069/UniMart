@@ -104,7 +104,7 @@ export const mockListings = [
   {
     id: 5,
     seller_id: 'student_a',
-    seller: 'Satkar Singh (You)',
+    seller: 'Satkar Singh (Engineering)',
     title: 'Organic Chemistry as a Second Language (Klein)',
     category: 'Textbooks',
     category_id: 'books-notes',
@@ -150,7 +150,7 @@ export const mockListings = [
   {
     id: 7,
     seller_id: 'student_a',
-    seller: 'Satkar Singh (You)',
+    seller: 'Satkar Singh (Engineering)',
     title: 'Arduino Uno Starter Lab Kit + Sensors Box',
     category: 'Machinery & Tech',
     category_id: 'lab-engineering-gear',

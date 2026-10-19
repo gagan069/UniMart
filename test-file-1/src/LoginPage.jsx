@@ -2,7 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from './context/AuthContext.jsx';
 import { useTheme } from './context/ThemeContext.jsx';
-import { SEEDED_USERS, findUserByCredentials, registerNewStudent } from './lib/mockUsers.js';
+import {
+  SEEDED_USERS,
+  findUserByEmail,
+  checkEmailExists,
+  registerNewStudent
+} from './lib/mockUsers.js';
 import './LoginPage.css';
 import welcomeStudentImg from './assets/welcome_student.jpg';
 import campusParkImg from './assets/campus_park.jpg';
@@ -106,25 +111,42 @@ export default function LoginPage({ onGoToDashboard, initialMode }) {
       const isValid = validateRegister();
       if (!isValid) return;
 
+      const normalizedEmail = email.trim().toLowerCase();
+      if (checkEmailExists(normalizedEmail)) {
+        setFieldErrors((prev) => ({ ...prev, email: 'An account with this email already exists.' }));
+        setAlertInfo({
+          type: 'danger',
+          message: 'An account with this email already exists. Please sign in instead.'
+        });
+        return;
+      }
+
       setIsLoading(true);
       setTimeout(() => {
         setIsLoading(false);
-        const newStudent = registerNewStudent({
-          name: fullName,
-          email,
-          studentId,
-          password
-        });
-        if (auth?.login) auth.login(newStudent);
+        try {
+          const newStudent = registerNewStudent({
+            name: fullName,
+            email,
+            studentId,
+            password
+          });
+          if (auth?.login) auth.login(newStudent);
 
-        setAlertInfo({
-          type: 'success',
-          message: `Registration successful! Welcome, ${newStudent.name}. Redirecting...`
-        });
-        setTimeout(() => {
-          if (onGoToDashboard) onGoToDashboard();
-          else navigate('/');
-        }, 800);
+          setAlertInfo({
+            type: 'success',
+            message: `Registration successful! Welcome, ${newStudent.name}. Redirecting...`
+          });
+          setTimeout(() => {
+            if (onGoToDashboard) onGoToDashboard();
+            else navigate('/');
+          }, 800);
+        } catch (err) {
+          setAlertInfo({
+            type: 'danger',
+            message: err.message || 'Registration failed.'
+          });
+        }
       }, 700);
       return;
     }
@@ -141,22 +163,29 @@ export default function LoginPage({ onGoToDashboard, initialMode }) {
     setIsLoading(true);
     setTimeout(() => {
       setIsLoading(false);
-      const matched = findUserByCredentials(email, password);
-      let sessionUser = matched;
+      const userWithEmail = findUserByEmail(email);
 
-      if (!sessionUser) {
+      if (!userWithEmail) {
         setAlertInfo({
           type: 'danger',
-          message: 'Invalid credentials. Please check your email and password or register a new account.'
+          message: 'No account found. Please register first.'
         });
         return;
       }
 
-      if (auth?.login) auth.login(sessionUser);
+      if (userWithEmail.password !== password) {
+        setAlertInfo({
+          type: 'danger',
+          message: 'Incorrect password.'
+        });
+        return;
+      }
+
+      if (auth?.login) auth.login(userWithEmail);
 
       setAlertInfo({
         type: 'success',
-        message: `Welcome back, ${sessionUser.name} (${sessionUser.role.toUpperCase()})! Redirecting...`
+        message: `Welcome back, ${userWithEmail.name} (${userWithEmail.role.toUpperCase()})! Redirecting...`
       });
       setTimeout(() => {
         if (onGoToDashboard) onGoToDashboard();
