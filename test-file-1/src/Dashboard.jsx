@@ -449,8 +449,8 @@ export default function Dashboard({ onGoToLogin, initialTab }) {
   };
 
   const handleAddSamplePhoto = (sampleImg) => {
-    if (formData.photos.length >= 4) {
-      setFormErrors((prev) => ({ ...prev, photos: 'Maximum 4 photos allowed.' }));
+    if (formData.photos.length >= 5) {
+      setFormErrors((prev) => ({ ...prev, photos: 'Maximum 5 photos allowed.' }));
       return;
     }
     setFormData((prev) => ({
@@ -2205,7 +2205,7 @@ export default function Dashboard({ onGoToLogin, initialTab }) {
                   <div className="mb-3">
                     <label className="form-label small fw-semibold d-flex justify-content-between align-items-center mb-1">
                       <span>Item Photos <span className="unimart-req-asterisk">*</span></span>
-                      <span className="text-muted small">{formData.photos.length} / 4 photos added</span>
+                      <span className="text-muted small">{formData.photos.length} / 5 photos added</span>
                     </label>
 
                     <input 
@@ -2243,7 +2243,7 @@ export default function Dashboard({ onGoToLogin, initialTab }) {
                         Drag & drop photos here, or <span className="text-decoration-underline" style={{ color: 'var(--unimart-maroon)' }}>browse files</span>
                       </div>
                       <div className="text-muted" style={{ fontSize: '0.75rem' }}>
-                        Supports JPG, PNG, WebP (Max 5MB each, up to 4 photos)
+                        Supports JPG, PNG, WebP (Max 5MB each, up to 5 photos)
                       </div>
                     </div>
 
