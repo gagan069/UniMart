@@ -24,6 +24,13 @@ export const fetchListings = createAsyncThunk(
           try {
             const parsed = JSON.parse(saved);
             if (Array.isArray(parsed) && parsed.length > 0) {
+              const existingIds = new Set(parsed.map((item) => String(item.id)));
+              const missingSeed = mockListings.filter((seed) => !existingIds.has(String(seed.id)));
+              if (missingSeed.length > 0) {
+                const merged = [...parsed, ...missingSeed];
+                saveListingsToStorage(merged);
+                return merged;
+              }
               return parsed;
             }
           } catch (e) {
@@ -48,6 +55,13 @@ export function getInitialListings() {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
+          const existingIds = new Set(parsed.map((item) => String(item.id)));
+          const missingSeed = mockListings.filter((seed) => !existingIds.has(String(seed.id)));
+          if (missingSeed.length > 0) {
+            const merged = [...parsed, ...missingSeed];
+            saveListingsToStorage(merged);
+            return merged;
+          }
           return parsed;
         }
       }
