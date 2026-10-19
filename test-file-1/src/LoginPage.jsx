@@ -145,21 +145,11 @@ export default function LoginPage({ onGoToDashboard, initialMode }) {
       let sessionUser = matched;
 
       if (!sessionUser) {
-        // Fallback demo for custom student logins with valid chitkara email
-        if (email.trim().toLowerCase().endsWith('@chitkara.edu.in')) {
-          sessionUser = registerNewStudent({
-            name: email.split('@')[0],
-            email,
-            studentId: deriveStudentId(email),
-            password
-          });
-        } else {
-          setAlertInfo({
-            type: 'danger',
-            message: 'Invalid credentials. Please use seeded accounts (Admin / Student A / Student B) or register with @chitkara.edu.in.'
-          });
-          return;
-        }
+        setAlertInfo({
+          type: 'danger',
+          message: 'Invalid credentials. Please check your email and password or register a new account.'
+        });
+        return;
       }
 
       if (auth?.login) auth.login(sessionUser);
