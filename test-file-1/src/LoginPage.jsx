@@ -1,32 +1,36 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from './context/AuthContext.jsx';
 import { useTheme } from './context/ThemeContext.jsx';
-import {
-  SEEDED_USERS,
-  findUserByEmail,
-  checkEmailExists,
-  registerNewStudent
-} from './lib/mockUsers.js';
+import { useChat } from './context/ChatContext.jsx';
+import { SEEDED_USERS, findUserByCredentials, registerNewStudent } from './lib/mockUsers.js';
 import './LoginPage.css';
 import welcomeStudentImg from './assets/welcome_student.jpg';
 import campusParkImg from './assets/campus_park.jpg';
 
-export default function LoginPage({ onGoToDashboard, initialMode }) {
-  const navigate = useNavigate();
-  const location = useLocation();
+export default function LoginPage({
+  onGoToDashboard,
+  initialMode = 'login',
+  initialPage = 1,
+  autoOpenModal = false
+}) {
   const auth = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const chat = useChat();
 
-  const isRegisterRoute = initialMode === 'register' || location?.pathname === '/register';
+  // Ensure chat is closed when on the login / register page
+  useEffect(() => {
+    if (chat?.closeChat) {
+      chat.closeChat();
+    }
+  }, []);
 
   // Page 1 = Welcome Screen (Expansive skater artwork)
   // Page 2 = Campus Gateway (Full campus illustration with Login & Register below)
-  const [currentPage, setCurrentPage] = useState(isRegisterRoute ? 2 : 1);
+  const [currentPage, setCurrentPage] = useState(initialPage);
 
   // Popup Modal states
-  const [isModalOpen, setIsModalOpen] = useState(isRegisterRoute);
-  const [modalMode, setModalMode] = useState(isRegisterRoute ? 'register' : 'login');
+  const [isModalOpen, setIsModalOpen] = useState(autoOpenModal || initialMode === 'register');
+  const [modalMode, setModalMode] = useState(initialMode);
 
   // Form states
   const [email, setEmail] = useState('');
@@ -111,42 +115,24 @@ export default function LoginPage({ onGoToDashboard, initialMode }) {
       const isValid = validateRegister();
       if (!isValid) return;
 
-      const normalizedEmail = email.trim().toLowerCase();
-      if (checkEmailExists(normalizedEmail)) {
-        setFieldErrors((prev) => ({ ...prev, email: 'An account with this email already exists.' }));
-        setAlertInfo({
-          type: 'danger',
-          message: 'An account with this email already exists. Please sign in instead.'
-        });
-        return;
-      }
-
       setIsLoading(true);
       setTimeout(() => {
         setIsLoading(false);
-        try {
-          const newStudent = registerNewStudent({
-            name: fullName,
-            email,
-            studentId,
-            password
-          });
-          if (auth?.login) auth.login(newStudent);
+        const newStudent = registerNewStudent({
+          name: fullName,
+          email,
+          studentId,
+          password
+        });
+        if (auth?.login) auth.login(newStudent);
 
-          setAlertInfo({
-            type: 'success',
-            message: `Registration successful! Welcome, ${newStudent.name}. Redirecting...`
-          });
-          setTimeout(() => {
-            if (onGoToDashboard) onGoToDashboard();
-            else navigate('/');
-          }, 800);
-        } catch (err) {
-          setAlertInfo({
-            type: 'danger',
-            message: err.message || 'Registration failed.'
-          });
-        }
+        setAlertInfo({
+          type: 'success',
+          message: `Registration successful! Welcome, ${newStudent.name}. Redirecting...`
+        });
+        setTimeout(() => {
+          if (onGoToDashboard) onGoToDashboard();
+        }, 800);
       }, 700);
       return;
     }
@@ -163,33 +149,36 @@ export default function LoginPage({ onGoToDashboard, initialMode }) {
     setIsLoading(true);
     setTimeout(() => {
       setIsLoading(false);
-      const userWithEmail = findUserByEmail(email);
+      const matched = findUserByCredentials(email, password);
+      let sessionUser = matched;
 
-      if (!userWithEmail) {
-        setAlertInfo({
-          type: 'danger',
-          message: 'No account found. Please register first.'
-        });
-        return;
+      if (!sessionUser) {
+        // Fallback demo for custom student logins with valid chitkara email
+        if (email.trim().toLowerCase().endsWith('@chitkara.edu.in')) {
+          sessionUser = {
+            id: `student_${Date.now()}`,
+            name: email.split('@')[0],
+            email: email.trim().toLowerCase(),
+            studentId: '2110990696',
+            role: 'student'
+          };
+        } else {
+          setAlertInfo({
+            type: 'danger',
+            message: 'Invalid credentials. Please use seeded accounts (Admin / Student A / Student B) or register with @chitkara.edu.in.'
+          });
+          return;
+        }
       }
 
-      if (userWithEmail.password !== password) {
-        setAlertInfo({
-          type: 'danger',
-          message: 'Incorrect password.'
-        });
-        return;
-      }
-
-      if (auth?.login) auth.login(userWithEmail);
+      if (auth?.login) auth.login(sessionUser);
 
       setAlertInfo({
         type: 'success',
-        message: `Welcome back, ${userWithEmail.name} (${userWithEmail.role.toUpperCase()})! Redirecting...`
+        message: `Welcome back, ${sessionUser.name} (${sessionUser.role.toUpperCase()})! Redirecting...`
       });
       setTimeout(() => {
         if (onGoToDashboard) onGoToDashboard();
-        else navigate('/');
       }, 700);
     }, 600);
   };
@@ -197,11 +186,12 @@ export default function LoginPage({ onGoToDashboard, initialMode }) {
   const handleSkip = () => {
     // Guest mode: log out any current user so user === null
     if (auth?.logout) auth.logout();
-    setGuestNotice(true);
-    setTimeout(() => {
-      if (onGoToDashboard) onGoToDashboard();
-      else navigate('/');
-    }, 400);
+    if (onGoToDashboard) {
+      onGoToDashboard();
+    } else {
+      setGuestNotice(true);
+      setTimeout(() => setGuestNotice(false), 3500);
+    }
   };
 
   return (

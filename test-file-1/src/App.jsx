@@ -1,15 +1,12 @@
-import React, { useEffect } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
-import LoginPage from './LoginPage.jsx';
-import Dashboard from './Dashboard.jsx';
-import AdminPage from './pages/AdminPage.jsx';
-import Layout from './layouts/Layout.jsx';
-import NotFound from './pages/NotFound.jsx';
-import { useAuth } from './context/AuthContext.jsx';
-import { isAdmin } from './lib/permissions.js';
-import { fetchListings } from './store/slices/listingsSlice.js';
-import { selectListingsStatus } from './store/selectors.js';
+import React, { useState } from "react";
+import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import LoginPage from "./LoginPage.jsx";
+import Dashboard from "./Dashboard.jsx";
+import AdminPage from "./pages/AdminPage.jsx";
+import Layout from "./layouts/Layout.jsx";
+import NotFound from "./pages/NotFound.jsx";
+import { useAuth } from "./context/AuthContext.jsx";
+import { isAdmin } from "./lib/permissions.js";
 
 function ProtectedAdminRoute({ children }) {
   const { user } = useAuth();
@@ -25,32 +22,43 @@ function ProtectedAdminRoute({ children }) {
   return children;
 }
 
-function App() {
-  const dispatch = useDispatch();
-  const listingsStatus = useSelector(selectListingsStatus);
+function MainScreen() {
+  // 'dashboard' | 'login'
+  const [view, setView] = useState("dashboard");
 
-  // Dispatch fetchListings on app start to ensure store is synced with storage
-  useEffect(() => {
-    dispatch(fetchListings());
-  }, [dispatch]);
+  return (
+    <>
+      {view === "login" ? (
+        <LoginPage onGoToDashboard={() => setView("dashboard")} />
+      ) : (
+        <Dashboard onGoToLogin={() => setView("login")} />
+      )}
+    </>
+  );
+}
+
+function App() {
+  const navigate = useNavigate();
 
   return (
     <Routes>
+      <Route
+        path="/login"
+        element={<LoginPage onGoToDashboard={() => navigate("/")} />}
+      />
+      <Route
+        path="/register"
+        element={
+          <LoginPage
+            initialMode="register"
+            initialPage={2}
+            autoOpenModal={true}
+            onGoToDashboard={() => navigate("/")}
+          />
+        }
+      />
       <Route path="/" element={<Layout />}>
-        {/* Marketplace Dashboard */}
-        <Route index element={<Dashboard />} />
-
-        {/* Dedicated Auth URLs */}
-        <Route path="login" element={<LoginPage initialMode="login" />} />
-        <Route path="register" element={<LoginPage initialMode="register" />} />
-
-        {/* Catalog & Filter Routes */}
-        <Route path="item/:id" element={<Dashboard />} />
-        <Route path="saved" element={<Dashboard initialTab="saved" />} />
-        <Route path="my-listings" element={<Dashboard initialTab="my" />} />
-        <Route path="requests" element={<Dashboard initialTab="requests" />} />
-
-        {/* Protected Admin Portal */}
+        <Route index element={<MainScreen />} />
         <Route
           path="admin"
           element={
@@ -59,8 +67,6 @@ function App() {
             </ProtectedAdminRoute>
           }
         />
-
-        {/* Catch-all 404 Route */}
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>

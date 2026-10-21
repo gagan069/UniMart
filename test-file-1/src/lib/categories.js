@@ -4,10 +4,6 @@ export const categories = [
     slug: "books-notes",
     name: "Books & Notes",
     icon: "menu_book",
-    color: "#d97706",
-    colorName: "Amber Gold",
-    glowKey: "amber",
-    bgSoft: "rgba(217, 119, 6, 0.12)",
     subcategories: [
       { id: "engineering-textbooks", slug: "engineering-textbooks", name: "Engineering textbooks" },
       { id: "other-course-textbooks", slug: "other-course-textbooks", name: "Other course textbooks" },
@@ -22,10 +18,6 @@ export const categories = [
     slug: "electronics-gadgets",
     name: "Electronics & Gadgets",
     icon: "devices",
-    color: "#0ea5e9",
-    colorName: "Sky Tech Blue",
-    glowKey: "cyan",
-    bgSoft: "rgba(14, 165, 233, 0.12)",
     subcategories: [
       { id: "laptops", slug: "laptops", name: "Laptops" },
       { id: "phones-tablets", slug: "phones-tablets", name: "Phones & tablets" },
@@ -40,10 +32,6 @@ export const categories = [
     slug: "lab-engineering-gear",
     name: "Lab & Engineering Gear",
     icon: "precision_manufacturing",
-    color: "#0284c7",
-    colorName: "Electric Blue",
-    glowKey: "blue",
-    bgSoft: "rgba(2, 132, 199, 0.12)",
     subcategories: [
       { id: "scientific-calculators", slug: "scientific-calculators", name: "Scientific calculators" },
       { id: "drafters-drawing-kits", slug: "drafters-drawing-kits", name: "Drafters & drawing kits" },
@@ -58,10 +46,6 @@ export const categories = [
     slug: "stationery-supplies",
     name: "Stationery & Supplies",
     icon: "edit_note",
-    color: "#059669",
-    colorName: "Emerald Green",
-    glowKey: "emerald",
-    bgSoft: "rgba(5, 150, 105, 0.12)",
     subcategories: [
       { id: "notebooks-registers", slug: "notebooks-registers", name: "Notebooks & registers" },
       { id: "art-supplies", slug: "art-supplies", name: "Art supplies" },
@@ -75,10 +59,6 @@ export const categories = [
     slug: "hostel-room-essentials",
     name: "Hostel & Room Essentials",
     icon: "bed",
-    color: "#ea580c",
-    colorName: "Warm Orange",
-    glowKey: "orange",
-    bgSoft: "rgba(234, 88, 12, 0.12)",
     subcategories: [
       { id: "kitchen-kettle-induction", slug: "kitchen-kettle-induction", name: "Kitchen (kettle, induction)" },
       { id: "cooling-heating", slug: "cooling-heating", name: "Cooling & heating" },
@@ -93,10 +73,6 @@ export const categories = [
     slug: "fashion-accessories",
     name: "Fashion & Accessories",
     icon: "checkroom",
-    color: "#e11d48",
-    colorName: "Vibrant Rose",
-    glowKey: "rose",
-    bgSoft: "rgba(225, 29, 72, 0.12)",
     subcategories: [
       { id: "mens-clothing", slug: "mens-clothing", name: "Men’s clothing" },
       { id: "womens-clothing", slug: "womens-clothing", name: "Women’s clothing" },
@@ -111,10 +87,6 @@ export const categories = [
     slug: "perfumes-grooming",
     name: "Perfumes & Grooming",
     icon: "local_florist",
-    color: "#a855f7",
-    colorName: "Royal Purple",
-    glowKey: "purple",
-    bgSoft: "rgba(168, 85, 247, 0.12)",
     subcategories: [
       { id: "perfumes-deos", slug: "perfumes-deos", name: "Perfumes & deos" },
       { id: "attars", slug: "attars", name: "Attars" },
@@ -127,10 +99,6 @@ export const categories = [
     slug: "handmade-art",
     name: "Handmade & Art",
     icon: "palette",
-    color: "#ec4899",
-    colorName: "Rose Pink",
-    glowKey: "pink",
-    bgSoft: "rgba(236, 72, 153, 0.12)",
     subcategories: [
       { id: "crochet-knitting", slug: "crochet-knitting", name: "Crochet & knitting" },
       { id: "paintings-sketches", slug: "paintings-sketches", name: "Paintings & sketches" },
@@ -144,10 +112,6 @@ export const categories = [
     slug: "sports-fitness-cycles",
     name: "Sports, Fitness & Cycles",
     icon: "fitness_center",
-    color: "#65a30d",
-    colorName: "Neon Lime",
-    glowKey: "lime",
-    bgSoft: "rgba(101, 163, 13, 0.12)",
     subcategories: [
       { id: "cricket", slug: "cricket", name: "Cricket" },
       { id: "racket-sports", slug: "racket-sports", name: "Racket sports" },
@@ -162,34 +126,8 @@ export const categories = [
     slug: "other",
     name: "Other",
     icon: "more_horiz",
-    color: "#64748b",
-    colorName: "Steel Slate",
-    glowKey: "slate",
-    bgSoft: "rgba(100, 116, 139, 0.12)",
     subcategories: []
   }
 ];
-
-export function getCategoryMeta(categoryIdOrName) {
-  if (!categoryIdOrName) return categories[9]; // Other
-  const query = categoryIdOrName.toLowerCase().trim();
-  
-  const found = categories.find(
-    (c) => c.id === query || c.slug === query || c.name.toLowerCase() === query
-  );
-  if (found) return found;
-
-  if (query.includes('book') || query.includes('note') || query.includes('textbook')) return categories[0];
-  if (query.includes('electr') || query.includes('gadget') || query.includes('phone') || query.includes('laptop')) return categories[1];
-  if (query.includes('lab') || query.includes('gear') || query.includes('calc') || query.includes('machin')) return categories[2];
-  if (query.includes('station') || query.includes('suppl') || query.includes('pen')) return categories[3];
-  if (query.includes('hostel') || query.includes('room') || query.includes('bed')) return categories[4];
-  if (query.includes('fashion') || query.includes('cloth') || query.includes('access')) return categories[5];
-  if (query.includes('perfume') || query.includes('groom') || query.includes('scent')) return categories[6];
-  if (query.includes('art') || query.includes('craft') || query.includes('handmade')) return categories[7];
-  if (query.includes('sport') || query.includes('fit') || query.includes('cycle')) return categories[8];
-
-  return categories[9];
-}
 
 export default categories;

@@ -1,21 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useSelector, useDispatch } from 'react-redux';
 import { useTheme } from './context/ThemeContext.jsx';
 import { useAuth } from './context/AuthContext.jsx';
-import {
-  addListing,
-  updateListing,
-  removeListing,
-} from './store/slices/listingsSlice.js';
-import {
-  selectAllListings,
-  selectVisibleListings,
-  selectMyListings,
-  selectListingsStatus,
-} from './store/selectors.js';
-import { canManageListing, isAdmin as checkIsAdmin } from './lib/permissions.js';
-import { compressImage } from './lib/imageCompressor.js';
+import { useListings } from './context/ListingsContext.jsx';
+import { useChat } from './context/ChatContext.jsx';
+import { canManageListing, isAdmin as checkIsAdmin, isGuest, isStudent } from './lib/permissions.js';
 import './Dashboard.css';
 
 // Product images
@@ -23,6 +12,12 @@ import imgCalcBook from './assets/products/calculus.jpg';
 import imgMatchaMug from './assets/products/matcha_mug.jpg';
 import imgGraphCalc from './assets/products/graphing_calc.jpg';
 import imgRoomSpray from './assets/products/room_spray.jpg';
+import imgOrgChem from './assets/products/organic_chem.jpg';
+import imgToteBag from './assets/products/tote_bag.jpg';
+import imgArduinoKit from './assets/products/arduino_kit.jpg';
+import imgSolidPerfume from './assets/products/solid_perfume.jpg';
+import FloatingChatButton from './components/chat/FloatingChatButton.jsx';
+import ChatModal from './components/chat/ChatModal.jsx';
 
 import { categories } from './lib/categories.js';
 
@@ -44,22 +39,54 @@ export const MEETUP_OPTIONS = [
   'Other'
 ];
 
-export default function Dashboard({ onGoToLogin, initialTab }) {
-  const dispatch = useDispatch();
+export const CATEGORY_THEME_MAP = {
+  'books-notes': 'theme-academic',
+  'electronics-gadgets': 'theme-tech',
+  'lab-engineering-gear': 'theme-tech',
+  'stationery-supplies': 'theme-academic',
+  'hostel-room-essentials': 'theme-crafts',
+  'fashion-accessories': 'theme-crafts',
+  'perfumes-grooming': 'theme-scents',
+  'handmade-art': 'theme-crafts',
+  'sports-fitness-cycles': 'theme-tech',
+  'other': 'theme-tech'
+};
+
+export const resolveCategoryId = (item) => {
+  if (item?.category_id && categories.some((c) => c.id === item.category_id)) {
+    return item.category_id;
+  }
+  const cat = (item?.category || '').toLowerCase().trim();
+  const matched = categories.find(
+    (c) =>
+      c.id === item?.category_id ||
+      c.name.toLowerCase() === cat ||
+      (c.id === 'books-notes' && (cat.includes('book') || cat.includes('textbook') || cat.includes('note'))) ||
+      (c.id === 'handmade-art' && (cat.includes('craft') || cat.includes('handmade') || cat.includes('art'))) ||
+      (c.id === 'lab-engineering-gear' && (cat.includes('machinery') || cat.includes('lab') || cat.includes('gear'))) ||
+      (c.id === 'electronics-gadgets' && (cat.includes('electronic') || cat.includes('gadget') || cat.includes('tech'))) ||
+      (c.id === 'perfumes-grooming' && (cat.includes('perfume') || cat.includes('scent') || cat.includes('grooming'))) ||
+      (c.id === 'stationery-supplies' && cat.includes('stationery')) ||
+      (c.id === 'hostel-room-essentials' && (cat.includes('hostel') || cat.includes('room'))) ||
+      (c.id === 'fashion-accessories' && (cat.includes('fashion') || cat.includes('accessor'))) ||
+      (c.id === 'sports-fitness-cycles' && (cat.includes('sport') || cat.includes('fitness') || cat.includes('cycle')))
+  );
+  return matched ? matched.id : 'books-notes';
+};
+
+export default function Dashboard({ onGoToLogin }) {
   const { theme, toggleTheme } = useTheme();
-  const { user, logout, switchAccount } = useAuth() || {};
-  const productList = useSelector(selectAllListings);
-  const visibleListings = useSelector(selectVisibleListings(user));
-  const myListings = useSelector(selectMyListings(user?.id));
-  const listingsStatus = useSelector(selectListingsStatus);
+  const { user, login, logout, switchAccount, seededUsers } = useAuth() || {};
+  const { productList, setProductList, addListing, updateListing, removeListing } = useListings();
+  const { openChatWithItem, closeChat } = useChat();
   const [adminAlert, setAdminAlert] = useState(null);
+
+  const handleGoToLogin = () => {
+    if (closeChat) closeChat();
+    if (onGoToLogin) onGoToLogin();
+  };
   const location = useLocation();
   const navigate = useNavigate();
-
-  const goToLogin = () => {
-    if (onGoToLogin) onGoToLogin();
-    else navigate('/login');
-  };
 
   // Listen for access denied redirect from /admin route
   useEffect(() => {
@@ -91,7 +118,7 @@ export default function Dashboard({ onGoToLogin, initialTab }) {
     meetupSpot: '',
     customMeetupSpot: '',
     description: '',
-    seller: user?.name ? `${user.name} (You)` : 'Student (You)',
+    seller: 'Satkar (You)',
     photos: []
   });
   const [formErrors, setFormErrors] = useState({});
@@ -131,7 +158,6 @@ export default function Dashboard({ onGoToLogin, initialTab }) {
   ];
 
   const [catalogTab, setCatalogTab] = useState(() => {
-    if (initialTab) return initialTab;
     try {
       if (typeof window !== 'undefined' && window.location.search) {
         const t = new URLSearchParams(window.location.search).get('tab');
@@ -166,14 +192,16 @@ export default function Dashboard({ onGoToLogin, initialTab }) {
   }, [user, catalogTab]);
 
   // Total count of listings owned by current user
-  const myListingsCount = user ? myListings.length : 0;
+  const myListingsCount = user
+    ? productList.filter((item) => item.seller_id === user.id).length
+    : 0;
 
   // Active pool of products scoped by catalog tab ('all' vs 'my')
   const activeScopedProducts = catalogTab === 'my' && user
-    ? myListings
-    : visibleListings;
+    ? productList.filter((item) => item.seller_id === user.id)
+    : productList;
 
-  const pendingCount = (catalogTab === 'my' ? myListings : productList).filter((item) => item.status === 'pending').length;
+  const pendingCount = activeScopedProducts.filter((item) => item.status === 'pending').length;
 
   // Dynamic count calculation within the active catalog scope
   const getCategoryCount = (key) => {
@@ -407,50 +435,50 @@ export default function Dashboard({ onGoToLogin, initialTab }) {
     setCurrentStep(2);
   };
 
-  const handlePhotoFiles = async (files) => {
+  const handlePhotoFiles = (files) => {
     if (!files || files.length === 0) return;
     const fileList = Array.from(files);
-    const validImages = fileList.filter((f) => f.type && f.type.startsWith('image/'));
+    const validImages = fileList.filter((f) => f.type.startsWith('image/'));
 
     if (validImages.length === 0) {
       setFormErrors((prev) => ({ ...prev, photos: 'Please select valid image files (JPG, PNG, WebP).' }));
       return;
     }
 
-    const availableSlots = 5 - formData.photos.length;
+    const availableSlots = 4 - formData.photos.length;
     if (availableSlots <= 0) {
-      setFormErrors((prev) => ({ ...prev, photos: 'Maximum 5 photos allowed.' }));
+      setFormErrors((prev) => ({ ...prev, photos: 'Maximum 4 photos allowed.' }));
       return;
     }
 
     const filesToLoad = validImages.slice(0, availableSlots);
-    try {
-      const compressedPhotos = [];
-      for (const file of filesToLoad) {
-        if (file.size > 10 * 1024 * 1024) {
-          setFormErrors((prev) => ({ ...prev, photos: `File "${file.name}" exceeds 10MB limit.` }));
-          continue;
-        }
-        const compressed = await compressImage(file, 1024, 0.7);
-        compressedPhotos.push(compressed);
-      }
+    let loadedCount = 0;
+    const newPhotos = [];
 
-      if (compressedPhotos.length > 0) {
-        setFormData((prev) => ({
-          ...prev,
-          photos: [...prev.photos, ...compressedPhotos]
-        }));
-        setFormErrors((prev) => ({ ...prev, photos: '' }));
+    filesToLoad.forEach((file) => {
+      if (file.size > 5 * 1024 * 1024) {
+        setFormErrors((prev) => ({ ...prev, photos: `File "${file.name}" exceeds 5MB limit.` }));
+        return;
       }
-    } catch (err) {
-      console.error('Failed to compress photos', err);
-      setFormErrors((prev) => ({ ...prev, photos: 'Failed to process images. Please try different files.' }));
-    }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        newPhotos.push(e.target.result);
+        loadedCount++;
+        if (loadedCount === filesToLoad.length) {
+          setFormData((prev) => ({
+            ...prev,
+            photos: [...prev.photos, ...newPhotos]
+          }));
+          setFormErrors((prev) => ({ ...prev, photos: '' }));
+        }
+      };
+      reader.readAsDataURL(file);
+    });
   };
 
   const handleAddSamplePhoto = (sampleImg) => {
-    if (formData.photos.length >= 5) {
-      setFormErrors((prev) => ({ ...prev, photos: 'Maximum 5 photos allowed.' }));
+    if (formData.photos.length >= 4) {
+      setFormErrors((prev) => ({ ...prev, photos: 'Maximum 4 photos allowed.' }));
       return;
     }
     setFormData((prev) => ({
@@ -478,19 +506,9 @@ export default function Dashboard({ onGoToLogin, initialTab }) {
     }
 
     const catObj = categories.find((c) => c.id === formData.category_id);
-    const categoryName = catObj ? (catObj.id === 'books-notes' ? 'Textbooks' : catObj.name) : 'Textbooks';
-    const categoryThemeMap = {
-      'books-notes': 'theme-academic',
-      'crafts': 'theme-crafts',
-      'tech-tools': 'theme-tech',
-      'fragrance': 'theme-scents'
-    };
-    const iconMap = {
-      'books-notes': 'menu_book',
-      'crafts': 'palette',
-      'tech-tools': 'precision_manufacturing',
-      'fragrance': 'local_florist'
-    };
+    const categoryName = catObj ? catObj.name : 'Books & Notes';
+    const categoryTheme = CATEGORY_THEME_MAP[formData.category_id] || 'theme-academic';
+    const categoryIcon = catObj?.icon || 'sell';
 
     const finalMeetup = formData.meetupSpot === 'Other' ? formData.customMeetupSpot : formData.meetupSpot;
 
@@ -500,9 +518,12 @@ export default function Dashboard({ onGoToLogin, initialTab }) {
       const oldPrice = Number(existingItem?.price);
       const isPriceChanged = newPrice !== oldPrice;
 
+      // Resolve existing category ID accurately even if sample item originally lacked category_id
+      const existingCatId = existingItem?.category_id || resolveCategoryId(existingItem);
+
       // Check if any fields other than price changed
       const isTitleChanged = formData.title.trim() !== (existingItem?.title || '').trim();
-      const isCategoryChanged = formData.category_id !== (existingItem?.category_id || '');
+      const isCategoryChanged = formData.category_id !== existingCatId;
       const isSubcategoryChanged = (formData.subcategory_id || '') !== (existingItem?.subcategory_id || '');
       const isConditionChanged = formData.condition !== (existingItem?.condition || '');
       const isDescChanged = (formData.description || '').trim() !== (existingItem?.description || '').trim();
@@ -525,15 +546,11 @@ export default function Dashboard({ onGoToLogin, initialTab }) {
 
       // Rule: If ONLY the price was updated, auto-accept immediately and keep listing active
       if (!isContentChanged && isPriceChanged) {
-        dispatch(
-          updateListing({
-            id: editingId,
-            updatedFields: {
-              price: newPrice,
-              origPrice: Math.round(newPrice * 1.35)
-            }
-          })
-        );
+        updateListing(editingId, {
+          price: newPrice,
+          origPrice: Math.round(newPrice * 1.35),
+          category_id: existingCatId
+        });
 
         setEditResultType('price_only');
         setIsPublishedSuccess(true);
@@ -551,30 +568,25 @@ export default function Dashboard({ onGoToLogin, initialTab }) {
       }
 
       // Rule: Except for price, whenever we edit the product send a request to the admin panel under "Pending Approvals"
-      dispatch(
-        updateListing({
-          id: editingId,
-          updatedFields: {
-            title: formData.title.trim(),
-            category: categoryName,
-            category_id: formData.category_id,
-            subcategory_id: formData.subcategory_id || null,
-            price: newPrice,
-            origPrice: Math.round(newPrice * 1.35),
-            condition: formData.condition,
-            icon: iconMap[formData.category_id] || 'sell',
-            categoryTheme: categoryThemeMap[formData.category_id] || 'theme-academic',
-            notes: finalMeetup,
-            image: formData.photos[0] || imgCalcBook,
-            photos: formData.photos,
-            description: formData.description,
-            status: 'pending', // ⏳ Sent to admin panel under Pending Approvals!
-            badge: 'Waiting for Approval',
-            pendingType: 'edit',
-            editedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-          }
-        })
-      );
+      updateListing(editingId, {
+        title: formData.title.trim(),
+        category: categoryName,
+        category_id: formData.category_id,
+        subcategory_id: formData.subcategory_id || null,
+        price: newPrice,
+        origPrice: Math.round(newPrice * 1.35),
+        condition: formData.condition,
+        icon: categoryIcon,
+        categoryTheme: categoryTheme,
+        notes: finalMeetup,
+        image: formData.photos[0] || imgCalcBook,
+        photos: formData.photos,
+        description: formData.description,
+        status: 'pending', // ⏳ Sent to admin panel under Pending Approvals!
+        badge: 'Waiting for Approval',
+        pendingType: 'edit',
+        editedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      });
 
       setEditResultType('pending_approval');
       setIsPublishedSuccess(true);
@@ -593,7 +605,7 @@ export default function Dashboard({ onGoToLogin, initialTab }) {
 
     const newListing = {
       id: Date.now(),
-      seller_id: user?.id || 'guest_seller',
+      seller_id: user?.id || 'student_a',
       title: formData.title.trim(),
       category: categoryName,
       category_id: formData.category_id,
@@ -601,9 +613,9 @@ export default function Dashboard({ onGoToLogin, initialTab }) {
       price: Number(formData.price),
       origPrice: Math.round(Number(formData.price) * 1.35),
       condition: formData.condition,
-      seller: user?.name ? `${user.name} (You)` : 'Student (You)',
-      icon: iconMap[formData.category_id] || 'sell',
-      categoryTheme: categoryThemeMap[formData.category_id] || 'theme-academic',
+      seller: user?.name ? `${user.name} (You)` : 'Satkar (You)',
+      icon: categoryIcon,
+      categoryTheme: categoryTheme,
       badge: 'Waiting for Approval',
       notes: finalMeetup,
       image: formData.photos[0] || imgCalcBook,
@@ -614,22 +626,14 @@ export default function Dashboard({ onGoToLogin, initialTab }) {
       submittedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
 
-    try {
-      dispatch(addListing(newListing));
-      setEditResultType('pending_approval');
-      setIsPublishedSuccess(true);
-      setTimeout(() => {
-        setIsPublishedSuccess(false);
-        setIsSellModalOpen(false);
-        resetForm();
-      }, 2400);
-    } catch (err) {
-      console.error('Storage full while saving listing', err);
-      setAdminAlert({
-        type: 'danger',
-        text: 'Storage full — remove some photos'
-      });
-    }
+    addListing(newListing);
+    setEditResultType('pending_approval');
+    setIsPublishedSuccess(true);
+    setTimeout(() => {
+      setIsPublishedSuccess(false);
+      setIsSellModalOpen(false);
+      resetForm();
+    }, 2400);
   };
 
   // Reorder photos in Step 2
@@ -651,16 +655,8 @@ export default function Dashboard({ onGoToLogin, initialTab }) {
     setIsEditing(true);
     setEditingId(item.id);
 
-    // Map item.category to category_id
-    const matchedCat = categories.find(
-      (c) =>
-        c.name.toLowerCase() === (item.category || '').toLowerCase() ||
-        (c.id === 'books-notes' && (item.category === 'Textbooks' || item.category === 'Books & Notes')) ||
-        (c.id === 'crafts' && item.category === 'Handmade Crafts') ||
-        (c.id === 'tech-tools' && item.category === 'Machinery & Tech') ||
-        (c.id === 'fragrance' && item.category === 'Perfumes & Scents')
-    );
-    const categoryId = matchedCat ? matchedCat.id : 'books-notes';
+    // Map item.category to category_id using resolveCategoryId
+    const categoryId = resolveCategoryId(item);
 
     const isKnownSpot = MEETUP_OPTIONS.includes(item.notes);
     const photosList =
@@ -680,7 +676,7 @@ export default function Dashboard({ onGoToLogin, initialTab }) {
       meetupSpot: isKnownSpot ? item.notes : item.notes ? 'Other' : 'Library Entrance',
       customMeetupSpot: isKnownSpot ? '' : item.notes || '',
       description: item.description || '',
-      seller: item.seller || (user?.name ? `${user.name} (You)` : 'Student (You)'),
+      seller: item.seller || (user?.name ? `${user.name} (You)` : 'Satkar (You)'),
       photos: photosList
     });
 
@@ -700,7 +696,7 @@ export default function Dashboard({ onGoToLogin, initialTab }) {
     );
     if (!confirmed) return;
 
-    dispatch(removeListing(item.id));
+    removeListing(item.id);
     setAdminAlert({
       type: 'success',
       text: 'Listing deleted'
@@ -715,7 +711,7 @@ export default function Dashboard({ onGoToLogin, initialTab }) {
         type: 'danger',
         text: 'Please sign in with your college account to sell an item.'
       });
-      setTimeout(() => goToLogin(), 1000);
+      if (onGoToLogin) setTimeout(() => handleGoToLogin(), 1000);
       return;
     }
     setIsEditing(false);
@@ -743,6 +739,14 @@ export default function Dashboard({ onGoToLogin, initialTab }) {
       });
       return;
     }
+    if (item.seller_id === user.id || (item.seller && item.seller.includes('(You)'))) {
+      setAdminAlert({
+        type: 'info',
+        text: 'This is your own listing! You can manage it under "My Listings".'
+      });
+      return;
+    }
+    openChatWithItem(item);
   };
 
   const handleBuyClick = (e, item) => {
@@ -774,7 +778,7 @@ export default function Dashboard({ onGoToLogin, initialTab }) {
     );
     if (!confirmed) return;
 
-    dispatch(removeListing(productId));
+    removeListing(productId);
     setAdminAlert({
       type: 'success',
       text: 'Listing deleted'
@@ -808,7 +812,7 @@ export default function Dashboard({ onGoToLogin, initialTab }) {
       meetupSpot: '',
       customMeetupSpot: '',
       description: '',
-      seller: user?.name ? `${user.name} (You)` : 'Student (You)',
+      seller: user?.name ? `${user.name} (You)` : 'Satkar (You)',
       photos: []
     });
     setFormErrors({});
@@ -826,7 +830,7 @@ export default function Dashboard({ onGoToLogin, initialTab }) {
           <div className="d-flex align-items-center gap-3">
             <div 
               className="unimart-logo-group" 
-              onClick={goToLogin} 
+              onClick={handleGoToLogin} 
               role="button" 
               tabIndex={0}
               style={{ cursor: 'pointer' }}
@@ -841,7 +845,7 @@ export default function Dashboard({ onGoToLogin, initialTab }) {
             <button   
               type="button" 
               className="btn btn-sm btn-light border rounded-pill d-none d-lg-inline-flex align-items-center gap-1 text-muted"
-              onClick={goToLogin}
+              onClick={handleGoToLogin}
               title="Return to Landing Page"
             >
               <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>logout</span>
@@ -909,6 +913,7 @@ export default function Dashboard({ onGoToLogin, initialTab }) {
               title="Campus alerts"
             >
               <span className="material-symbols-outlined" style={{ fontSize: '21px' }}>notifications</span>
+              <span className="unimart-badge-count">1</span>
             </button>
 
             {/* Cart Button */}
@@ -918,6 +923,7 @@ export default function Dashboard({ onGoToLogin, initialTab }) {
               title="Cart items"
             >
               <span className="material-symbols-outlined" style={{ fontSize: '21px' }}>shopping_cart</span>
+              <span className="unimart-badge-count">2</span>
             </button>
 
             {/* Consolidated Profile Chip with 3 Lines + Dropdown */}
@@ -926,7 +932,7 @@ export default function Dashboard({ onGoToLogin, initialTab }) {
                 className={`unimart-user-chip ${!user ? 'cursor-pointer' : ''}`}
                 onClick={() => {
                   if (!user) {
-                    goToLogin();
+                    handleGoToLogin();
                   } else {
                     setIsUserMenuOpen((prev) => !prev);
                   }
@@ -936,7 +942,7 @@ export default function Dashboard({ onGoToLogin, initialTab }) {
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     if (!user) {
-                      goToLogin();
+                      handleGoToLogin();
                     } else {
                       setIsUserMenuOpen((prev) => !prev);
                     }
@@ -1087,6 +1093,7 @@ export default function Dashboard({ onGoToLogin, initialTab }) {
                       className="btn btn-sm btn-outline-danger w-100 rounded-pill d-flex align-items-center justify-content-center gap-1 py-1"
                       style={{ fontSize: '0.78rem' }}
                       onClick={() => {
+                        if (closeChat) closeChat();
                         logout();
                         setIsUserMenuOpen(false);
                       }}
@@ -1184,7 +1191,7 @@ export default function Dashboard({ onGoToLogin, initialTab }) {
               <span>Chitkara Campus Student Exchange</span>
             </div>
             <h2 className="fw-bolder mb-1" style={{ letterSpacing: '-0.025em' }}>
-              {user ? `Hi ${user.name.split(' ')[0]}! What are you looking for today?` : 'Hi there! What are you looking for today?'}
+              Hi Satkar! What are you looking for today?
             </h2>
             <p className="text-muted mb-0">
               Explore pre-owned textbooks, handmade crafts, campus tech tools, and student-crafted products.
@@ -1375,7 +1382,7 @@ export default function Dashboard({ onGoToLogin, initialTab }) {
                   className={`unimart-pill-tab ${catalogTab === 'my' ? 'active' : ''}`}
                   onClick={() => {
                     if (!user) {
-                      goToLogin();
+                      handleGoToLogin();
                       return;
                     }
                     setCatalogTab('my');
@@ -1434,16 +1441,8 @@ export default function Dashboard({ onGoToLogin, initialTab }) {
           </div>
         </div>
 
-        {/* Product Cards Grid, Loading State, or Empty State */}
-        {listingsStatus === 'loading' && filteredProducts.length === 0 ? (
-          <div className="text-center py-5 my-4">
-            <div className="spinner-border text-danger mb-3" role="status" style={{ width: '2.5rem', height: '2.5rem' }}>
-              <span className="visually-hidden">Loading marketplace catalog...</span>
-            </div>
-            <h5 className="fw-bold">Loading Campus Marketplace...</h5>
-            <p className="text-muted small">Fetching peer-to-peer listings</p>
-          </div>
-        ) : filteredProducts.length === 0 ? (
+        {/* Product Cards Grid or Empty State */}
+        {filteredProducts.length === 0 ? (
           catalogTab === 'my' && myListingsCount === 0 ? (
             <div className="unimart-empty-state">
               <div className="unimart-empty-icon-box">
@@ -1617,9 +1616,23 @@ export default function Dashboard({ onGoToLogin, initialTab }) {
                           {item.title}
                         </h6>
 
-                        <div className="unimart-seller-info">
-                          <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>person</span>
-                          <span>{item.seller}</span>
+                        <div className="d-flex justify-content-between align-items-center mb-1">
+                          <div className="unimart-seller-info">
+                            <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>person</span>
+                            <span>{item.seller}</span>
+                          </div>
+                          {(!user || (item.seller_id !== user.id && !item.seller?.includes('(You)'))) && (
+                            <button
+                              type="button"
+                              className="unimart-card-quick-chat-btn"
+                              onClick={(e) => handleChatClick(e, item)}
+                              title={`Chat with ${item.seller}`}
+                              aria-label={`Chat with seller ${item.seller}`}
+                            >
+                              <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>chat</span>
+                              <span>Chat</span>
+                            </button>
+                          )}
                         </div>
 
                         {/* Pricing in Indian Rupees (₹) */}
@@ -2205,7 +2218,7 @@ export default function Dashboard({ onGoToLogin, initialTab }) {
                   <div className="mb-3">
                     <label className="form-label small fw-semibold d-flex justify-content-between align-items-center mb-1">
                       <span>Item Photos <span className="unimart-req-asterisk">*</span></span>
-                      <span className="text-muted small">{formData.photos.length} / 5 photos added</span>
+                      <span className="text-muted small">{formData.photos.length} / 4 photos added</span>
                     </label>
 
                     <input 
@@ -2243,7 +2256,7 @@ export default function Dashboard({ onGoToLogin, initialTab }) {
                         Drag & drop photos here, or <span className="text-decoration-underline" style={{ color: 'var(--unimart-maroon)' }}>browse files</span>
                       </div>
                       <div className="text-muted" style={{ fontSize: '0.75rem' }}>
-                        Supports JPG, PNG, WebP (Max 5MB each, up to 5 photos)
+                        Supports JPG, PNG, WebP (Max 5MB each, up to 4 photos)
                       </div>
                     </div>
 
@@ -2399,7 +2412,7 @@ export default function Dashboard({ onGoToLogin, initialTab }) {
             <span className="fw-bold">UNIMART</span> — The Peer-to-Peer College E-Commerce Platform.
           </div>
           <div className="d-flex gap-4">
-            <button type="button" className="btn btn-link p-0 text-muted small text-decoration-none" onClick={goToLogin}>
+            <button type="button" className="btn btn-link p-0 text-muted small text-decoration-none" onClick={handleGoToLogin}>
               View Onboarding / Login
             </button>
             <span className="text-muted small">Campus Meetup Safety</span>
@@ -2408,6 +2421,10 @@ export default function Dashboard({ onGoToLogin, initialTab }) {
           </div>
         </div>
       </footer>
+
+      {/* Real-time Campus Marketplace Chat */}
+      <ChatModal />
+      <FloatingChatButton />
     </div>
   );
 }

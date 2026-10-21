@@ -539,69 +539,82 @@
 }
 
 /* ================= PRODUCT CARD (Category Translucency + Hotstar OTT Hover Popup) ================= */
-.unimart-product-card {
+.unimart-product-card,
+.hover-card {
   --cat-accent: #a855f7;
   --cat-tint-bg: #9333ea;
   --cat-glow-grad: linear-gradient(90deg, #e9d5ff 0%, #c084fc 60%, #9333ea 100%);
   --cat-glow-rgb: 168, 85, 247;
   --cat-badge-bg: #faf5ff;
   --cat-badge-color: #7e22ce;
+  --gradient-dark: linear-gradient(180deg, #3a1754 0%, #230d34 50%, #100419 100%);
   position: relative;
   overflow: visible;
   cursor: pointer;
   z-index: 1;
 }
 
-/* Category: Textbooks (Academic - Warm Golden Yellow) */
-.unimart-product-card.theme-academic {
+/* Category: Textbooks (Academic - Warm Golden Yellow / Forest Glow) */
+.unimart-product-card.theme-academic,
+.hover-card.theme-academic {
   --cat-accent: #eab308;
   --cat-tint-bg: #ca8a04;
   --cat-glow-grad: linear-gradient(90deg, #fef08a 0%, #facc15 60%, #ca8a04 100%);
   --cat-glow-rgb: 234, 179, 8;
   --cat-badge-bg: #fefce8;
   --cat-badge-color: #a16207;
+  --gradient-dark: linear-gradient(180deg, #18422b 0%, #0d281a 50%, #06140d 100%);
 }
 
-/* Category: Handmade Crafts (Artisan - Rose / Soft Pink) */
-.unimart-product-card.theme-crafts {
+/* Category: Handmade Crafts (Artisan - Rose / Soft Pink / Wine) */
+.unimart-product-card.theme-crafts,
+.hover-card.theme-crafts {
   --cat-accent: #ec4899;
   --cat-tint-bg: #db2777;
   --cat-glow-grad: linear-gradient(90deg, #fbcfe8 0%, #f472b6 60%, #db2777 100%);
   --cat-glow-rgb: 236, 72, 153;
   --cat-badge-bg: #fdf2f8;
   --cat-badge-color: #be185d;
+  --gradient-dark: linear-gradient(180deg, #4d1836 0%, #300d21 50%, #170510 100%);
 }
 
-/* Category: Machinery & Tech (Tools & Lab - Electric Sky Blue) */
-.unimart-product-card.theme-tech {
+/* Category: Machinery & Tech (Tools & Lab - Electric Sky Blue / Midnight) */
+.unimart-product-card.theme-tech,
+.hover-card.theme-tech {
   --cat-accent: #0ea5e9;
   --cat-tint-bg: #0284c7;
   --cat-glow-grad: linear-gradient(90deg, #bae6fd 0%, #38bdf8 60%, #0284c7 100%);
   --cat-glow-rgb: 14, 165, 233;
   --cat-badge-bg: #f0f9ff;
   --cat-badge-color: #0369a1;
+  --gradient-dark: linear-gradient(180deg, #133a5c 0%, #0b243b 50%, #05121e 100%);
 }
 
-/* Category: Perfumes & Scents (Fragrance - Royal Violet / Purple) */
-.unimart-product-card.theme-scents {
+/* Category: Perfumes & Scents (Fragrance - Royal Violet / Dark Blackberry) */
+.unimart-product-card.theme-scents,
+.hover-card.theme-scents {
   --cat-accent: #a855f7;
   --cat-tint-bg: #9333ea;
   --cat-glow-grad: linear-gradient(90deg, #e9d5ff 0%, #c084fc 60%, #9333ea 100%);
   --cat-glow-rgb: 168, 85, 247;
   --cat-badge-bg: #faf5ff;
   --cat-badge-color: #7e22ce;
+  --gradient-dark: linear-gradient(180deg, #3a1754 0%, #230d34 50%, #100419 100%);
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .unimart-product-card:is(:hover, .is-hovered) {
+  .unimart-product-card:is(:hover, .is-hovered),
+  .hover-card:is(:hover, .is-hovered) {
     z-index: 50;
   }
 }
-.unimart-product-card.is-hovered {
+.unimart-product-card.is-hovered,
+.hover-card.is-hovered {
   z-index: 50;
 }
 
-.unimart-card-inner {
+.unimart-card-inner,
+.card-inner {
   background: #ffffff;
   border: 1px solid #e7ebf0;
   border-radius: 20px;
@@ -609,11 +622,16 @@
   flex-direction: column;
   position: relative;
   height: 100%;
-  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), border-radius 0.3s, border-color 0.3s;
+  transition: 
+    transform 0.32s cubic-bezier(0.2, 0.8, 0.2, 1), 
+    box-shadow 0.32s cubic-bezier(0.2, 0.8, 0.2, 1), 
+    border-radius 0.3s, 
+    border-color 0.3s ease;
   cursor: pointer;
 }
 
-.unimart-card-top-content {
+.unimart-card-top-content,
+.card-top {
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -623,57 +641,64 @@
   transition: border-radius 0.3s;
 }
 
-.unimart-product-card:is(:hover, .is-hovered) .unimart-card-inner {
+/* Smooth scale pop-out and ambient halo glow */
+.unimart-product-card:is(:hover, .is-hovered) .unimart-card-inner,
+.hover-card:is(:hover, .is-hovered) .card-inner {
   transform: scale(1.1) translateY(-6px);
-  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.28), 0 0 32px rgba(var(--cat-glow-rgb), 0.25);
-  border-bottom-left-radius: 20px;
-  border-bottom-right-radius: 20px;
-  background: transparent;
   border-color: rgba(var(--cat-glow-rgb), 0.45);
+  box-shadow: 
+    0 24px 48px rgba(0, 0, 0, 0.28), 
+    0 0 32px rgba(var(--cat-glow-rgb), 0.25);
+  border-bottom-left-radius: 20px;
+  border-bottom-right-radius: 20px;
+  background: transparent;
 }
 
-.unimart-product-card:is(:hover, .is-hovered) .unimart-card-top-content {
+.unimart-product-card:is(:hover, .is-hovered) .unimart-card-top-content,
+.hover-card:is(:hover, .is-hovered) .card-top {
   background: transparent;
   border-bottom-left-radius: 20px;
   border-bottom-right-radius: 20px;
 }
 
-.unimart-product-card:is(:hover, .is-hovered) .unimart-card-body {
+.unimart-product-card:is(:hover, .is-hovered) .unimart-card-body,
+.hover-card:is(:hover, .is-hovered) .card-body {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
 }
 
-/* Academic (Green - Rich Forest Emerald Gradient) */
+/* Dynamic category-tailored expanded details gradients */
 .unimart-product-card:has(.theme-academic):is(:hover, .is-hovered) .unimart-expanded-details,
-.unimart-product-card.theme-academic:is(:hover, .is-hovered) .unimart-expanded-details {
-  background: linear-gradient(180deg, #18422b 0%, #0d281a 50%, #06140d 100%);
-  border-color: rgba(52, 211, 153, 0.45);
-  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4), 0 12px 30px rgba(16, 185, 129, 0.35), 0 0 30px rgba(52, 211, 153, 0.22);
+.unimart-product-card.theme-academic:is(:hover, .is-hovered) .unimart-expanded-details,
+.hover-card.theme-academic:is(:hover, .is-hovered) .expanded-details {
+  background: var(--gradient-dark, linear-gradient(180deg, #18422b 0%, #0d281a 50%, #06140d 100%));
+  border-color: rgba(var(--cat-glow-rgb), 0.45);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4), 0 0 32px rgba(var(--cat-glow-rgb), 0.25);
 }
 
-/* Crafts (Pink - Rich Mulberry Wine Gradient) */
 .unimart-product-card:has(.theme-crafts):is(:hover, .is-hovered) .unimart-expanded-details,
-.unimart-product-card.theme-crafts:is(:hover, .is-hovered) .unimart-expanded-details {
-  background: linear-gradient(180deg, #4d1836 0%, #300d21 50%, #170510 100%);
-  border-color: rgba(244, 114, 182, 0.45);
-  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4), 0 12px 30px rgba(236, 72, 153, 0.38), 0 0 30px rgba(244, 114, 182, 0.25);
+.unimart-product-card.theme-crafts:is(:hover, .is-hovered) .unimart-expanded-details,
+.hover-card.theme-crafts:is(:hover, .is-hovered) .expanded-details {
+  background: var(--gradient-dark, linear-gradient(180deg, #4d1836 0%, #300d21 50%, #170510 100%));
+  border-color: rgba(var(--cat-glow-rgb), 0.45);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4), 0 0 32px rgba(var(--cat-glow-rgb), 0.25);
 }
 
-/* Tech (Blue - Rich Midnight Ocean Gradient) */
 .unimart-product-card:has(.theme-tech):is(:hover, .is-hovered) .unimart-expanded-details,
-.unimart-product-card.theme-tech:is(:hover, .is-hovered) .unimart-expanded-details {
-  background: linear-gradient(180deg, #133a5c 0%, #0b243b 50%, #05121e 100%);
-  border-color: rgba(56, 189, 248, 0.45);
-  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4), 0 12px 30px rgba(14, 165, 233, 0.38), 0 0 30px rgba(56, 189, 248, 0.25);
+.unimart-product-card.theme-tech:is(:hover, .is-hovered) .unimart-expanded-details,
+.hover-card.theme-tech:is(:hover, .is-hovered) .expanded-details {
+  background: var(--gradient-dark, linear-gradient(180deg, #133a5c 0%, #0b243b 50%, #05121e 100%));
+  border-color: rgba(var(--cat-glow-rgb), 0.45);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4), 0 0 32px rgba(var(--cat-glow-rgb), 0.25);
 }
 
-/* Scents (Purple - Rich Royal Violet Gradient) */
 .unimart-product-card:has(.theme-scents):is(:hover, .is-hovered) .unimart-expanded-details,
-.unimart-product-card.theme-scents:is(:hover, .is-hovered) .unimart-expanded-details {
-  background: linear-gradient(180deg, #3a1754 0%, #230d34 50%, #100419 100%);
-  border-color: rgba(192, 132, 252, 0.45);
-  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4), 0 12px 30px rgba(168, 85, 247, 0.38), 0 0 30px rgba(192, 132, 252, 0.25);
+.unimart-product-card.theme-scents:is(:hover, .is-hovered) .unimart-expanded-details,
+.hover-card.theme-scents:is(:hover, .is-hovered) .expanded-details {
+  background: var(--gradient-dark, linear-gradient(180deg, #3a1754 0%, #230d34 50%, #100419 100%));
+  border-color: rgba(var(--cat-glow-rgb), 0.45);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4), 0 0 32px rgba(var(--cat-glow-rgb), 0.25);
 }
 
 /* --- Image & Graphic Placeholder Area --- */
@@ -687,22 +712,26 @@
 }
 
 /* Translucent picture with delicate category infusion */
-.unimart-card-image {
+.unimart-card-image,
+.card-image {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: 0.35;
+  opacity: 0.45;
   filter: contrast(0.98) brightness(1.02);
-  transition: opacity 0.3s ease, transform 0.4s ease, filter 0.3s ease;
+  transition: opacity 0.3s ease, filter 0.3s ease, transform 0.4s ease;
 }
 
-.unimart-product-card:is(:hover, .is-hovered) .unimart-card-image {
-  opacity: 0.92;
+/* Image lights up and sharpens on hover */
+.unimart-product-card:is(:hover, .is-hovered) .unimart-card-image,
+.hover-card:is(:hover, .is-hovered) .card-image {
+  opacity: 0.95;
   filter: contrast(1.05) brightness(1.03);
 }
 
-/* Translucent category color tint wash (Soft & delicate, exactly like screenshot) */
-.unimart-category-translucent-tint {
+/* Translucent category color tint wash */
+.unimart-category-translucent-tint,
+.category-translucent-tint {
   position: absolute;
   inset: 0;
   background: linear-gradient(180deg,
@@ -713,12 +742,14 @@
   transition: opacity 0.3s ease;
 }
 
-.unimart-product-card:is(:hover, .is-hovered) .unimart-category-translucent-tint {
+.unimart-product-card:is(:hover, .is-hovered) .unimart-category-translucent-tint,
+.hover-card:is(:hover, .is-hovered) .category-translucent-tint {
   opacity: 0.12;
 }
 
-/* Clean category top border strip */
-.unimart-card-glow-border {
+/* Glowing category strip at top */
+.unimart-card-glow-border,
+.card-glow-border {
   position: absolute;
   top: 0;
   left: 0;
@@ -731,8 +762,9 @@
   transition: height 0.3s ease, box-shadow 0.3s ease;
 }
 
-.unimart-product-card:is(:hover, .is-hovered) .unimart-card-glow-border {
-  height: 4.5px;
+.unimart-product-card:is(:hover, .is-hovered) .unimart-card-glow-border,
+.hover-card:is(:hover, .is-hovered) .card-glow-border {
+  height: 5px;
   box-shadow: 0 0 16px var(--cat-accent), 0 2px 8px var(--cat-accent);
 }
 
@@ -967,7 +999,7 @@
 
 .unimart-orig-price {
   font-size: 0.85rem;
-  color: #94a3b8;
+  color: #afc2de;
   text-decoration: line-through;
   margin-left: 0.45rem;
 }
@@ -1049,31 +1081,37 @@
   box-shadow: 0 4px 10px rgba(220, 38, 38, 0.2);
 }
 
-/* ================= EXPANDED DETAILS SECTION (bhrigav-react HOVER CARDS) ================= */
-.unimart-expanded-details {
+/* ================= EXPANDED DETAILS SECTION (HOTSTAR / UNIMART EXPANDING HOVER CARD) ================= */
+.unimart-expanded-details,
+.expanded-details {
   position: absolute;
   top: 175px;
   bottom: -1px;
   margin-top: -1px;
   left: -1px;
   right: -1px;
-  background: linear-gradient(180deg, #22292f 0%, #14181c 50%, #0a0c0e 100%);
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: var(--gradient-dark, linear-gradient(180deg, #133a5c 0%, #0b243b 50%, #05121e 100%));
+  border: 1px solid rgba(var(--cat-glow-rgb), 0.45);
   border-top: none;
   border-radius: 0 0 20px 20px;
   padding: 1rem 1.1rem;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0.3s, border-color 0.3s, box-shadow 0.3s;
-  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.35);
+  transition: 
+    opacity 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), 
+    visibility 0.3s ease, 
+    border-color 0.3s ease, 
+    box-shadow 0.3s ease;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4);
   z-index: 5;
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 
-/* Synced ambient light bleeding from the image into the description */
-.unimart-expanded-details::before {
+/* Dynamic Ambient Light Bleed into Description */
+.unimart-expanded-details::before,
+.expanded-details::before {
   content: '';
   position: absolute;
   top: 0;
@@ -1091,7 +1129,8 @@
   pointer-events: none;
 }
 
-.unimart-product-card:is(:hover, .is-hovered) .unimart-expanded-details {
+.unimart-product-card:is(:hover, .is-hovered) .unimart-expanded-details,
+.hover-card:is(:hover, .is-hovered) .expanded-details {
   opacity: 1;
   visibility: visible;
 }
@@ -1841,8 +1880,8 @@
    ========================================================================== */
 
 [data-theme="dark"] {
-  --unimart-maroon: #e11d48;
-  --unimart-maroon-dark: #be123c;
+  --unimart-maroon: #9f2944;
+  --unimart-maroon-dark: #711d34;
   --unimart-maroon-light: #fb7185;
   --unimart-maroon-subtle: rgba(225, 29, 72, 0.14);
   --unimart-maroon-border: rgba(225, 29, 72, 0.32);
@@ -2004,9 +2043,9 @@
 }
 
 [data-theme="dark"] .unimart-pill-tab.active {
-  background: linear-gradient(135deg, #e11d48 0%, #be123c 100%);
+  background: linear-gradient(135deg, var(--unimart-maroon) 0%, var(--unimart-maroon-dark) 100%);
   color: #ffffff;
-  border-color: #f43f5e;
+  border-color: #ff0000;
   box-shadow: 0 4px 16px rgba(225, 29, 72, 0.35);
 }
 
@@ -2142,13 +2181,13 @@
 [data-theme="dark"] .unimart-card-resting,
 [data-theme="dark"] .unimart-card-inner {
   background: #f4ede3;
-  border: 1px solid #dfd6c8;
+  border: 1px solid #5e5e5e;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), 0 2px 10px rgba(0, 0, 0, 0.2);
 }
 
 [data-theme="dark"] .unimart-card-top-content,
 [data-theme="dark"] .unimart-card-body {
-  background: #f4ede3;
+  background: linear-gradient(135deg, #353638 0%, #28292a 55%, #202123 100%);
 }
 
 [data-theme="dark"] .unimart-card-placeholder-wrap,
@@ -2157,12 +2196,25 @@
   border-bottom-color: #dfd6c8;
 }
 
-[data-theme="dark"] .unimart-expanded-details {
-  border-color: rgba(255, 255, 255, 0.16);
+[data-theme="dark"] .unimart-expanded-details,
+[data-theme="dark"] .expanded-details {
+  background: var(--gradient-dark, #111827);
+  border-color: rgba(var(--cat-glow-rgb), 0.45);
+}
+
+[data-theme="dark"] .unimart-product-card:is(:hover, .is-hovered) .unimart-card-inner,
+[data-theme="dark"] .hover-card:is(:hover, .is-hovered) .card-inner {
+  background: transparent;
+  border-color: rgba(var(--cat-glow-rgb), 0.45);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5), 0 0 32px rgba(var(--cat-glow-rgb), 0.25);
 }
 
 [data-theme="dark"] .unimart-card-image {
-  opacity: 0.85;
+  opacity: 0.65;
+}
+
+[data-theme="dark"] .unimart-product-card:is(:hover, .is-hovered) .unimart-card-image {
+  opacity: 0.95;
 }
 
 [data-theme="dark"] .unimart-condition-badge {
@@ -2198,21 +2250,21 @@
 }
 
 [data-theme="dark"] .unimart-badge-chip {
-  background: #e7dfd1;
-  color: #44403c;
-  border: 1px solid #d9cebe;
+  background: #3c3c3c;
+  color: #ffffffa1;
+  border: 1px solid #5e5e5e;
 }
 
 [data-theme="dark"] .unimart-card-title {
-  color: #1c1917;
+  color: #ffffff;
 }
 
 [data-theme="dark"] .unimart-seller-info {
-  color: #57534e;
+  color: #e1d5c2c2;
 }
 
 [data-theme="dark"] .unimart-current-price {
-  color: #1c1917;
+  color: #ffffff;
 }
 
 [data-theme="dark"] .unimart-original-price {
