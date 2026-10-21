@@ -28,7 +28,9 @@ export default function AdminPage() {
     );
   });
 
-  const totalMarketValue = productList.reduce((acc, curr) => acc + (Number(curr.price) || 0), 0);
+  const totalMarketValue = productList
+    .filter((item) => item.status !== 'pending')
+    .reduce((acc, curr) => acc + (Number(curr.price) || 0), 0);
 
   const handleApprove = (item) => {
     approveListing(item.id);

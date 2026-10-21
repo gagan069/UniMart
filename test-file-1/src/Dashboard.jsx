@@ -167,13 +167,14 @@ export default function Dashboard({ onGoToLogin }) {
     }));
   };
 
-  // Category filter definitions
+  // Category filter definitions derived from categories.js
   const categoryDefs = [
     { key: 'All', name: 'All Categories', icon: 'apps' },
-    { key: 'Textbooks', name: 'Textbooks & Notes', icon: 'menu_book' },
-    { key: 'Handmade Crafts', name: 'Handmade Crafts', icon: 'palette' },
-    { key: 'Machinery & Tech', name: 'Machinery & Tech', icon: 'precision_manufacturing' },
-    { key: 'Perfumes & Scents', name: 'Perfumes & Scents', icon: 'local_florist' }
+    ...categories.map((c) => ({
+      key: c.id,
+      name: c.name,
+      icon: c.icon
+    }))
   ];
 
   const [catalogTab, setCatalogTab] = useState(() => {
@@ -226,28 +227,38 @@ export default function Dashboard({ onGoToLogin }) {
   const getCategoryCount = (key) => {
     if (key === 'All') return `${activeScopedProducts.length} items`;
     if (key === 'Pending') return `${pendingCount} items`;
-    const count = activeScopedProducts.filter((item) => item.category === key).length;
+    const count = activeScopedProducts.filter((item) => {
+      const itemCatId = resolveCategoryId(item);
+      const catObj = categories.find((c) => c.id === key);
+      return itemCatId === key || item.category === key || (catObj && item.category === catObj.name);
+    }).length;
     return `${count} items`;
   };
 
   // Dynamic product filtering by category and live search query within active scope
   const filteredProducts = activeScopedProducts.filter((item) => {
+    const itemCatId = resolveCategoryId(item);
+    const catObj = categories.find((c) => c.id === selectedCategory);
     const matchesCategory =
       selectedCategory === 'All'
         ? true
         : selectedCategory === 'Pending'
         ? item.status === 'pending'
-        : item.category === selectedCategory;
+        : itemCatId === selectedCategory ||
+          item.category === selectedCategory ||
+          (catObj && item.category === catObj.name);
+
     const q = searchQuery.trim().toLowerCase();
     if (!q) return matchesCategory;
 
     const matchesSearch =
-      item.title.toLowerCase().includes(q) ||
-      item.category.toLowerCase().includes(q) ||
-      item.seller.toLowerCase().includes(q) ||
+      (item.title || '').toLowerCase().includes(q) ||
+      (item.category || '').toLowerCase().includes(q) ||
+      (item.seller || '').toLowerCase().includes(q) ||
       (item.notes && item.notes.toLowerCase().includes(q)) ||
       (item.badge && item.badge.toLowerCase().includes(q)) ||
       (item.condition && item.condition.toLowerCase().includes(q)) ||
+      (item.description && item.description.toLowerCase().includes(q)) ||
       (item.status && item.status.toLowerCase().includes(q));
 
     return matchesCategory && matchesSearch;
@@ -1269,25 +1280,25 @@ export default function Dashboard({ onGoToLogin }) {
           
           {/* Card 1: Pre-owned Books (Lime Yellow Palette) */}
           <div 
-            className={`unimart-spotlight-card card-lime-yellow ${selectedCategory === 'Textbooks' ? 'active-spotlight' : ''}`}
+            className={`unimart-spotlight-card card-lime-yellow ${selectedCategory === 'books-notes' ? 'active-spotlight' : ''}`}
             onClick={() => {
-              setSelectedCategory(selectedCategory === 'Textbooks' ? 'All' : 'Textbooks');
+              setSelectedCategory(selectedCategory === 'books-notes' ? 'All' : 'books-notes');
               document.getElementById('marketplace-catalog')?.scrollIntoView({ behavior: 'smooth' });
             }}
             role="button"
             tabIndex={0}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
-                setSelectedCategory(selectedCategory === 'Textbooks' ? 'All' : 'Textbooks');
+                setSelectedCategory(selectedCategory === 'books-notes' ? 'All' : 'books-notes');
                 document.getElementById('marketplace-catalog')?.scrollIntoView({ behavior: 'smooth' });
               }
             }}
-            title="Filter by Textbooks & Notes"
+            title="Filter by Books & Notes"
           >
             <div>
               <div className="unimart-card-tag">
                 <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>menu_book</span>
-                <span>Semester Notes</span>
+                <span>Books & Notes</span>
               </div>
               <div className="unimart-card-serif-title">
                 Pre-owned books
@@ -1298,9 +1309,9 @@ export default function Dashboard({ onGoToLogin }) {
             </div>
 
             <div className="unimart-view-all-pill">
-              <span>{selectedCategory === 'Textbooks' ? 'Active Filter • Click to Reset' : 'Academic Collection'}</span>
+              <span>{selectedCategory === 'books-notes' ? 'Active Filter • Click to Reset' : 'Academic Collection'}</span>
               <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
-                {selectedCategory === 'Textbooks' ? 'close' : 'arrow_forward'}
+                {selectedCategory === 'books-notes' ? 'close' : 'arrow_forward'}
               </span>
             </div>
 
@@ -1309,25 +1320,25 @@ export default function Dashboard({ onGoToLogin }) {
 
           {/* Card 2: Student Handmade Crafts & Art (Soft Pink Palette) */}
           <div 
-            className={`unimart-spotlight-card card-soft-pink ${selectedCategory === 'Handmade Crafts' ? 'active-spotlight' : ''}`}
+            className={`unimart-spotlight-card card-soft-pink ${selectedCategory === 'handmade-art' ? 'active-spotlight' : ''}`}
             onClick={() => {
-              setSelectedCategory(selectedCategory === 'Handmade Crafts' ? 'All' : 'Handmade Crafts');
+              setSelectedCategory(selectedCategory === 'handmade-art' ? 'All' : 'handmade-art');
               document.getElementById('marketplace-catalog')?.scrollIntoView({ behavior: 'smooth' });
             }}
             role="button"
             tabIndex={0}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
-                setSelectedCategory(selectedCategory === 'Handmade Crafts' ? 'All' : 'Handmade Crafts');
+                setSelectedCategory(selectedCategory === 'handmade-art' ? 'All' : 'handmade-art');
                 document.getElementById('marketplace-catalog')?.scrollIntoView({ behavior: 'smooth' });
               }
             }}
-            title="Filter by Student Handmade Crafts"
+            title="Filter by Handmade & Art"
           >
             <div>
               <div className="unimart-card-tag">
                 <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>palette</span>
-                <span>Campus Makers & Creators</span>
+                <span>Handmade & Art</span>
               </div>
               <div className="unimart-card-serif-title">
                 Best of student art
@@ -1338,49 +1349,49 @@ export default function Dashboard({ onGoToLogin }) {
             </div>
 
             <div className="unimart-view-all-pill">
-              <span>{selectedCategory === 'Handmade Crafts' ? 'Active Filter • Click to Reset' : 'Art Collections'}</span>
+              <span>{selectedCategory === 'handmade-art' ? 'Active Filter • Click to Reset' : 'Art Collections'}</span>
               <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
-                {selectedCategory === 'Handmade Crafts' ? 'close' : 'arrow_forward'}
+                {selectedCategory === 'handmade-art' ? 'close' : 'arrow_forward'}
               </span>
             </div>
 
             <span className="unimart-card-art-icon">🎨</span>
           </div>
 
-          {/* Card 3: Machinery, Tech & Perfumes (Sky Blue Palette) */}
+          {/* Card 3: Lab & Engineering Gear (Sky Blue Palette) */}
           <div 
-            className={`unimart-spotlight-card card-sky-blue ${selectedCategory === 'Machinery & Tech' ? 'active-spotlight' : ''}`}
+            className={`unimart-spotlight-card card-sky-blue ${selectedCategory === 'lab-engineering-gear' ? 'active-spotlight' : ''}`}
             onClick={() => {
-              setSelectedCategory(selectedCategory === 'Machinery & Tech' ? 'All' : 'Machinery & Tech');
+              setSelectedCategory(selectedCategory === 'lab-engineering-gear' ? 'All' : 'lab-engineering-gear');
               document.getElementById('marketplace-catalog')?.scrollIntoView({ behavior: 'smooth' });
             }}
             role="button"
             tabIndex={0}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
-                setSelectedCategory(selectedCategory === 'Machinery & Tech' ? 'All' : 'Machinery & Tech');
+                setSelectedCategory(selectedCategory === 'lab-engineering-gear' ? 'All' : 'lab-engineering-gear');
                 document.getElementById('marketplace-catalog')?.scrollIntoView({ behavior: 'smooth' });
               }
             }}
-            title="Filter by Machinery & Tech"
+            title="Filter by Lab & Engineering Gear"
           >
             <div>
               <div className="unimart-card-tag">
                 <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>precision_manufacturing</span>
-                <span>Tech, Tools & Aromatics</span>
+                <span>Lab & Engineering</span>
               </div>
               <div className="unimart-card-serif-title">
-                Tech & Perfumes
+                Tech & Engineering tools
               </div>
               <div className="unimart-card-subtitle">
-                Calculators, kits & Home-made fragrances from ₹249
+                Calculators, robotics kits & lab equipment from ₹450
               </div>
             </div>
 
             <div className="unimart-view-all-pill">
-              <span>{selectedCategory === 'Machinery & Tech' ? 'Active Filter • Click to Reset' : 'Tech & Fragrance'}</span>
+              <span>{selectedCategory === 'lab-engineering-gear' ? 'Active Filter • Click to Reset' : 'Lab & Tech Collection'}</span>
               <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
-                {selectedCategory === 'Machinery & Tech' ? 'close' : 'arrow_forward'}
+                {selectedCategory === 'lab-engineering-gear' ? 'close' : 'arrow_forward'}
               </span>
             </div>
 
@@ -1463,7 +1474,7 @@ export default function Dashboard({ onGoToLogin }) {
                 {selectedCategory !== 'All' && (
                   <span className="badge bg-white text-dark border rounded-pill px-3 py-2 d-inline-flex align-items-center gap-2 shadow-sm">
                     <span className="text-muted small">Category:</span>
-                    <strong>{selectedCategory}</strong>
+                    <strong>{categories.find((c) => c.id === selectedCategory)?.name || (selectedCategory === 'Pending' ? 'Waiting Approval' : selectedCategory)}</strong>
                     <button
                       type="button"
                       className="btn-close ms-1"
@@ -1534,8 +1545,8 @@ export default function Dashboard({ onGoToLogin }) {
               <h4 className="fw-bold mb-1">No Listings Found</h4>
               <p className="text-muted small mb-3 text-center" style={{ maxWidth: '420px' }}>
                 {searchQuery.trim()
-                  ? `No products match "${searchQuery}" in ${selectedCategory === 'All' ? 'any category' : selectedCategory}.`
-                  : `No products available currently in "${selectedCategory}".`}
+                  ? `No products match "${searchQuery}" in ${selectedCategory === 'All' ? 'any category' : (categories.find((c) => c.id === selectedCategory)?.name || selectedCategory)}.`
+                  : `No products available currently in "${categories.find((c) => c.id === selectedCategory)?.name || selectedCategory}".`}
               </p>
               <button
                 type="button"

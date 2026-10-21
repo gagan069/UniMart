@@ -4,7 +4,7 @@ export const mockListings = [
   {
     id: 1,
     title: 'Calculus',
-    category: 'Textbooks',
+    category: 'Books & Notes',
     category_id: 'books-notes',
     price: 450,
     origPrice: 1499,
@@ -19,7 +19,7 @@ export const mockListings = [
   {
     id: 2,
     title: 'Handcrafted Matcha Mug',
-    category: 'Handmade Crafts',
+    category: 'Handmade & Art',
     category_id: 'handmade-art',
     price: 350,
     origPrice: 699,
@@ -34,7 +34,7 @@ export const mockListings = [
   {
     id: 3,
     title: 'Color Graphing Calculator',
-    category: 'Machinery & Tech',
+    category: 'Lab & Engineering Gear',
     category_id: 'lab-engineering-gear',
     price: 2499,
     origPrice: 6999,
@@ -49,7 +49,7 @@ export const mockListings = [
   {
     id: 4,
     title: 'Botanical Room Spray: Cedar & Wild Lavender (50ml)',
-    category: 'Perfumes & Scents',
+    category: 'Perfumes & Grooming',
     category_id: 'perfumes-grooming',
     price: 299,
     origPrice: 499,
@@ -64,7 +64,7 @@ export const mockListings = [
   {
     id: 5,
     title: 'Organic Chemistry as a Second Language (Klein)',
-    category: 'Textbooks',
+    category: 'Books & Notes',
     category_id: 'books-notes',
     price: 380,
     origPrice: 1100,
@@ -79,7 +79,7 @@ export const mockListings = [
   {
     id: 6,
     title: 'Hand-Embroidered Canvas Tote Bag',
-    category: 'Handmade Crafts',
+    category: 'Handmade & Art',
     category_id: 'handmade-art',
     price: 320,
     origPrice: 599,
@@ -94,7 +94,7 @@ export const mockListings = [
   {
     id: 7,
     title: 'Arduino Robotics Starter Kit + Sensor Shield',
-    category: 'Machinery & Tech',
+    category: 'Lab & Engineering Gear',
     category_id: 'lab-engineering-gear',
     price: 1850,
     origPrice: 3499,
@@ -109,7 +109,7 @@ export const mockListings = [
   {
     id: 8,
     title: 'Artisanal Solid Perfume: Amberwood & Bergamot',
-    category: 'Perfumes & Scents',
+    category: 'Perfumes & Grooming',
     category_id: 'perfumes-grooming',
     price: 249,
     origPrice: 449,
