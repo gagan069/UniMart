@@ -24,7 +24,9 @@ export default function AdminPage() {
       (item.title && item.title.toLowerCase().includes(q)) ||
       (item.seller && item.seller.toLowerCase().includes(q)) ||
       (item.category && item.category.toLowerCase().includes(q)) ||
-      (item.condition && item.condition.toLowerCase().includes(q))
+      (item.condition && item.condition.toLowerCase().includes(q)) ||
+      (item.description && item.description.toLowerCase().includes(q)) ||
+      (item.notes && item.notes.toLowerCase().includes(q))
     );
   });
 
