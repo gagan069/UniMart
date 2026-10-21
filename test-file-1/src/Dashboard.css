@@ -602,6 +602,78 @@
   --gradient-dark: linear-gradient(180deg, #3a1754 0%, #230d34 50%, #100419 100%);
 }
 
+/* Category: Electronics & Gadgets (Neon Cyan / Electric Teal) */
+.unimart-product-card.theme-electronics,
+.hover-card.theme-electronics {
+  --cat-accent: #06b6d4;
+  --cat-tint-bg: #0891b2;
+  --cat-glow-grad: linear-gradient(90deg, #a5f3fc 0%, #22d3ee 60%, #0891b2 100%);
+  --cat-glow-rgb: 6, 182, 212;
+  --cat-badge-bg: #ecfeff;
+  --cat-badge-color: #0e7490;
+  --gradient-dark: linear-gradient(180deg, #0d3844 0%, #08242c 50%, #031217 100%);
+}
+
+/* Category: Stationery & Supplies (Warm Tangerine / Coral Amber) */
+.unimart-product-card.theme-stationery,
+.hover-card.theme-stationery {
+  --cat-accent: #f97316;
+  --cat-tint-bg: #ea580c;
+  --cat-glow-grad: linear-gradient(90deg, #ffedd5 0%, #fb923c 60%, #ea580c 100%);
+  --cat-glow-rgb: 249, 115, 22;
+  --cat-badge-bg: #fff7ed;
+  --cat-badge-color: #c2410c;
+  --gradient-dark: linear-gradient(180deg, #44230d 0%, #2b1607 50%, #160a03 100%);
+}
+
+/* Category: Hostel & Room Essentials (Emerald / Cozy Forest) */
+.unimart-product-card.theme-hostel,
+.hover-card.theme-hostel {
+  --cat-accent: #10b981;
+  --cat-tint-bg: #059669;
+  --cat-glow-grad: linear-gradient(90deg, #d1fae5 0%, #34d399 60%, #059669 100%);
+  --cat-glow-rgb: 16, 185, 129;
+  --cat-badge-bg: #ecfdf5;
+  --cat-badge-color: #047857;
+  --gradient-dark: linear-gradient(180deg, #0e3d29 0%, #08271a 50%, #03140c 100%);
+}
+
+/* Category: Fashion & Accessories (Ruby Crimson / Sunset Rose) */
+.unimart-product-card.theme-fashion,
+.hover-card.theme-fashion {
+  --cat-accent: #f43f5e;
+  --cat-tint-bg: #e11d48;
+  --cat-glow-grad: linear-gradient(90deg, #ffe4e6 0%, #fb7185 60%, #e11d48 100%);
+  --cat-glow-rgb: 244, 63, 94;
+  --cat-badge-bg: #fff1f2;
+  --cat-badge-color: #be123c;
+  --gradient-dark: linear-gradient(180deg, #45101a 0%, #2b090f 50%, #170407 100%);
+}
+
+/* Category: Sports, Fitness & Cycles (Athletic Lime / Kinetic Green) */
+.unimart-product-card.theme-sports,
+.hover-card.theme-sports {
+  --cat-accent: #84cc16;
+  --cat-tint-bg: #65a30d;
+  --cat-glow-grad: linear-gradient(90deg, #ecfccb 0%, #a3e635 60%, #65a30d 100%);
+  --cat-glow-rgb: 132, 204, 22;
+  --cat-badge-bg: #f7fee7;
+  --cat-badge-color: #4d7c0f;
+  --gradient-dark: linear-gradient(180deg, #273d09 0%, #192705 50%, #0d1502 100%);
+}
+
+/* Category: Other Campus Items (Modern Indigo / Velvet Slate) */
+.unimart-product-card.theme-other,
+.hover-card.theme-other {
+  --cat-accent: #6366f1;
+  --cat-tint-bg: #4f46e5;
+  --cat-glow-grad: linear-gradient(90deg, #e0e7ff 0%, #818cf8 60%, #4f46e5 100%);
+  --cat-glow-rgb: 99, 102, 241;
+  --cat-badge-bg: #eef2ff;
+  --cat-badge-color: #4338ca;
+  --gradient-dark: linear-gradient(180deg, #1e1b4b 0%, #131033 50%, #0a081c 100%);
+}
+
 @media (hover: hover) and (pointer: fine) {
   .unimart-product-card:is(:hover, .is-hovered),
   .hover-card:is(:hover, .is-hovered) {
@@ -697,6 +769,54 @@
 .unimart-product-card.theme-scents:is(:hover, .is-hovered) .unimart-expanded-details,
 .hover-card.theme-scents:is(:hover, .is-hovered) .expanded-details {
   background: var(--gradient-dark, linear-gradient(180deg, #3a1754 0%, #230d34 50%, #100419 100%));
+  border-color: rgba(var(--cat-glow-rgb), 0.45);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4), 0 0 32px rgba(var(--cat-glow-rgb), 0.25);
+}
+
+.unimart-product-card:has(.theme-electronics):is(:hover, .is-hovered) .unimart-expanded-details,
+.unimart-product-card.theme-electronics:is(:hover, .is-hovered) .unimart-expanded-details,
+.hover-card.theme-electronics:is(:hover, .is-hovered) .expanded-details {
+  background: var(--gradient-dark, linear-gradient(180deg, #0d3844 0%, #08242c 50%, #031217 100%));
+  border-color: rgba(var(--cat-glow-rgb), 0.45);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4), 0 0 32px rgba(var(--cat-glow-rgb), 0.25);
+}
+
+.unimart-product-card:has(.theme-stationery):is(:hover, .is-hovered) .unimart-expanded-details,
+.unimart-product-card.theme-stationery:is(:hover, .is-hovered) .unimart-expanded-details,
+.hover-card.theme-stationery:is(:hover, .is-hovered) .expanded-details {
+  background: var(--gradient-dark, linear-gradient(180deg, #44230d 0%, #2b1607 50%, #160a03 100%));
+  border-color: rgba(var(--cat-glow-rgb), 0.45);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4), 0 0 32px rgba(var(--cat-glow-rgb), 0.25);
+}
+
+.unimart-product-card:has(.theme-hostel):is(:hover, .is-hovered) .unimart-expanded-details,
+.unimart-product-card.theme-hostel:is(:hover, .is-hovered) .unimart-expanded-details,
+.hover-card.theme-hostel:is(:hover, .is-hovered) .expanded-details {
+  background: var(--gradient-dark, linear-gradient(180deg, #0e3d29 0%, #08271a 50%, #03140c 100%));
+  border-color: rgba(var(--cat-glow-rgb), 0.45);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4), 0 0 32px rgba(var(--cat-glow-rgb), 0.25);
+}
+
+.unimart-product-card:has(.theme-fashion):is(:hover, .is-hovered) .unimart-expanded-details,
+.unimart-product-card.theme-fashion:is(:hover, .is-hovered) .unimart-expanded-details,
+.hover-card.theme-fashion:is(:hover, .is-hovered) .expanded-details {
+  background: var(--gradient-dark, linear-gradient(180deg, #45101a 0%, #2b090f 50%, #170407 100%));
+  border-color: rgba(var(--cat-glow-rgb), 0.45);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4), 0 0 32px rgba(var(--cat-glow-rgb), 0.25);
+}
+
+.unimart-product-card:has(.theme-sports):is(:hover, .is-hovered) .unimart-expanded-details,
+.unimart-product-card.theme-sports:is(:hover, .is-hovered) .unimart-expanded-details,
+.hover-card.theme-sports:is(:hover, .is-hovered) .expanded-details {
+  background: var(--gradient-dark, linear-gradient(180deg, #273d09 0%, #192705 50%, #0d1502 100%));
+  border-color: rgba(var(--cat-glow-rgb), 0.45);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4), 0 0 32px rgba(var(--cat-glow-rgb), 0.25);
+}
+
+.unimart-product-card:has(.theme-other):is(:hover, .is-hovered) .unimart-expanded-details,
+.unimart-product-card.theme-other:is(:hover, .is-hovered) .unimart-expanded-details,
+.hover-card.theme-other:is(:hover, .is-hovered) .expanded-details {
+  background: var(--gradient-dark, linear-gradient(180deg, #1e1b4b 0%, #131033 50%, #0a081c 100%));
   border-color: rgba(var(--cat-glow-rgb), 0.45);
   box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4), 0 0 32px rgba(var(--cat-glow-rgb), 0.25);
 }

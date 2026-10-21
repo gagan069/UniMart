@@ -42,15 +42,15 @@ export const MEETUP_OPTIONS = [
 
 export const CATEGORY_THEME_MAP = {
   'books-notes': 'theme-academic',
-  'electronics-gadgets': 'theme-tech',
+  'electronics-gadgets': 'theme-electronics',
   'lab-engineering-gear': 'theme-tech',
-  'stationery-supplies': 'theme-academic',
-  'hostel-room-essentials': 'theme-crafts',
-  'fashion-accessories': 'theme-crafts',
+  'stationery-supplies': 'theme-stationery',
+  'hostel-room-essentials': 'theme-hostel',
+  'fashion-accessories': 'theme-fashion',
   'perfumes-grooming': 'theme-scents',
   'handmade-art': 'theme-crafts',
-  'sports-fitness-cycles': 'theme-tech',
-  'other': 'theme-tech'
+  'sports-fitness-cycles': 'theme-sports',
+  'other': 'theme-other'
 };
 
 export const resolveCategoryId = (item) => {
@@ -1570,13 +1570,15 @@ export default function Dashboard({ onGoToLogin }) {
               const activePhotoIdx = cardPhotoIndex[item.id] || 0;
               const currentImg = photosList[activePhotoIdx] || item.image;
               const hasMultiplePhotos = photosList.length > 1;
+              const itemCatId = item.category_id || resolveCategoryId(item);
+              const themeClass = CATEGORY_THEME_MAP[itemCatId] || item.categoryTheme || 'theme-academic';
 
               return (
-                <div key={item.id} className={`unimart-product-card ${item.categoryTheme || 'theme-academic'}`}>
+                <div key={item.id} className={`unimart-product-card ${themeClass}`}>
                   <div className="unimart-card-inner">
                     <div className="unimart-card-top-content">
                       {/* Image and placeholder banner with category theme */}
-                      <div className={`unimart-card-placeholder-wrap ${item.categoryTheme || 'theme-academic'}`}>
+                      <div className={`unimart-card-placeholder-wrap ${themeClass}`}>
                         <img 
                           src={currentImg} 
                           className="unimart-card-image" 
