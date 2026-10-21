@@ -75,6 +75,23 @@ export const resolveCategoryId = (item) => {
   return matched ? matched.id : 'books-notes';
 };
 
+export const getDisplaySellerName = (item, currentUser) => {
+  if (!item?.seller) return 'Campus Member';
+  const baseName = item.seller.replace(/\s*\(You\)/i, '').trim();
+  const isOwner = currentUser && (
+    item.seller_id === currentUser.id ||
+    baseName.toLowerCase() === (currentUser.name || '').toLowerCase()
+  );
+  return isOwner ? `${baseName} (You)` : baseName;
+};
+
+export const isUserListingOwner = (item, currentUser) => {
+  if (!currentUser) return false;
+  if (item.seller_id === currentUser.id) return true;
+  const baseName = (item.seller || '').replace(/\s*\(You\)/i, '').trim().toLowerCase();
+  return Boolean(currentUser.name && baseName === currentUser.name.toLowerCase());
+};
+
 export default function Dashboard({ onGoToLogin }) {
   const { theme, toggleTheme } = useTheme();
   const { user, login, logout, switchAccount, seededUsers } = useAuth() || {};
@@ -114,12 +131,13 @@ export default function Dashboard({ onGoToLogin }) {
     category_id: '',
     subcategory_id: null,
     price: '',
+    origPrice: '',
     condition: '',
     hasNotes: false,
     meetupSpot: '',
     customMeetupSpot: '',
     description: '',
-    seller: 'Satkar (You)',
+    seller: user?.name || 'Campus Student',
     photos: []
   });
   const [formErrors, setFormErrors] = useState({});
@@ -562,9 +580,10 @@ export default function Dashboard({ onGoToLogin }) {
 
       // Rule: If ONLY the price was updated, auto-accept immediately and keep listing active
       if (!isContentChanged && isPriceChanged) {
+        const parsedOrig = formData.origPrice ? Number(formData.origPrice) : (existingItem?.origPrice || null);
         updateListing(editingId, {
           price: newPrice,
-          origPrice: Math.round(newPrice * 1.35),
+          origPrice: parsedOrig && parsedOrig > newPrice ? parsedOrig : (existingItem?.origPrice && existingItem.origPrice > newPrice ? existingItem.origPrice : null),
           category_id: existingCatId
         });
 
@@ -602,6 +621,8 @@ export default function Dashboard({ onGoToLogin }) {
         badge: existingItem.badge === 'Waiting for Approval' ? 'Verified' : (existingItem.badge || 'Verified')
       };
 
+      const parsedOrig = formData.origPrice ? Number(formData.origPrice) : (existingItem?.origPrice || null);
+
       // Rule: Except for price, whenever we edit the product send a request to the admin panel under "Pending Approvals"
       updateListing(editingId, {
         title: formData.title.trim(),
@@ -609,7 +630,7 @@ export default function Dashboard({ onGoToLogin }) {
         category_id: formData.category_id,
         subcategory_id: formData.subcategory_id || null,
         price: newPrice,
-        origPrice: Math.round(newPrice * 1.35),
+        origPrice: parsedOrig && parsedOrig > newPrice ? parsedOrig : null,
         condition: formData.condition,
         icon: categoryIcon,
         categoryTheme: categoryTheme,
@@ -617,6 +638,7 @@ export default function Dashboard({ onGoToLogin }) {
         image: formData.photos[0] || imgCalcBook,
         photos: formData.photos,
         description: formData.description,
+        seller: user?.name || (existingItem?.seller ? existingItem.seller.replace(/\s*\(You\)/i, '').trim() : 'Campus Student'),
         status: 'pending', // ⏳ Sent to admin panel under Pending Approvals!
         badge: 'Waiting for Approval',
         pendingType: 'edit',
@@ -647,9 +669,9 @@ export default function Dashboard({ onGoToLogin }) {
       category_id: formData.category_id,
       subcategory_id: formData.subcategory_id || null,
       price: Number(formData.price),
-      origPrice: Math.round(Number(formData.price) * 1.35),
+      origPrice: formData.origPrice && Number(formData.origPrice) > Number(formData.price) ? Number(formData.origPrice) : null,
       condition: formData.condition,
-      seller: user?.name ? `${user.name} (You)` : 'Satkar (You)',
+      seller: user?.name || 'Campus Student',
       icon: categoryIcon,
       categoryTheme: categoryTheme,
       badge: 'Waiting for Approval',
@@ -707,12 +729,13 @@ export default function Dashboard({ onGoToLogin }) {
       category_id: categoryId,
       subcategory_id: item.subcategory_id || '',
       price: String(item.price),
+      origPrice: item.origPrice ? String(item.origPrice) : '',
       condition: item.condition || 'Like New',
       hasNotes: Boolean(item.notes),
       meetupSpot: isKnownSpot ? item.notes : item.notes ? 'Other' : 'Library Entrance',
       customMeetupSpot: isKnownSpot ? '' : item.notes || '',
       description: item.description || '',
-      seller: item.seller || (user?.name ? `${user.name} (You)` : 'Satkar (You)'),
+      seller: item.seller ? item.seller.replace(/\s*\(You\)/i, '').trim() : (user?.name || 'Campus Student'),
       photos: photosList
     });
 
@@ -775,7 +798,7 @@ export default function Dashboard({ onGoToLogin }) {
       });
       return;
     }
-    if (item.seller_id === user.id || (item.seller && item.seller.includes('(You)'))) {
+    if (isUserListingOwner(item, user)) {
       setAdminAlert({
         type: 'info',
         text: 'This is your own listing! You can manage it under "My Listings".'
@@ -843,12 +866,13 @@ export default function Dashboard({ onGoToLogin }) {
       category_id: '',
       subcategory_id: null,
       price: '',
+      origPrice: '',
       condition: '',
       hasNotes: false,
       meetupSpot: '',
       customMeetupSpot: '',
       description: '',
-      seller: user?.name ? `${user.name} (You)` : 'Satkar (You)',
+      seller: user?.name || 'Campus Student',
       photos: []
     });
     setFormErrors({});
@@ -1529,7 +1553,8 @@ export default function Dashboard({ onGoToLogin }) {
         ) : (
           <div className="unimart-products-grid">
             {filteredProducts.map((item) => {
-              const discountPct = Math.round(((item.origPrice - item.price) / item.origPrice) * 100);
+              const hasDiscount = typeof item.origPrice === 'number' && !isNaN(item.origPrice) && item.origPrice > item.price;
+              const discountPct = hasDiscount ? Math.round(((item.origPrice - item.price) / item.origPrice) * 100) : 0;
               const photosList = item.photos && item.photos.length > 0 ? item.photos : (item.image ? [item.image] : []);
               const activePhotoIdx = cardPhotoIndex[item.id] || 0;
               const currentImg = photosList[activePhotoIdx] || item.image;
@@ -1655,15 +1680,15 @@ export default function Dashboard({ onGoToLogin }) {
                         <div className="d-flex justify-content-between align-items-center mb-1">
                           <div className="unimart-seller-info">
                             <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>person</span>
-                            <span>{item.seller}</span>
+                            <span>{getDisplaySellerName(item, user)}</span>
                           </div>
-                          {(!user || (item.seller_id !== user.id && !item.seller?.includes('(You)'))) && (
+                          {!isUserListingOwner(item, user) && (
                             <button
                               type="button"
                               className="unimart-card-quick-chat-btn"
                               onClick={(e) => handleChatClick(e, item)}
-                              title={`Chat with ${item.seller}`}
-                              aria-label={`Chat with seller ${item.seller}`}
+                              title={`Chat with ${getDisplaySellerName(item, user)}`}
+                              aria-label={`Chat with seller ${getDisplaySellerName(item, user)}`}
                             >
                               <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>chat</span>
                               <span>Chat</span>
@@ -1677,10 +1702,10 @@ export default function Dashboard({ onGoToLogin }) {
                             <span className="unimart-current-price">
                               {item.price === 0 ? 'Free' : `₹${item.price.toLocaleString('en-IN')}`}
                             </span>
-                            {item.origPrice && (
+                            {hasDiscount && (
                               <span className="unimart-orig-price">₹{item.origPrice.toLocaleString('en-IN')}</span>
                             )}
-                            {discountPct > 0 && (
+                            {hasDiscount && discountPct > 0 && (
                               <span className="unimart-discount-tag">{discountPct}% OFF</span>
                             )}
                             {item.isNegotiable && (
@@ -1733,7 +1758,7 @@ export default function Dashboard({ onGoToLogin }) {
                       </h6>
                       <div className="unimart-expanded-meta">
                         <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>badge</span>
-                        <span style={{ fontSize: '0.78rem', marginLeft: '6px' }}>{item.seller}</span>
+                        <span style={{ fontSize: '0.78rem', marginLeft: '6px' }}>{getDisplaySellerName(item, user)}</span>
                       </div>
                       <p className="unimart-expanded-desc">
                         {item.description || (item.notes ? `Includes: ${item.notes}. ` : '') + `Verified pre-owned item in ${(item.condition || '').toLowerCase()} condition.`}
@@ -1987,11 +2012,11 @@ export default function Dashboard({ onGoToLogin }) {
                   </div>
                 )}
 
-                {/* Price & Condition Row */}
+                {/* Price & Original Price Row */}
                 <div className="row g-3 mb-3">
                   <div className="col-md-6">
                     <label className="form-label small fw-semibold" htmlFor="listing-price">
-                      Price (₹ INR) <span className="unimart-req-asterisk">*</span>
+                      Selling Price (₹ INR) <span className="unimart-req-asterisk">*</span>
                     </label>
                     <div className="input-group">
                       <span className="input-group-text bg-light text-muted fw-bold">₹</span>
@@ -2015,61 +2040,81 @@ export default function Dashboard({ onGoToLogin }) {
                   </div>
 
                   <div className="col-md-6">
-                    <label className="form-label small fw-semibold" htmlFor="listing-condition-trigger">
-                      Condition <span className="unimart-req-asterisk">*</span>
+                    <label className="form-label small fw-semibold" htmlFor="listing-orig-price">
+                      Original MRP / Retail Price (₹) <span className="text-muted fw-normal">(Optional)</span>
                     </label>
-                    <div className="position-relative" ref={conditionDropdownRef}>
-                      <button
-                        type="button"
-                        id="listing-condition-trigger"
-                        className={`form-select text-start rounded-3 py-2 d-flex justify-content-between align-items-center ${
-                          formErrors.condition ? 'is-invalid border-danger' : ''
-                        }`}
-                        onClick={() => setIsConditionOpen(!isConditionOpen)}
-                        onBlur={() => handleBlur('condition')}
-                        aria-expanded={isConditionOpen}
-                        style={{
-                          cursor: 'pointer',
-                          background: '#fff',
-                          borderColor: formErrors.condition ? '#dc3545' : isConditionOpen ? 'var(--unimart-maroon)' : '#dee2e6'
-                        }}
-                      >
-                        <span className={formData.condition ? 'text-dark text-truncate' : 'text-muted'}>
-                          {formData.condition ? (
-                            <strong className="fw-semibold">{formData.condition}</strong>
-                          ) : (
-                            <span className="text-muted">Select condition...</span>
-                          )}
-                        </span>
-                        <span className="material-symbols-outlined text-muted" style={{ fontSize: '20px' }}>
-                          {isConditionOpen ? 'expand_less' : 'expand_more'}
-                        </span>
-                      </button>
-
-                      {isConditionOpen && (
-                        <div className="unimart-condition-dropdown">
-                          {CONDITION_OPTIONS.map((opt) => (
-                            <div
-                              key={opt.value}
-                              className={`unimart-condition-item ${formData.condition === opt.value ? 'selected' : ''}`}
-                              onMouseDown={(e) => {
-                                e.preventDefault();
-                                handleSelectCondition(opt.value);
-                              }}
-                            >
-                              <div className="unimart-condition-name">{opt.label}</div>
-                              <div className="unimart-condition-hint">{opt.hint}</div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                    <div className="input-group">
+                      <span className="input-group-text bg-light text-muted fw-bold">₹</span>
+                      <input
+                        type="number"
+                        id="listing-orig-price"
+                        min="1"
+                        max="200000"
+                        placeholder="e.g. 1499 (for discount tag)"
+                        className="form-control rounded-end-3 py-2"
+                        value={formData.origPrice || ''}
+                        onChange={(e) => handleFieldChange('origPrice', e.target.value)}
+                      />
                     </div>
-                    {formErrors.condition && (
-                      <div className="invalid-feedback d-block text-danger small mt-1" role="alert">
-                        {formErrors.condition}
+                  </div>
+                </div>
+
+                {/* Condition */}
+                <div className="mb-3">
+                  <label className="form-label small fw-semibold" htmlFor="listing-condition-trigger">
+                    Condition <span className="unimart-req-asterisk">*</span>
+                  </label>
+                  <div className="position-relative" ref={conditionDropdownRef}>
+                    <button
+                      type="button"
+                      id="listing-condition-trigger"
+                      className={`form-select text-start rounded-3 py-2 d-flex justify-content-between align-items-center ${
+                        formErrors.condition ? 'is-invalid border-danger' : ''
+                      }`}
+                      onClick={() => setIsConditionOpen(!isConditionOpen)}
+                      onBlur={() => handleBlur('condition')}
+                      aria-expanded={isConditionOpen}
+                      style={{
+                        cursor: 'pointer',
+                        background: '#fff',
+                        borderColor: formErrors.condition ? '#dc3545' : isConditionOpen ? 'var(--unimart-maroon)' : '#dee2e6'
+                      }}
+                    >
+                      <span className={formData.condition ? 'text-dark text-truncate' : 'text-muted'}>
+                        {formData.condition ? (
+                          <strong className="fw-semibold">{formData.condition}</strong>
+                        ) : (
+                          <span className="text-muted">Select condition...</span>
+                        )}
+                      </span>
+                      <span className="material-symbols-outlined text-muted" style={{ fontSize: '20px' }}>
+                        {isConditionOpen ? 'expand_less' : 'expand_more'}
+                      </span>
+                    </button>
+
+                    {isConditionOpen && (
+                      <div className="unimart-condition-dropdown">
+                        {CONDITION_OPTIONS.map((opt) => (
+                          <div
+                            key={opt.value}
+                            className={`unimart-condition-item ${formData.condition === opt.value ? 'selected' : ''}`}
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              handleSelectCondition(opt.value);
+                            }}
+                          >
+                            <div className="unimart-condition-name">{opt.label}</div>
+                            <div className="unimart-condition-hint">{opt.hint}</div>
+                          </div>
+                        ))}
                       </div>
                     )}
                   </div>
+                  {formErrors.condition && (
+                    <div className="invalid-feedback d-block text-danger small mt-1" role="alert">
+                      {formErrors.condition}
+                    </div>
+                  )}
                 </div>
 
                 {/* Meetup Spot */}
