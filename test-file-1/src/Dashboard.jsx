@@ -1022,7 +1022,7 @@ export default function Dashboard({ onGoToLogin }) {
                 title={
                   !user
                     ? 'Guest Mode (Click to Sign In)'
-                    : `${user.name} • ${user.studentId || (checkIsAdmin(user) ? 'ADMIN-001' : '2110990697')} • ${checkIsAdmin(user) ? 'Admin' : 'Student'}`
+                    : `${user.name} • ${user.student_id || user.studentId || (checkIsAdmin(user) ? 'ADMIN-001' : '')} • ${checkIsAdmin(user) ? 'Admin' : 'Student'}`
                 }
                 id="unimart-navbar-profile-chip"
               >
@@ -1037,7 +1037,7 @@ export default function Dashboard({ onGoToLogin }) {
                     {!user ? 'Guest' : user.name}
                   </span>
                   <span className="unimart-chip-roll">
-                    {!user ? 'Not signed in' : (user.studentId || (checkIsAdmin(user) ? 'ADMIN-001' : '2110990697'))}
+                    {!user ? 'Not signed in' : (user.student_id || user.studentId || (checkIsAdmin(user) ? 'ADMIN-001' : 'Student Account'))}
                   </span>
                   <span className="unimart-chip-role">
                     {!user ? 'Guest' : checkIsAdmin(user) ? 'Admin' : 'Student'}
@@ -1059,7 +1059,7 @@ export default function Dashboard({ onGoToLogin }) {
                           {user.name}
                         </span>
                         <span className="text-muted" style={{ fontSize: '0.74rem' }}>
-                          {user.studentId || (checkIsAdmin(user) ? 'ADMIN-001' : '2110990697')}
+                          {user.student_id || user.studentId || (checkIsAdmin(user) ? 'ADMIN-001' : 'Student Account')}
                         </span>
                         <span className="fw-semibold" style={{ fontSize: '0.74rem', color: '#70182c' }}>
                           {checkIsAdmin(user) ? 'Admin' : 'Student'}
@@ -1262,7 +1262,7 @@ export default function Dashboard({ onGoToLogin }) {
               <span>Chitkara Campus Student Exchange</span>
             </div>
             <h2 className="fw-bolder mb-1" style={{ letterSpacing: '-0.025em' }}>
-              Hi Satkar! What are you looking for today?
+              {user ? `Hi ${user.name ? user.name.split(' ')[0] : 'there'}!` : 'Hi Guest!'} What are you looking for today?
             </h2>
             <p className="text-muted mb-0">
               Explore pre-owned textbooks, handmade crafts, campus tech tools, and student-crafted products.

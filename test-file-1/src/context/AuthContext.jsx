@@ -1,66 +1,73 @@
-import React, { createContext, useContext, useState } from 'react';
-import { SEEDED_USERS } from '../lib/mockUsers.js';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { authApi } from '../api/authApi.js';
 import { isAdmin as checkIsAdmin } from '../lib/permissions.js';
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  // Support optional ?as=admin / ?as=priya / ?as=guest for testing, then check localStorage, then default to Student A
+  // First-time visitors are guests (null) unless a valid session exists in localStorage
   const [user, setUser] = useState(() => {
     try {
-      if (typeof window !== 'undefined' && window.location.search) {
-        const params = new URLSearchParams(window.location.search);
-        const asParam = params.get('as');
-        if (asParam === 'guest') return null;
-        if (asParam === 'admin') return SEEDED_USERS[0];
-        if (asParam === 'satkar') return SEEDED_USERS[1];
-        if (asParam === 'priya') return SEEDED_USERS[2];
-        if (asParam) {
-          const match = SEEDED_USERS.find((u) => u.id === asParam || u.email === asParam);
-          if (match) return match;
-        }
-      }
-
-      const savedId = localStorage.getItem('unimart_active_user_id');
-      if (savedId === 'guest') return null;
-      if (savedId) {
-        const found = SEEDED_USERS.find((u) => u.id === savedId || u.email === savedId);
-        if (found) return found;
-      }
+      const raw = localStorage.getItem('unimart_active_session_user_v1');
+      if (raw) return JSON.parse(raw);
     } catch (e) {}
-    return SEEDED_USERS[1];
+    return null;
   });
 
-  const login = (userData) => {
-    setUser(userData);
-    try {
-      if (userData?.id) localStorage.setItem('unimart_active_user_id', userData.id);
-    } catch (e) {}
-  };
+  const [loading, setLoading] = useState(false);
 
-  const logout = () => {
-    setUser(null);
-    try {
-      localStorage.setItem('unimart_active_user_id', 'guest');
-    } catch (e) {}
-  };
+  useEffect(() => {
+    let mounted = true;
+    authApi.getCurrentUser().then((res) => {
+      if (mounted && res?.data !== undefined) {
+        setUser(res.data);
+      }
+    });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
-  const switchAccount = (accountKey) => {
-    if (accountKey === 'guest' || accountKey === null) {
-      setUser(null);
-      try {
-        localStorage.setItem('unimart_active_user_id', 'guest');
-      } catch (e) {}
-      return;
+  const login = async (credentials) => {
+    setLoading(true);
+    try {
+      const res = await authApi.login(credentials);
+      setUser(res.data);
+      return res.data;
+    } finally {
+      setLoading(false);
     }
-    const found = SEEDED_USERS.find(
-      (u) => u.id === accountKey || u.email === accountKey
-    );
-    if (found) {
-      setUser(found);
-      try {
-        localStorage.setItem('unimart_active_user_id', found.id);
-      } catch (e) {}
+  };
+
+  const register = async (userData) => {
+    setLoading(true);
+    try {
+      const res = await authApi.register(userData);
+      setUser(res.data);
+      return res.data;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const logout = async () => {
+    setLoading(true);
+    try {
+      await authApi.logout();
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const switchAccount = async (accountKey) => {
+    setLoading(true);
+    try {
+      const res = await authApi.switchAccount(accountKey);
+      setUser(res.data);
+      return res.data;
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -68,12 +75,13 @@ export function AuthProvider({ children }) {
     <AuthContext.Provider
       value={{
         user,
+        loading,
         role: user?.role || 'guest',
         isAdmin: checkIsAdmin(user),
         login,
+        register,
         logout,
-        switchAccount,
-        seededUsers: SEEDED_USERS
+        switchAccount
       }}
     >
       {children}

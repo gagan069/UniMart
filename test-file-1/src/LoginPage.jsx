@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext.jsx';
 import { useTheme } from './context/ThemeContext.jsx';
 import { useChat } from './context/ChatContext.jsx';
@@ -107,7 +108,13 @@ export default function LoginPage({
     return Object.keys(errs).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const navigate = useNavigate();
+  const goToDashboard = () => {
+    if (onGoToDashboard) onGoToDashboard();
+    else navigate('/');
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setAlertInfo(null);
 
@@ -116,24 +123,28 @@ export default function LoginPage({
       if (!isValid) return;
 
       setIsLoading(true);
-      setTimeout(() => {
-        setIsLoading(false);
-        const newStudent = registerNewStudent({
+      try {
+        const newStudent = await auth.register({
           name: fullName,
           email,
-          studentId,
+          student_id: studentId,
           password
         });
-        if (auth?.login) auth.login(newStudent);
-
         setAlertInfo({
           type: 'success',
           message: `Registration successful! Welcome, ${newStudent.name}. Redirecting...`
         });
         setTimeout(() => {
-          if (onGoToDashboard) onGoToDashboard();
+          goToDashboard();
         }, 800);
-      }, 700);
+      } catch (err) {
+        setAlertInfo({
+          type: 'danger',
+          message: err.message || 'Registration failed. Please check your details.'
+        });
+      } finally {
+        setIsLoading(false);
+      }
       return;
     }
 
@@ -147,51 +158,29 @@ export default function LoginPage({
     }
 
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      const matched = findUserByCredentials(email, password);
-      let sessionUser = matched;
-
-      if (!sessionUser) {
-        // Fallback demo for custom student logins with valid chitkara email
-        if (email.trim().toLowerCase().endsWith('@chitkara.edu.in')) {
-          sessionUser = {
-            id: `student_${Date.now()}`,
-            name: email.split('@')[0],
-            email: email.trim().toLowerCase(),
-            studentId: '2110990696',
-            role: 'student'
-          };
-        } else {
-          setAlertInfo({
-            type: 'danger',
-            message: 'Invalid credentials. Please use seeded accounts (Admin / Student A / Student B) or register with @chitkara.edu.in.'
-          });
-          return;
-        }
-      }
-
-      if (auth?.login) auth.login(sessionUser);
-
+    try {
+      const sessionUser = await auth.login({ email, password });
       setAlertInfo({
         type: 'success',
         message: `Welcome back, ${sessionUser.name} (${sessionUser.role.toUpperCase()})! Redirecting...`
       });
       setTimeout(() => {
-        if (onGoToDashboard) onGoToDashboard();
+        goToDashboard();
       }, 700);
-    }, 600);
+    } catch (err) {
+      setAlertInfo({
+        type: 'danger',
+        message: err.message || 'Invalid email or password. Please check your Chitkara credentials.'
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleSkip = () => {
+  const handleSkip = async () => {
     // Guest mode: log out any current user so user === null
-    if (auth?.logout) auth.logout();
-    if (onGoToDashboard) {
-      onGoToDashboard();
-    } else {
-      setGuestNotice(true);
-      setTimeout(() => setGuestNotice(false), 3500);
-    }
+    if (auth?.logout) await auth.logout();
+    goToDashboard();
   };
 
   return (

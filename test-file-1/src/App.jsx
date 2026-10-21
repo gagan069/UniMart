@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import LoginPage from "./LoginPage.jsx";
 import Dashboard from "./Dashboard.jsx";
@@ -22,21 +22,6 @@ function ProtectedAdminRoute({ children }) {
   return children;
 }
 
-function MainScreen() {
-  // 'dashboard' | 'login'
-  const [view, setView] = useState("dashboard");
-
-  return (
-    <>
-      {view === "login" ? (
-        <LoginPage onGoToDashboard={() => setView("dashboard")} />
-      ) : (
-        <Dashboard onGoToLogin={() => setView("login")} />
-      )}
-    </>
-  );
-}
-
 function App() {
   const navigate = useNavigate();
 
@@ -58,7 +43,7 @@ function App() {
         }
       />
       <Route path="/" element={<Layout />}>
-        <Route index element={<MainScreen />} />
+        <Route index element={<Dashboard onGoToLogin={() => navigate("/login")} />} />
         <Route
           path="admin"
           element={

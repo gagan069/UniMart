@@ -49,16 +49,21 @@ export const authApi = {
     }
 
     const users = getTable('users') || [];
-    const exists = users.some((u) => u.email.toLowerCase() === normalizedEmail);
-    if (exists) {
+    const emailExists = users.some((u) => u.email.toLowerCase() === normalizedEmail);
+    if (emailExists) {
       throw new Error('An account with this Chitkara email address already exists.');
+    }
+
+    const trimmedStudentId = (student_id || '').trim();
+    if (trimmedStudentId && users.some((u) => u.student_id && u.student_id.toLowerCase() === trimmedStudentId.toLowerCase())) {
+      throw new Error('An account with this Student ID already exists.');
     }
 
     const newUser = {
       id: `student_${Date.now()}`,
       name: name.trim(),
       email: normalizedEmail,
-      student_id: (student_id || '').trim(),
+      student_id: trimmedStudentId,
       password_hash: password,
       role: 'student', // All public registrations are student accounts
       created_at: new Date().toISOString()
@@ -81,13 +86,6 @@ export const authApi = {
       const raw = localStorage.getItem(SESSION_KEY);
       if (raw) return { data: JSON.parse(raw) };
     } catch (e) {}
-    // Default to student_a for quick development demo if no session set
-    const users = getTable('users') || [];
-    const defaultUser = users.find((u) => u.id === 'student_a') || users[1];
-    if (defaultUser) {
-      const { password_hash, ...safeUser } = defaultUser;
-      return { data: safeUser };
-    }
     return { data: null };
   },
 
