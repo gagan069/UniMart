@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useTheme } from './context/ThemeContext.jsx';
 import { useAuth } from './context/AuthContext.jsx';
 import { useListings } from './context/ListingsContext.jsx';
+import { useChat } from './context/ChatContext.jsx';
 import { canManageListing, isAdmin as checkIsAdmin, isGuest, isStudent } from './lib/permissions.js';
 import './Dashboard.css';
 
@@ -40,6 +41,7 @@ export default function Dashboard({ onGoToLogin }) {
   const { theme, toggleTheme } = useTheme();
   const { user, login, logout, switchAccount, seededUsers } = useAuth() || {};
   const { productList, setProductList, addListing, updateListing, removeListing } = useListings();
+  const { openChatWithItem } = useChat();
   const [adminAlert, setAdminAlert] = useState(null);
   const location = useLocation();
   const navigate = useNavigate();
@@ -709,6 +711,14 @@ export default function Dashboard({ onGoToLogin }) {
       });
       return;
     }
+    if (item.seller_id === user.id || (item.seller && item.seller.includes('(You)'))) {
+      setAdminAlert({
+        type: 'info',
+        text: 'This is your own listing! You can manage it under "My Listings".'
+      });
+      return;
+    }
+    openChatWithItem(item);
   };
 
   const handleBuyClick = (e, item) => {
@@ -1577,9 +1587,23 @@ export default function Dashboard({ onGoToLogin }) {
                           {item.title}
                         </h6>
 
-                        <div className="unimart-seller-info">
-                          <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>person</span>
-                          <span>{item.seller}</span>
+                        <div className="d-flex justify-content-between align-items-center mb-1">
+                          <div className="unimart-seller-info">
+                            <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>person</span>
+                            <span>{item.seller}</span>
+                          </div>
+                          {(!user || (item.seller_id !== user.id && !item.seller?.includes('(You)'))) && (
+                            <button
+                              type="button"
+                              className="unimart-card-quick-chat-btn"
+                              onClick={(e) => handleChatClick(e, item)}
+                              title={`Chat with ${item.seller}`}
+                              aria-label={`Chat with seller ${item.seller}`}
+                            >
+                              <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>chat</span>
+                              <span>Chat</span>
+                            </button>
+                          )}
                         </div>
 
                         {/* Pricing in Indian Rupees (₹) */}

@@ -6,6 +6,7 @@ import { store } from './store/store.js'
 import { AuthProvider } from './context/AuthContext.jsx'
 import { ThemeProvider } from './context/ThemeContext.jsx'
 import { ListingsProvider } from './context/ListingsContext.jsx'
+import { ChatProvider } from './context/ChatContext.jsx'
 import './index.css'
 import App from './App.jsx'
 
@@ -16,7 +17,9 @@ createRoot(document.getElementById('root')).render(
         <AuthProvider>
           <ThemeProvider>
             <ListingsProvider>
-              <App />
+              <ChatProvider>
+                <App />
+              </ChatProvider>
             </ListingsProvider>
           </ThemeProvider>
         </AuthProvider>
