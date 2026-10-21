@@ -179,13 +179,39 @@ export function ListingsProvider({ children }) {
   const approveListing = (id) => {
     setProductList((prev) =>
       prev.map((item) =>
-        item.id === id ? { ...item, status: 'approved', badge: 'Admin Approved' } : item
+        item.id === id
+          ? {
+              ...item,
+              status: 'approved',
+              badge: item.badge === 'Waiting for Approval' ? 'Admin Approved' : (item.badge || 'Verified'),
+              pendingType: null,
+              originalVersion: null
+            }
+          : item
       )
     );
   };
 
   const rejectListing = (id) => {
-    setProductList((prev) => prev.filter((item) => item.id !== id));
+    setProductList((prev) => {
+      const target = prev.find((item) => item.id === id);
+      if (target && target.pendingType === 'edit' && target.originalVersion) {
+        // Restore to original approved version instead of deleting the whole listing (Bug 3 fix)
+        return prev.map((item) =>
+          item.id === id
+            ? {
+                ...item,
+                ...target.originalVersion,
+                status: 'approved',
+                pendingType: null,
+                originalVersion: null
+              }
+            : item
+        );
+      }
+      // If it was a brand new listing submission, remove it from catalog
+      return prev.filter((item) => item.id !== id);
+    });
   };
 
   return (

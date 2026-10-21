@@ -39,13 +39,20 @@ export default function AdminPage() {
   };
 
   const handleReject = (item) => {
+    const isEdit = item.pendingType === 'edit';
     const confirmed = window.confirm(
-      `Reject and remove '${item.title}'?`
+      isEdit
+        ? `Reject pending edits for '${item.title}'? The listing will be restored to its previously approved version.`
+        : `Reject and remove '${item.title}'?`
     );
     if (!confirmed) return;
 
     rejectListing(item.id);
-    setToastMessage(`Listing "${item.title}" rejected`);
+    setToastMessage(
+      isEdit
+        ? `Pending edits for "${item.title}" rejected — listing restored to previous version`
+        : `Listing "${item.title}" rejected`
+    );
     setTimeout(() => {
       setToastMessage(null);
     }, 3500);

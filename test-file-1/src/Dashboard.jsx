@@ -18,6 +18,7 @@ import imgArduinoKit from './assets/products/arduino_kit.jpg';
 import imgSolidPerfume from './assets/products/solid_perfume.jpg';
 import FloatingChatButton from './components/chat/FloatingChatButton.jsx';
 import ChatModal from './components/chat/ChatModal.jsx';
+import { compressImage } from './lib/imageCompressor.js';
 
 import { categories } from './lib/categories.js';
 
@@ -435,7 +436,7 @@ export default function Dashboard({ onGoToLogin }) {
     setCurrentStep(2);
   };
 
-  const handlePhotoFiles = (files) => {
+  const handlePhotoFiles = async (files) => {
     if (!files || files.length === 0) return;
     const fileList = Array.from(files);
     const validImages = fileList.filter((f) => f.type.startsWith('image/'));
@@ -452,28 +453,43 @@ export default function Dashboard({ onGoToLogin }) {
     }
 
     const filesToLoad = validImages.slice(0, availableSlots);
-    let loadedCount = 0;
     const newPhotos = [];
+    const errors = [];
 
-    filesToLoad.forEach((file) => {
-      if (file.size > 5 * 1024 * 1024) {
-        setFormErrors((prev) => ({ ...prev, photos: `File "${file.name}" exceeds 5MB limit.` }));
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        newPhotos.push(e.target.result);
-        loadedCount++;
-        if (loadedCount === filesToLoad.length) {
-          setFormData((prev) => ({
-            ...prev,
-            photos: [...prev.photos, ...newPhotos]
-          }));
-          setFormErrors((prev) => ({ ...prev, photos: '' }));
+    // Process all files with Promise.allSettled so no single file failure blocks the rest (Bug 4 fix)
+    const results = await Promise.allSettled(
+      filesToLoad.map(async (file) => {
+        if (file.size > 15 * 1024 * 1024) {
+          throw new Error(`"${file.name}" exceeds 15MB limit.`);
         }
-      };
-      reader.readAsDataURL(file);
+        return await compressImage(file);
+      })
+    );
+
+    results.forEach((res, idx) => {
+      if (res.status === 'fulfilled' && res.value) {
+        newPhotos.push(res.value);
+      } else {
+        const errorMsg = res.reason?.message || `Failed to process "${filesToLoad[idx].name}".`;
+        errors.push(errorMsg);
+      }
     });
+
+    if (newPhotos.length > 0) {
+      setFormData((prev) => ({
+        ...prev,
+        photos: [...prev.photos, ...newPhotos]
+      }));
+    }
+
+    if (errors.length > 0) {
+      setFormErrors((prev) => ({
+        ...prev,
+        photos: errors.join(' ')
+      }));
+    } else {
+      setFormErrors((prev) => ({ ...prev, photos: '' }));
+    }
   };
 
   const handleAddSamplePhoto = (sampleImg) => {
@@ -567,6 +583,25 @@ export default function Dashboard({ onGoToLogin }) {
         return;
       }
 
+      // Save backup of original approved version before applying pending edit (Bug 3 fix)
+      const originalVersion = existingItem.originalVersion || {
+        title: existingItem.title,
+        category: existingItem.category,
+        category_id: existingItem.category_id || existingCatId,
+        subcategory_id: existingItem.subcategory_id || null,
+        price: existingItem.price,
+        origPrice: existingItem.origPrice,
+        condition: existingItem.condition,
+        icon: existingItem.icon,
+        categoryTheme: existingItem.categoryTheme,
+        notes: existingItem.notes,
+        image: existingItem.image,
+        photos: existingItem.photos,
+        description: existingItem.description,
+        status: existingItem.status === 'pending' ? 'approved' : (existingItem.status || 'approved'),
+        badge: existingItem.badge === 'Waiting for Approval' ? 'Verified' : (existingItem.badge || 'Verified')
+      };
+
       // Rule: Except for price, whenever we edit the product send a request to the admin panel under "Pending Approvals"
       updateListing(editingId, {
         title: formData.title.trim(),
@@ -585,6 +620,7 @@ export default function Dashboard({ onGoToLogin }) {
         status: 'pending', // ⏳ Sent to admin panel under Pending Approvals!
         badge: 'Waiting for Approval',
         pendingType: 'edit',
+        originalVersion,
         editedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       });
 
@@ -2256,7 +2292,7 @@ export default function Dashboard({ onGoToLogin }) {
                         Drag & drop photos here, or <span className="text-decoration-underline" style={{ color: 'var(--unimart-maroon)' }}>browse files</span>
                       </div>
                       <div className="text-muted" style={{ fontSize: '0.75rem' }}>
-                        Supports JPG, PNG, WebP (Max 5MB each, up to 4 photos)
+                        Supports JPG, PNG, WebP (Max 15MB each, auto-compressed, up to 4 photos)
                       </div>
                     </div>
 
