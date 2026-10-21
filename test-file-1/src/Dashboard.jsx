@@ -94,7 +94,7 @@ export const isUserListingOwner = (item, currentUser) => {
 
 export default function Dashboard({ onGoToLogin }) {
   const { theme, toggleTheme } = useTheme();
-  const { user, login, logout, switchAccount, seededUsers } = useAuth() || {};
+  const { user, logout } = useAuth() || {};
   const { productList, setProductList, addListing, updateListing, removeListing } = useListings();
   const { openChatWithItem, closeChat } = useChat();
   const [adminAlert, setAdminAlert] = useState(null);
@@ -1069,74 +1069,6 @@ export default function Dashboard({ onGoToLogin }) {
                     <div className="text-muted" style={{ fontSize: '0.72rem' }}>
                       {user.email}
                     </div>
-                  </div>
-
-                  {/* Switch Testing Accounts */}
-                  <div className="py-2 border-bottom">
-                    <div className="dropdown-header text-uppercase text-muted px-3 py-1" style={{ fontSize: '0.66rem', letterSpacing: '0.5px' }}>
-                      Switch Testing Account
-                    </div>
-                    <button
-                      type="button"
-                      className={`dropdown-item d-flex align-items-center justify-content-between px-3 py-1.5 ${user?.id === 'student_b' ? 'active' : ''}`}
-                      onClick={() => {
-                        switchAccount('student_b');
-                        setIsUserMenuOpen(false);
-                      }}
-                    >
-                      <div>
-                        <div className="fw-bold" style={{ fontSize: '0.8rem' }}>🎓 Priya K. (Student B)</div>
-                        <div className="text-muted" style={{ fontSize: '0.7rem' }}>2110990697 • Student</div>
-                      </div>
-                      {user?.id === 'student_b' && (
-                        <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>check</span>
-                      )}
-                    </button>
-                    <button
-                      type="button"
-                      className={`dropdown-item d-flex align-items-center justify-content-between px-3 py-1.5 ${user?.id === 'student_a' ? 'active' : ''}`}
-                      onClick={() => {
-                        switchAccount('student_a');
-                        setIsUserMenuOpen(false);
-                      }}
-                    >
-                      <div>
-                        <div className="fw-bold" style={{ fontSize: '0.8rem' }}>🎓 Satkar Singh (Student A)</div>
-                        <div className="text-muted" style={{ fontSize: '0.7rem' }}>2110990696 • Student</div>
-                      </div>
-                      {user?.id === 'student_a' && (
-                        <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>check</span>
-                      )}
-                    </button>
-                    <button
-                      type="button"
-                      className={`dropdown-item d-flex align-items-center justify-content-between px-3 py-1.5 ${checkIsAdmin(user) ? 'active' : ''}`}
-                      onClick={() => {
-                        switchAccount('admin_1');
-                        setIsUserMenuOpen(false);
-                      }}
-                    >
-                      <div>
-                        <div className="fw-bold" style={{ fontSize: '0.8rem' }}>🛡️ Campus Admin</div>
-                        <div className="text-muted" style={{ fontSize: '0.7rem' }}>ADMIN-001 • Admin</div>
-                      </div>
-                      {checkIsAdmin(user) && (
-                        <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>check</span>
-                      )}
-                    </button>
-                    <button
-                      type="button"
-                      className="dropdown-item d-flex align-items-center justify-content-between px-3 py-1.5"
-                      onClick={() => {
-                        switchAccount('guest');
-                        setIsUserMenuOpen(false);
-                      }}
-                    >
-                      <div>
-                        <div className="fw-bold" style={{ fontSize: '0.8rem' }}>👤 Guest Mode</div>
-                        <div className="text-muted" style={{ fontSize: '0.7rem' }}>Not signed in • Guest</div>
-                      </div>
-                    </button>
                   </div>
 
                   {/* Admin route link if admin */}

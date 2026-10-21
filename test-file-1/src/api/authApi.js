@@ -100,30 +100,6 @@ export const authApi = {
   },
 
   /**
-   * Quick-switch account between seeded accounts for professor testing/viva
-   */
-  async switchAccount(userIdOrKey) {
-    await delay(200);
-    if (!userIdOrKey || userIdOrKey === 'guest') {
-      authApi.setCurrentUser(null);
-      return { data: null, message: 'Browsing as Guest' };
-    }
-
-    const users = getTable('users') || [];
-    const matched = users.find(
-      (u) => u.id === userIdOrKey || u.email.toLowerCase() === userIdOrKey.toLowerCase()
-    );
-
-    if (!matched) {
-      throw new Error(`User ${userIdOrKey} not found.`);
-    }
-
-    const { password_hash, ...safeUser } = matched;
-    authApi.setCurrentUser(safeUser);
-    return { data: safeUser, message: `Switched account to ${safeUser.name}` };
-  },
-
-  /**
    * End session
    */
   async logout() {

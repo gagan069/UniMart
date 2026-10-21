@@ -60,17 +60,6 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const switchAccount = async (accountKey) => {
-    setLoading(true);
-    try {
-      const res = await authApi.switchAccount(accountKey);
-      setUser(res.data);
-      return res.data;
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <AuthContext.Provider
       value={{
@@ -81,7 +70,6 @@ export function AuthProvider({ children }) {
         login,
         register,
         logout,
-        switchAccount
       }}
     >
       {children}
