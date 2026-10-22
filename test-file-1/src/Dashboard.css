@@ -1069,6 +1069,10 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: var(--unimart-maroon);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .unimart-badge-chip {

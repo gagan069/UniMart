@@ -153,11 +153,14 @@ export default function ListingCard({
               </div>
             )}
 
-            <div className="d-flex justify-content-between align-items-center mb-1">
-              <span className="unimart-card-category">
+            <div className="d-flex justify-content-between align-items-center mb-1" style={{ minWidth: 0, gap: '0.5rem' }}>
+              <span
+                className="unimart-card-category"
+                title={subcategoryName ? `${item.category} • ${subcategoryName}` : item.category}
+              >
                 {item.category}{subcategoryName ? ` • ${subcategoryName}` : ''}
               </span>
-              <span className={`unimart-badge-chip ${item.status === 'pending' ? 'chip-pending' : ''}`}>
+              <span className={`unimart-badge-chip flex-shrink-0 ${item.status === 'pending' ? 'chip-pending' : ''}`}>
                 {item.status === 'sold' ? 'Sold' : (item.badge || 'Verified')}
               </span>
             </div>

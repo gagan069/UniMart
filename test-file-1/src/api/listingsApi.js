@@ -151,6 +151,7 @@ export const listingsApi = {
       meetup_spot: data.notes || data.meetup_spot || 'Library Entrance',
       description: data.description || '',
       has_notes: Boolean(data.hasNotes || data.has_notes),
+      badge: data.badge || null,
       status: 'pending', // Starts pending admin approval
       pending_type: 'new',
       created_at: new Date().toISOString(),
@@ -227,6 +228,7 @@ export const listingsApi = {
       listings[itemIndex] = {
         ...existingItem,
         status: updates.status || existingItem.status,
+        badge: updates.badge !== undefined ? updates.badge : existingItem.badge,
         price: newPrice,
         original_price: updates.origPrice !== undefined ? Number(updates.origPrice) : existingItem.original_price,
         updated_at: new Date().toISOString()

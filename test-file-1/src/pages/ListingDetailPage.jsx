@@ -51,7 +51,7 @@ export default function ListingDetailPage() {
   const isOwner = user && (item.seller_id === user.id || isUserListingOwner(item, user));
   const isAdmin = checkIsAdmin(user);
 
-  if (item.status === 'pending' && !isOwner && !isAdmin) {
+  if ((item.status === 'pending' || item.status === 'rejected') && !isOwner && !isAdmin) {
     return <NotFound />;
   }
 
@@ -66,6 +66,17 @@ export default function ListingDetailPage() {
 
   const hasDiscount = typeof item.origPrice === 'number' && !isNaN(item.origPrice) && item.origPrice > item.price;
   const discountPct = hasDiscount ? Math.round(((item.origPrice - item.price) / item.origPrice) * 100) : 0;
+
+  const handleSellClick = () => {
+    if (!user) {
+      setToastAlert({
+        type: 'danger',
+        text: 'Please sign in with your college account to sell an item.'
+      });
+      return;
+    }
+    navigate('/?sell=true', { state: { openSell: true } });
+  };
 
   const handleChatClick = () => {
     if (!user) {
@@ -124,8 +135,8 @@ export default function ListingDetailPage() {
       <Navbar
         handleGoToLogin={() => navigate('/login')}
         searchQuery=""
-        setSearchQuery={() => navigate('/')}
-        handleSellClick={() => navigate('/')}
+        setSearchQuery={(q) => navigate(`/?q=${encodeURIComponent(q)}`)}
+        handleSellClick={handleSellClick}
         theme={theme}
         toggleTheme={toggleTheme}
         user={user}

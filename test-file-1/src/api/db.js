@@ -20,7 +20,7 @@ import imgArduinoKit from '../assets/products/arduino_kit.jpg';
 import imgSolidPerfume from '../assets/products/solid_perfume.jpg';
 
 const DB_PREFIX = 'unimart_db_';
-const DB_VERSION = 'v3';
+const DB_VERSION = 'v4';
 
 // In-memory fallback if localStorage throws in private / restricted browsing
 const memoryStore = {};
@@ -85,136 +85,144 @@ const SEED_LISTINGS = [
     seller_id: 'student_b',
     title: 'Calculus',
     category_id: 'books-notes',
-    subcategory_id: 'engineering-textbooks',
+    subcategory_id: null,
     price: 450,
     original_price: 1499,
     item_condition: 'Like New',
     meetup_spot: 'Library Entrance',
     description: 'Single Variable Calculus textbook covering limits, derivatives & integrals. Verified pre-owned in like-new condition with no markings.',
     has_notes: false,
+    badge: 'Academic Pick',
     status: 'approved',
     pending_type: null,
-    created_at: new Date('2026-02-01').toISOString(),
-    updated_at: new Date('2026-02-01').toISOString()
+    created_at: new Date('2026-01-01T00:00:08Z').toISOString(),
+    updated_at: new Date('2026-01-01T00:00:08Z').toISOString()
   },
   {
     id: 2,
     seller_id: 'student_b',
     title: 'Handcrafted Matcha Mug',
     category_id: 'handmade-art',
-    subcategory_id: 'decor',
+    subcategory_id: null,
     price: 350,
     original_price: 699,
     item_condition: 'Handmade',
     meetup_spot: 'Square One',
     description: 'Hand-thrown ceramic mug with earthy green glaze finish. Perfect for matcha, chai, or as a desk planter. One-of-a-kind artisan piece.',
     has_notes: false,
+    badge: 'Student Artisan',
     status: 'approved',
     pending_type: null,
-    created_at: new Date('2026-02-02').toISOString(),
-    updated_at: new Date('2026-02-02').toISOString()
+    created_at: new Date('2026-01-01T00:00:07Z').toISOString(),
+    updated_at: new Date('2026-01-01T00:00:07Z').toISOString()
   },
   {
     id: 3,
     seller_id: 'student_b',
     title: 'Color Graphing Calculator',
     category_id: 'lab-engineering-gear',
-    subcategory_id: 'scientific-calculators',
+    subcategory_id: null,
     price: 2499,
     original_price: 6999,
     item_condition: 'Excellent',
     meetup_spot: 'Turing Block',
     description: 'TI-84 Plus CE color graphing calculator. Includes USB cable and fresh batteries. Approved for all engineering exams.',
     has_notes: false,
+    badge: 'Lab Ready',
     status: 'approved',
     pending_type: null,
-    created_at: new Date('2026-02-03').toISOString(),
-    updated_at: new Date('2026-02-03').toISOString()
+    created_at: new Date('2026-01-01T00:00:06Z').toISOString(),
+    updated_at: new Date('2026-01-01T00:00:06Z').toISOString()
   },
   {
     id: 4,
     seller_id: 'student_b',
     title: 'Botanical Room Spray: Cedar & Wild Lavender (50ml)',
     category_id: 'perfumes-grooming',
-    subcategory_id: 'perfumes-deos',
+    subcategory_id: null,
     price: 299,
     original_price: 499,
     item_condition: 'Freshly Crafted',
     meetup_spot: 'Food Court',
     description: 'Includes: Natural Essential Oils. Verified pre-owned item in freshly crafted condition. Hand-blended botanical fragrance.',
     has_notes: false,
+    badge: 'Organic',
     status: 'approved',
     pending_type: null,
-    created_at: new Date('2026-02-04').toISOString(),
-    updated_at: new Date('2026-02-04').toISOString()
+    created_at: new Date('2026-01-01T00:00:05Z').toISOString(),
+    updated_at: new Date('2026-01-01T00:00:05Z').toISOString()
   },
   {
     id: 5,
     seller_id: 'student_a',
     title: 'Organic Chemistry as a Second Language (Klein)',
     category_id: 'books-notes',
-    subcategory_id: 'engineering-textbooks',
+    subcategory_id: null,
     price: 380,
     original_price: 1100,
     item_condition: 'Good',
     meetup_spot: 'Library Entrance',
     description: 'David Klein second edition with handwritten summary mind maps in margins. Essential for surviving organic synthesis.',
     has_notes: true,
+    badge: 'Semester Bestseller',
     status: 'approved',
     pending_type: null,
-    created_at: new Date('2026-02-05').toISOString(),
-    updated_at: new Date('2026-02-05').toISOString()
+    created_at: new Date('2026-01-01T00:00:04Z').toISOString(),
+    updated_at: new Date('2026-01-01T00:00:04Z').toISOString()
   },
   {
     id: 6,
     seller_id: 'student_b',
     title: 'Block-Printed Canvas Tote Bag (Sunflower Edition)',
     category_id: 'handmade-art',
-    subcategory_id: 'custom-gifts',
+    subcategory_id: null,
     price: 280,
     original_price: 550,
     item_condition: 'Brand New',
     meetup_spot: 'Gate No. 4',
     description: 'Heavy duty 320 GSM unbleached cotton tote bag with handmade sunflower woodblock print. Washable & durable.',
     has_notes: false,
+    badge: 'Limited Run',
     status: 'approved',
     pending_type: null,
-    created_at: new Date('2026-02-06').toISOString(),
-    updated_at: new Date('2026-02-06').toISOString()
+    created_at: new Date('2026-01-01T00:00:03Z').toISOString(),
+    updated_at: new Date('2026-01-01T00:00:03Z').toISOString()
   },
   {
     id: 7,
     seller_id: 'student_a',
     title: 'Arduino Uno Starter Lab Kit + Sensors Box',
     category_id: 'lab-engineering-gear',
-    subcategory_id: 'arduino-robotics-kits',
+    subcategory_id: null,
     price: 1150,
     original_price: 2400,
     item_condition: 'Like New',
     meetup_spot: 'Turing Block',
     description: 'Original ATmega328P Arduino board, breadboard, OLED display, ultrasonic sensors, motors and resistors. Tested in Turing lab.',
     has_notes: false,
+    badge: 'Verified Working',
     status: 'approved',
     pending_type: null,
-    created_at: new Date('2026-02-07').toISOString(),
-    updated_at: new Date('2026-02-07').toISOString()
+    created_at: new Date('2026-01-01T00:00:02Z').toISOString(),
+    updated_at: new Date('2026-01-01T00:00:02Z').toISOString()
   },
   {
     id: 8,
     seller_id: 'student_b',
     title: 'Solid Amber & Sandalwood Wax Cologne (15g Pocket Tin)',
     category_id: 'perfumes-grooming',
-    subcategory_id: 'attars',
+    subcategory_id: null,
     price: 249,
     original_price: 450,
     item_condition: 'Brand New',
     meetup_spot: 'Hostel Gate',
     description: 'Alcohol-free travel solid cologne in a sliding matte metal tin. Warm Mysore sandalwood notes blended with amber.',
     has_notes: false,
+    badge: 'Pocket Cologne',
     status: 'approved',
     pending_type: null,
-    created_at: new Date('2026-02-08').toISOString(),
-    updated_at: new Date('2026-02-08').toISOString()
+    created_at: new Date('2026-01-01T00:00:01Z').toISOString(),
+    updated_at: new Date('2026-01-01T00:00:01Z').toISOString()
   }
 ];
 

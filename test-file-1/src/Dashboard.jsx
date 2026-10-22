@@ -55,7 +55,17 @@ export default function Dashboard({ onGoToLogin }) {
 
   const [adminAlert, setAdminAlert] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(() => {
+    try {
+      if (typeof window !== 'undefined' && window.location.search) {
+        const q = new URLSearchParams(window.location.search).get('q');
+        if (q) return q;
+      }
+    } catch {
+      // ignore
+    }
+    return '';
+  });
   const [cardPhotoIndex, setCardPhotoIndex] = useState({});
 
   // Listings from Redux store using centralized selectors
@@ -91,6 +101,25 @@ export default function Dashboard({ onGoToLogin }) {
       window.history.replaceState({}, document.title);
     }
   }, [location.state]);
+
+  // Sync search query and sell modal triggers when navigating with URL params or router state
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(location.search);
+      const q = params.get('q');
+      if (q !== null && q !== undefined) {
+        setSearchQuery((prev) => (prev !== q ? q : prev));
+      }
+      if (location.state?.openSell || params.get('sell') === 'true') {
+        if (user) {
+          listingForm.openSellModal();
+        }
+        window.history.replaceState({}, document.title, location.pathname + (q ? `?q=${encodeURIComponent(q)}` : ''));
+      }
+    } catch {
+      // ignore
+    }
+  }, [location.search, location.state, location.pathname, user, listingForm]);
 
   const [catalogTab, setCatalogTab] = useState(() => {
     try {
