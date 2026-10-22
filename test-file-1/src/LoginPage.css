@@ -728,3 +728,18 @@ html, body {
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   color: #94a3b8;
 }
+
+/* Dark Theme Artwork Enhancements */
+[data-theme='dark'] .unimart-welcome-artwork-frame,
+[data-theme='dark'] .unimart-gateway-artwork-frame {
+  background-color: #0b0f17;
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme='dark'] .unimart-welcome-artwork-frame img,
+[data-theme='dark'] .unimart-gateway-artwork-frame img {
+  border-radius: 18px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}

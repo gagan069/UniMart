@@ -3,10 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext.jsx';
 import { useTheme } from './context/ThemeContext.jsx';
 import { useChat } from './context/ChatContext.jsx';
-import { SEEDED_USERS, findUserByCredentials, registerNewStudent } from './lib/mockUsers.js';
+import { SEEDED_USERS } from './lib/mockUsers.js';
 import './LoginPage.css';
 import welcomeStudentImg from './assets/welcome_student.jpg';
+import welcomeStudentDarkImg from './assets/welcome_student_dark.jpg';
 import campusParkImg from './assets/campus_park.jpg';
+import campusParkDarkImg from './assets/campus_park_dark.jpg';
 
 export default function LoginPage({
   onGoToDashboard,
@@ -16,6 +18,9 @@ export default function LoginPage({
 }) {
   const auth = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const isDark = theme === 'dark';
+  const currentWelcomeImg = isDark ? welcomeStudentDarkImg : welcomeStudentImg;
+  const currentCampusImg = isDark ? campusParkDarkImg : campusParkImg;
   const chat = useChat();
 
   // Ensure chat is closed when on the login / register page
@@ -291,7 +296,7 @@ export default function LoginPage({
             {/* Expansive Responsive Banner Frame matching the reference */}
             <div className="unimart-welcome-artwork-frame">
               <img 
-                src={welcomeStudentImg} 
+                src={currentWelcomeImg} 
                 alt="Student jumping with skateboard" 
               />
             </div>
@@ -359,7 +364,7 @@ export default function LoginPage({
             {/* Expansive Artwork Banner with full bench, trees, and path visible */}
             <div className="unimart-gateway-artwork-frame">
               <img 
-                src={campusParkImg} 
+                src={currentCampusImg} 
                 alt="Campus street and park scenery" 
               />
             </div>
