@@ -1,16 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
 import { useAuth } from '../context/AuthContext.jsx';
-import { useListings } from '../context/ListingsContext.jsx';
 import { useTheme } from '../context/ThemeContext.jsx';
-import { isAdmin } from '../lib/permissions.js';
+import {
+  fetchListings,
+  approveListing as approveListingAction,
+  rejectListing as rejectListingAction,
+  deleteListing as deleteListingAction
+} from '../store/slices/listingsSlice.js';
 import './AdminPage.css';
 
 export default function AdminPage() {
   const { user } = useAuth();
-  const { productList, removeListing, approveListing, rejectListing } = useListings();
+  const dispatch = useDispatch();
+  const productList = useSelector((state) => state.listings.items);
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    dispatch(fetchListings({ currentUser: user }));
+  }, [dispatch, user]);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [toastMessage, setToastMessage] = useState(null);
@@ -35,7 +45,7 @@ export default function AdminPage() {
     .reduce((acc, curr) => acc + (Number(curr.price) || 0), 0);
 
   const handleApprove = (item) => {
-    approveListing(item.id);
+    dispatch(approveListingAction({ id: item.id, currentUser: user }));
     setToastMessage(`Listing "${item.title}" approved and live in catalog!`);
     setTimeout(() => {
       setToastMessage(null);
@@ -51,7 +61,7 @@ export default function AdminPage() {
     );
     if (!confirmed) return;
 
-    rejectListing(item.id);
+    dispatch(rejectListingAction({ id: item.id, currentUser: user }));
     setToastMessage(
       isEdit
         ? `Pending edits for "${item.title}" rejected — listing restored to previous version`
@@ -68,7 +78,7 @@ export default function AdminPage() {
     );
     if (!confirmed) return;
 
-    removeListing(item.id);
+    dispatch(deleteListingAction({ id: item.id, currentUser: user }));
     setToastMessage(`Listing deleted`);
     setTimeout(() => {
       setToastMessage(null);

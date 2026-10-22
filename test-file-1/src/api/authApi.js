@@ -32,7 +32,7 @@ export const authApi = {
     }
 
     // Strip password_hash before returning user to client
-    const { password_hash, ...safeUser } = matchedUser;
+    const { password_hash: _hash, ...safeUser } = matchedUser;
     authApi.setCurrentUser(safeUser);
     return { data: safeUser, message: 'Login successful' };
   },
@@ -72,7 +72,7 @@ export const authApi = {
     users.push(newUser);
     setTable('users', users);
 
-    const { password_hash, ...safeUser } = newUser;
+    const { password_hash: _newUserHash, ...safeUser } = newUser;
     authApi.setCurrentUser(safeUser);
     return { data: safeUser, message: 'Student registration successful' };
   },
@@ -85,7 +85,7 @@ export const authApi = {
     try {
       const raw = localStorage.getItem(SESSION_KEY);
       if (raw) return { data: JSON.parse(raw) };
-    } catch (e) {}
+    } catch (_e) {}
     return { data: null };
   },
 
@@ -96,7 +96,7 @@ export const authApi = {
       } else {
         localStorage.removeItem(SESSION_KEY);
       }
-    } catch (e) {}
+    } catch (_e) {}
   },
 
   /**
@@ -115,7 +115,7 @@ export const authApi = {
     await delay(100);
     const users = getTable('users') || [];
     return {
-      data: users.map(({ password_hash, ...safeUser }) => safeUser)
+      data: users.map(({ password_hash: _seedHash, ...safeUser }) => safeUser)
     };
   }
 };

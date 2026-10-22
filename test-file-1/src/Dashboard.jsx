@@ -1,101 +1,57 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
 import { useTheme } from './context/ThemeContext.jsx';
 import { useAuth } from './context/AuthContext.jsx';
-import { useListings } from './context/ListingsContext.jsx';
 import { useChat } from './context/ChatContext.jsx';
-import { canManageListing, isAdmin as checkIsAdmin, isGuest, isStudent } from './lib/permissions.js';
-import './Dashboard.css';
+import { canManageListing } from './lib/permissions.js';
+import { categories } from './lib/categories.js';
+import { compressImage } from './lib/imageCompressor.js';
+import {
+  fetchListings,
+  createListing,
+  updateListing as updateListingAction,
+  deleteListing as deleteListingAction
+} from './store/slices/listingsSlice.js';
 
-// Product images
-import imgCalcBook from './assets/products/calculus.jpg';
-import imgMatchaMug from './assets/products/matcha_mug.jpg';
-import imgGraphCalc from './assets/products/graphing_calc.jpg';
-import imgRoomSpray from './assets/products/room_spray.jpg';
-import imgOrgChem from './assets/products/organic_chem.jpg';
-import imgToteBag from './assets/products/tote_bag.jpg';
-import imgArduinoKit from './assets/products/arduino_kit.jpg';
-import imgSolidPerfume from './assets/products/solid_perfume.jpg';
+import {
+  CONDITION_OPTIONS,
+  MEETUP_OPTIONS,
+  CATEGORY_THEME_MAP,
+  resolveCategoryId,
+  getDisplaySellerName,
+  isUserListingOwner
+} from './lib/constants.js';
+
+import Navbar from './components/Navbar.jsx';
+import CategoryBar from './components/CategoryBar.jsx';
+import SpotlightCard from './components/SpotlightCard.jsx';
+import ListingGrid from './components/ListingGrid.jsx';
+import SellListingModal from './components/SellListingModal/SellListingModal.jsx';
 import FloatingChatButton from './components/chat/FloatingChatButton.jsx';
 import ChatModal from './components/chat/ChatModal.jsx';
-import { compressImage } from './lib/imageCompressor.js';
 
-import { categories } from './lib/categories.js';
+import imgCalcBook from './assets/products/calculus.jpg';
+import './Dashboard.css';
 
-export const CONDITION_OPTIONS = [
-  { value: 'Brand New', label: 'Brand New', hint: 'Unused, sealed or with tags' },
-  { value: 'Like New', label: 'Like New', hint: 'Used a few times, no visible marks' },
-  { value: 'Good', label: 'Good', hint: 'Normal use, minor scratches or wear' },
-  { value: 'Fair', label: 'Fair', hint: 'Clear signs of use, still works fine' },
-  { value: 'For Parts / Not Working', label: 'For Parts / Not Working', hint: 'Damaged or faulty; useful for repair or parts' }
-];
-
-export const MEETUP_OPTIONS = [
-  'Square One',
-  'Gate No. 4',
-  'Turing Block',
-  'Library Entrance',
-  'Food Court',
-  'Hostel Gate',
-  'Other'
-];
-
-export const CATEGORY_THEME_MAP = {
-  'books-notes': 'theme-academic',
-  'electronics-gadgets': 'theme-electronics',
-  'lab-engineering-gear': 'theme-tech',
-  'stationery-supplies': 'theme-stationery',
-  'hostel-room-essentials': 'theme-hostel',
-  'fashion-accessories': 'theme-fashion',
-  'perfumes-grooming': 'theme-scents',
-  'handmade-art': 'theme-crafts',
-  'sports-fitness-cycles': 'theme-sports',
-  'other': 'theme-other'
-};
-
-export const resolveCategoryId = (item) => {
-  if (item?.category_id && categories.some((c) => c.id === item.category_id)) {
-    return item.category_id;
-  }
-  const cat = (item?.category || '').toLowerCase().trim();
-  const matched = categories.find(
-    (c) =>
-      c.id === item?.category_id ||
-      c.name.toLowerCase() === cat ||
-      (c.id === 'books-notes' && (cat.includes('book') || cat.includes('textbook') || cat.includes('note'))) ||
-      (c.id === 'handmade-art' && (cat.includes('craft') || cat.includes('handmade') || cat.includes('art'))) ||
-      (c.id === 'lab-engineering-gear' && (cat.includes('machinery') || cat.includes('lab') || cat.includes('gear'))) ||
-      (c.id === 'electronics-gadgets' && (cat.includes('electronic') || cat.includes('gadget') || cat.includes('tech'))) ||
-      (c.id === 'perfumes-grooming' && (cat.includes('perfume') || cat.includes('scent') || cat.includes('grooming'))) ||
-      (c.id === 'stationery-supplies' && cat.includes('stationery')) ||
-      (c.id === 'hostel-room-essentials' && (cat.includes('hostel') || cat.includes('room'))) ||
-      (c.id === 'fashion-accessories' && (cat.includes('fashion') || cat.includes('accessor'))) ||
-      (c.id === 'sports-fitness-cycles' && (cat.includes('sport') || cat.includes('fitness') || cat.includes('cycle')))
-  );
-  return matched ? matched.id : 'books-notes';
-};
-
-export const getDisplaySellerName = (item, currentUser) => {
-  if (!item?.seller) return 'Campus Member';
-  const baseName = item.seller.replace(/\s*\(You\)/i, '').trim();
-  const isOwner = currentUser && (
-    item.seller_id === currentUser.id ||
-    baseName.toLowerCase() === (currentUser.name || '').toLowerCase()
-  );
-  return isOwner ? `${baseName} (You)` : baseName;
-};
-
-export const isUserListingOwner = (item, currentUser) => {
-  if (!currentUser) return false;
-  if (item.seller_id === currentUser.id) return true;
-  const baseName = (item.seller || '').replace(/\s*\(You\)/i, '').trim().toLowerCase();
-  return Boolean(currentUser.name && baseName === currentUser.name.toLowerCase());
+// Re-export constants and helpers for backward compatibility
+export {
+  CONDITION_OPTIONS,
+  MEETUP_OPTIONS,
+  CATEGORY_THEME_MAP,
+  resolveCategoryId,
+  getDisplaySellerName,
+  isUserListingOwner
 };
 
 export default function Dashboard({ onGoToLogin }) {
   const { theme, toggleTheme } = useTheme();
   const { user, logout } = useAuth() || {};
-  const { productList, setProductList, addListing, updateListing, removeListing } = useListings();
+  const dispatch = useDispatch();
+
+  // Redux listings state
+  const productList = useSelector((state) => state.listings.items) || [];
+
   const { openChatWithItem, closeChat } = useChat();
   const [adminAlert, setAdminAlert] = useState(null);
 
@@ -105,6 +61,11 @@ export default function Dashboard({ onGoToLogin }) {
   };
   const location = useLocation();
   const navigate = useNavigate();
+
+  // Fetch listings on mount and user change
+  useEffect(() => {
+    dispatch(fetchListings({ currentUser: user }));
+  }, [dispatch, user]);
 
   // Listen for access denied redirect from /admin route
   useEffect(() => {
@@ -117,15 +78,22 @@ export default function Dashboard({ onGoToLogin }) {
     }
   }, [location.state]);
 
-  // Dynamic state for search & category filters
+  // Search & category filters
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
-  const [isSellModalOpen, setIsSellModalOpen] = useState(false);
 
-  // Listing flow state (Stage 1 & Stage 2)
+  // Step modal state
+  const [isSellModalOpen, setIsSellModalOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [isPublishedSuccess, setIsPublishedSuccess] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef(null);
+  const conditionDropdownRef = useRef(null);
+  const [isConditionOpen, setIsConditionOpen] = useState(false);
+
+  // Listing Form State
   const [formData, setFormData] = useState({
     title: '',
     category_id: '',
@@ -140,14 +108,10 @@ export default function Dashboard({ onGoToLogin }) {
     seller: user?.name || 'Campus Student',
     photos: []
   });
+
   const [formErrors, setFormErrors] = useState({});
-  const [touchedFields, setTouchedFields] = useState({});
-  const [isConditionOpen, setIsConditionOpen] = useState(false);
-  const conditionDropdownRef = useRef(null);
-  const fileInputRef = useRef(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [isPublishedSuccess, setIsPublishedSuccess] = useState(false);
-  const [editResultType, setEditResultType] = useState('price_only'); // 'price_only' | 'pending_approval'
+  const [, setTouchedFields] = useState({});
+  const [editResultType, setEditResultType] = useState('price_only');
   const [cardPhotoIndex, setCardPhotoIndex] = useState({});
 
   // Handlers for navigating through multi-photo cards
@@ -183,26 +147,11 @@ export default function Dashboard({ onGoToLogin }) {
         const t = new URLSearchParams(window.location.search).get('tab');
         if (t === 'my' || t === 'all') return t;
       }
-    } catch (e) {}
+    } catch {
+      // ignore
+    }
     return 'all';
   });
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const userMenuRef = useRef(null);
-
-  // Close profile dropdown when clicking outside
-  useEffect(() => {
-    const handleMenuClickOutside = (e) => {
-      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
-        setIsUserMenuOpen(false);
-      }
-    };
-    if (isUserMenuOpen) {
-      document.addEventListener('mousedown', handleMenuClickOutside);
-    }
-    return () => {
-      document.removeEventListener('mousedown', handleMenuClickOutside);
-    };
-  }, [isUserMenuOpen]);
 
   // Revert to 'all' if user logs out while on 'my' tab
   useEffect(() => {
@@ -300,26 +249,25 @@ export default function Dashboard({ onGoToLogin }) {
         break;
       }
       case 'price': {
-        const valStr = String(value || '').trim();
-        if (!valStr) {
+        const num = Number(value);
+        if (value === '' || value === null || value === undefined) {
           error = 'Price is required.';
-        } else {
-          const num = Number(valStr);
-          if (!/^\d+$/.test(valStr) || isNaN(num) || num < 1 || num > 100000) {
-            error = 'Price must be a whole number between ₹1 and ₹1,00,000.';
-          }
+        } else if (isNaN(num) || num <= 0) {
+          error = 'Price must be greater than 0.';
+        } else if (num > 100000) {
+          error = 'Price cannot exceed ₹1,00,000.';
         }
         break;
       }
       case 'condition': {
         if (!value) {
-          error = 'Please select a condition.';
+          error = 'Please select item condition.';
         }
         break;
       }
       case 'meetupSpot': {
         if (!value) {
-          error = 'Please select a meetup spot.';
+          error = 'Please choose a meetup spot.';
         }
         break;
       }
@@ -327,7 +275,11 @@ export default function Dashboard({ onGoToLogin }) {
         if (allData.meetupSpot === 'Other') {
           const trimmed = (value || '').trim();
           if (!trimmed) {
-            error = 'Please specify your meetup spot.';
+            error = 'Please specify your custom meetup spot.';
+          } else if (trimmed.length < 3) {
+            error = 'Spot must be at least 3 characters.';
+          } else if (trimmed.length > 50) {
+            error = 'Spot cannot exceed 50 characters.';
           }
         }
         break;
@@ -349,37 +301,37 @@ export default function Dashboard({ onGoToLogin }) {
     return error;
   };
 
-  const validateAll = (data = formData) => {
-    const errors = {};
-    const fields = ['title', 'category_id', 'price', 'condition', 'meetupSpot', 'description'];
-    if (data.meetupSpot === 'Other') {
-      fields.push('customMeetupSpot');
-    }
-    fields.forEach((f) => {
-      const err = validateField(f, data[f], data);
-      if (err) errors[f] = err;
+  const handleFieldChange = (field, value) => {
+    setFormData((prev) => {
+      const updated = { ...prev, [field]: value };
+      const err = validateField(field, value, updated);
+      setFormErrors((prevErr) => ({ ...prevErr, [field]: err }));
+      return updated;
     });
-    return errors;
   };
 
   const handleBlur = (field) => {
     setTouchedFields((prev) => ({ ...prev, [field]: true }));
-    const err = validateField(field, formData[field], formData);
+    const err = validateField(field, formData[field]);
     setFormErrors((prev) => ({ ...prev, [field]: err }));
   };
 
-  const handleFieldChange = (field, value) => {
-    setFormData((prev) => {
-      const updated = { ...prev, [field]: value };
-      return updated;
-    });
-    if (touchedFields[field]) {
-      setFormData((prev) => {
-        const err = validateField(field, value, prev);
-        setFormErrors((ePrev) => ({ ...ePrev, [field]: err }));
-        return prev;
-      });
-    }
+  const handleCategoryChange = (e) => {
+    const val = e.target.value;
+    setFormData((prev) => ({
+      ...prev,
+      category_id: val,
+      subcategory_id: null
+    }));
+    const err = validateField('category_id', val);
+    setFormErrors((prev) => ({ ...prev, category_id: err }));
+  };
+
+  const handleSelectCondition = (val) => {
+    setFormData((prev) => ({ ...prev, condition: val }));
+    setIsConditionOpen(false);
+    const err = validateField('condition', val);
+    setFormErrors((prev) => ({ ...prev, condition: err }));
   };
 
   const handleMeetupChange = (e) => {
@@ -389,114 +341,55 @@ export default function Dashboard({ onGoToLogin }) {
       meetupSpot: val,
       customMeetupSpot: val === 'Other' ? prev.customMeetupSpot : ''
     }));
-    if (touchedFields.meetupSpot) {
-      setFormErrors((prev) => ({
-        ...prev,
-        meetupSpot: val ? '' : 'Please select a meetup spot.',
-        customMeetupSpot: val !== 'Other' ? '' : prev.customMeetupSpot
-      }));
-    }
-  };
-
-  const handleCategoryChange = (e) => {
-    const catId = e.target.value;
-    setFormData((prev) => ({
-      ...prev,
-      category_id: catId,
-      subcategory_id: null,
-      hasNotes: catId === 'books-notes' ? prev.hasNotes : false
-    }));
-    if (touchedFields.category_id) {
-      setFormErrors((prev) => ({
-        ...prev,
-        category_id: catId ? '' : 'Please select a category.'
-      }));
-    }
-  };
-
-  const handleSelectCondition = (val) => {
-    setFormData((prev) => ({ ...prev, condition: val }));
-    setIsConditionOpen(false);
-    setTouchedFields((prev) => ({ ...prev, condition: true }));
-    setFormErrors((prev) => ({ ...prev, condition: '' }));
+    const err = validateField('meetupSpot', val);
+    setFormErrors((prev) => ({ ...prev, meetupSpot: err }));
   };
 
   const handleNextStep = (e) => {
-    if (e) e.preventDefault();
-    const allTouched = {
-      title: true,
-      category_id: true,
-      price: true,
-      condition: true,
-      meetupSpot: true,
-      customMeetupSpot: true,
-      description: true
-    };
-    setTouchedFields(allTouched);
-
-    const allErrors = validateAll(formData);
-    setFormErrors(allErrors);
-
-    if (Object.keys(allErrors).length > 0) {
-      // Don't move; show red messages and scroll/focus to first error
-      const errorOrder = [
-        { field: 'title', id: 'listing-title' },
-        { field: 'category_id', id: 'listing-category' },
-        { field: 'price', id: 'listing-price' },
-        { field: 'condition', id: 'listing-condition-trigger' },
-        { field: 'meetupSpot', id: 'listing-meetup' },
-        { field: 'customMeetupSpot', id: 'listing-custom-meetup' },
-        { field: 'description', id: 'listing-description' }
-      ];
-      const firstInvalid = errorOrder.find((item) => allErrors[item.field]);
-      if (firstInvalid) {
-        setTimeout(() => {
-          const el = document.getElementById(firstInvalid.id);
-          if (el) {
-            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            el.focus();
-          }
-        }, 50);
-      }
-      return;
+    e.preventDefault();
+    const fieldsToValidate = ['title', 'category_id', 'price', 'condition', 'meetupSpot', 'description'];
+    if (formData.meetupSpot === 'Other') {
+      fieldsToValidate.push('customMeetupSpot');
     }
 
-    // Valid: Advance to Step 2
-    setCurrentStep(2);
+    const errors = {};
+    let hasError = false;
+    fieldsToValidate.forEach((f) => {
+      const err = validateField(f, formData[f]);
+      if (err) {
+        errors[f] = err;
+        hasError = true;
+      }
+    });
+
+    setFormErrors(errors);
+    if (!hasError) {
+      setCurrentStep(2);
+    }
   };
 
   const handlePhotoFiles = async (files) => {
     if (!files || files.length === 0) return;
-    const fileList = Array.from(files);
-    const validImages = fileList.filter((f) => f.type.startsWith('image/'));
+    const currentCount = formData.photos.length;
+    const remainingSlots = 4 - currentCount;
 
-    if (validImages.length === 0) {
-      setFormErrors((prev) => ({ ...prev, photos: 'Please select valid image files (JPG, PNG, WebP).' }));
+    if (remainingSlots <= 0) {
+      setFormErrors((prev) => ({
+        ...prev,
+        photos: 'Maximum 4 photos allowed per listing.'
+      }));
       return;
     }
 
-    const availableSlots = 4 - formData.photos.length;
-    if (availableSlots <= 0) {
-      setFormErrors((prev) => ({ ...prev, photos: 'Maximum 4 photos allowed.' }));
-      return;
-    }
+    const filesToLoad = Array.from(files).slice(0, remainingSlots);
+    const compressionPromises = filesToLoad.map((file) => compressImage(file));
+    const results = await Promise.allSettled(compressionPromises);
 
-    const filesToLoad = validImages.slice(0, availableSlots);
     const newPhotos = [];
     const errors = [];
 
-    // Process all files with Promise.allSettled so no single file failure blocks the rest (Bug 4 fix)
-    const results = await Promise.allSettled(
-      filesToLoad.map(async (file) => {
-        if (file.size > 15 * 1024 * 1024) {
-          throw new Error(`"${file.name}" exceeds 15MB limit.`);
-        }
-        return await compressImage(file);
-      })
-    );
-
     results.forEach((res, idx) => {
-      if (res.status === 'fulfilled' && res.value) {
+      if (res.status === 'fulfilled') {
         newPhotos.push(res.value);
       } else {
         const errorMsg = res.reason?.message || `Failed to process "${filesToLoad[idx].name}".`;
@@ -554,7 +447,6 @@ export default function Dashboard({ onGoToLogin }) {
     const categoryName = catObj ? catObj.name : 'Books & Notes';
     const categoryTheme = CATEGORY_THEME_MAP[formData.category_id] || 'theme-academic';
     const categoryIcon = catObj?.icon || 'sell';
-
     const finalMeetup = formData.meetupSpot === 'Other' ? formData.customMeetupSpot : formData.meetupSpot;
 
     if (isEditing && editingId) {
@@ -563,10 +455,7 @@ export default function Dashboard({ onGoToLogin }) {
       const oldPrice = Number(existingItem?.price);
       const isPriceChanged = newPrice !== oldPrice;
 
-      // Resolve existing category ID accurately even if sample item originally lacked category_id
       const existingCatId = existingItem?.category_id || resolveCategoryId(existingItem);
-
-      // Check if any fields other than price changed
       const isTitleChanged = formData.title.trim() !== (existingItem?.title || '').trim();
       const isCategoryChanged = formData.category_id !== existingCatId;
       const isSubcategoryChanged = (formData.subcategory_id || '') !== (existingItem?.subcategory_id || '');
@@ -592,11 +481,17 @@ export default function Dashboard({ onGoToLogin }) {
       // Rule: If ONLY the price was updated, auto-accept immediately and keep listing active
       if (!isContentChanged && isPriceChanged) {
         const parsedOrig = formData.origPrice ? Number(formData.origPrice) : (existingItem?.origPrice || null);
-        updateListing(editingId, {
-          price: newPrice,
-          origPrice: parsedOrig && parsedOrig > newPrice ? parsedOrig : (existingItem?.origPrice && existingItem.origPrice > newPrice ? existingItem.origPrice : null),
-          category_id: existingCatId
-        });
+        dispatch(
+          updateListingAction({
+            id: editingId,
+            updates: {
+              price: newPrice,
+              origPrice: parsedOrig && parsedOrig > newPrice ? parsedOrig : (existingItem?.origPrice && existingItem.origPrice > newPrice ? existingItem.origPrice : null),
+              category_id: existingCatId
+            },
+            currentUser: user
+          })
+        );
 
         setEditResultType('price_only');
         setIsPublishedSuccess(true);
@@ -613,7 +508,7 @@ export default function Dashboard({ onGoToLogin }) {
         return;
       }
 
-      // Save backup of original approved version before applying pending edit (Bug 3 fix)
+      // Save backup of original approved version before applying pending edit
       const originalVersion = existingItem.originalVersion || {
         title: existingItem.title,
         category: existingItem.category,
@@ -634,28 +529,33 @@ export default function Dashboard({ onGoToLogin }) {
 
       const parsedOrig = formData.origPrice ? Number(formData.origPrice) : (existingItem?.origPrice || null);
 
-      // Rule: Except for price, whenever we edit the product send a request to the admin panel under "Pending Approvals"
-      updateListing(editingId, {
-        title: formData.title.trim(),
-        category: categoryName,
-        category_id: formData.category_id,
-        subcategory_id: formData.subcategory_id || null,
-        price: newPrice,
-        origPrice: parsedOrig && parsedOrig > newPrice ? parsedOrig : null,
-        condition: formData.condition,
-        icon: categoryIcon,
-        categoryTheme: categoryTheme,
-        notes: finalMeetup,
-        image: formData.photos[0] || imgCalcBook,
-        photos: formData.photos,
-        description: formData.description,
-        seller: user?.name || (existingItem?.seller ? existingItem.seller.replace(/\s*\(You\)/i, '').trim() : 'Campus Student'),
-        status: 'pending', // ⏳ Sent to admin panel under Pending Approvals!
-        badge: 'Waiting for Approval',
-        pendingType: 'edit',
-        originalVersion,
-        editedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      });
+      dispatch(
+        updateListingAction({
+          id: editingId,
+          updates: {
+            title: formData.title.trim(),
+            category: categoryName,
+            category_id: formData.category_id,
+            subcategory_id: formData.subcategory_id || null,
+            price: newPrice,
+            origPrice: parsedOrig && parsedOrig > newPrice ? parsedOrig : null,
+            condition: formData.condition,
+            icon: categoryIcon,
+            categoryTheme: categoryTheme,
+            notes: finalMeetup,
+            image: formData.photos[0] || imgCalcBook,
+            photos: formData.photos,
+            description: formData.description,
+            seller: user?.name || (existingItem?.seller ? existingItem.seller.replace(/\s*\(You\)/i, '').trim() : 'Campus Student'),
+            status: 'pending',
+            badge: 'Waiting for Approval',
+            pendingType: 'edit',
+            originalVersion,
+            editedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          },
+          currentUser: user
+        })
+      );
 
       setEditResultType('pending_approval');
       setIsPublishedSuccess(true);
@@ -673,7 +573,6 @@ export default function Dashboard({ onGoToLogin }) {
     }
 
     const newListing = {
-      id: Date.now(),
       seller_id: user?.id || 'student_a',
       title: formData.title.trim(),
       category: categoryName,
@@ -690,12 +589,12 @@ export default function Dashboard({ onGoToLogin }) {
       image: formData.photos[0] || imgCalcBook,
       photos: formData.photos,
       description: formData.description,
-      status: 'pending', // ⏳ Marked as waiting to be approved
+      status: 'pending',
       pendingType: 'new',
       submittedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
 
-    addListing(newListing);
+    dispatch(createListing({ data: newListing, currentUser: user }));
     setEditResultType('pending_approval');
     setIsPublishedSuccess(true);
     setTimeout(() => {
@@ -705,7 +604,6 @@ export default function Dashboard({ onGoToLogin }) {
     }, 2400);
   };
 
-  // Reorder photos in Step 2
   const handleMovePhoto = (index, direction) => {
     const targetIndex = index + direction;
     if (targetIndex < 0 || targetIndex >= formData.photos.length) return;
@@ -716,7 +614,6 @@ export default function Dashboard({ onGoToLogin }) {
     setFormData((prev) => ({ ...prev, photos: newPhotos }));
   };
 
-  // Edit listing action: opens SAME 2-step form pre-filled with data
   const handleEditListingClick = (e, item) => {
     if (e) e.stopPropagation();
     if (!canManageListing(user, item)) return;
@@ -724,9 +621,7 @@ export default function Dashboard({ onGoToLogin }) {
     setIsEditing(true);
     setEditingId(item.id);
 
-    // Map item.category to category_id using resolveCategoryId
     const categoryId = resolveCategoryId(item);
-
     const isKnownSpot = MEETUP_OPTIONS.includes(item.notes);
     const photosList =
       item.photos && item.photos.length > 0
@@ -756,7 +651,6 @@ export default function Dashboard({ onGoToLogin }) {
     setIsSellModalOpen(true);
   };
 
-  // Delete listing action: asks confirmation ("Delete 'title'? This can't be undone.") then toast "Listing deleted"
   const handleDeleteListingClick = (e, item) => {
     if (e) e.stopPropagation();
     if (!canManageListing(user, item)) return;
@@ -766,7 +660,7 @@ export default function Dashboard({ onGoToLogin }) {
     );
     if (!confirmed) return;
 
-    removeListing(item.id);
+    dispatch(deleteListingAction({ id: item.id, currentUser: user }));
     setAdminAlert({
       type: 'success',
       text: 'Listing deleted'
@@ -774,7 +668,6 @@ export default function Dashboard({ onGoToLogin }) {
     setTimeout(() => setAdminAlert(null), 3500);
   };
 
-  // Guest interaction handlers (Rules: Guest view only; chat/wishlist/sell prompt login)
   const handleSellClick = () => {
     if (!user) {
       setAdminAlert({
@@ -789,14 +682,13 @@ export default function Dashboard({ onGoToLogin }) {
     setIsSellModalOpen(true);
   };
 
-  const handleWishlistClick = (e, item) => {
+  const handleWishlistClick = (e) => {
     e.stopPropagation();
     if (!user) {
       setAdminAlert({
         type: 'danger',
         text: 'Please sign in to add items to your wishlist.'
       });
-      return;
     }
   };
 
@@ -819,51 +711,14 @@ export default function Dashboard({ onGoToLogin }) {
     openChatWithItem(item);
   };
 
-  const handleBuyClick = (e, item) => {
+  const handleBuyClick = (e) => {
     e.stopPropagation();
     if (!user) {
       setAdminAlert({
         type: 'danger',
         text: 'Please sign in to buy items on UNIMART.'
       });
-      return;
     }
-  };
-
-  // Legacy fallback removal
-  const handleRemoveProduct = (productId, productTitle) => {
-    const listing = productList.find((p) => p.id === productId);
-    if (!listing) return;
-
-    if (!canManageListing(user, listing)) {
-      setAdminAlert({
-        type: 'danger',
-        text: 'Permission denied: Students can only delete their own listings.'
-      });
-      return;
-    }
-
-    const confirmed = window.confirm(
-      `Delete '${productTitle || 'this listing'}'? This can't be undone.`
-    );
-    if (!confirmed) return;
-
-    removeListing(productId);
-    setAdminAlert({
-      type: 'success',
-      text: 'Listing deleted'
-    });
-    setTimeout(() => setAdminAlert(null), 3500);
-  };
-
-  const handleAdminApprove = (productId, productTitle) => {
-    if (!checkIsAdmin(user)) return;
-    updateListing(productId, { status: 'approved', badge: 'Admin Approved' });
-    setAdminAlert({
-      type: 'success',
-      text: `Listing "${productTitle || 'Item'}" has been approved and is now live!`
-    });
-    setTimeout(() => setAdminAlert(null), 4000);
   };
 
   const resetForm = () => {
@@ -893,299 +748,33 @@ export default function Dashboard({ onGoToLogin }) {
 
   return (
     <div className="unimart-dashboard-wrap">
-      {/* ================= TOP NAVBAR ================= */}
-      <nav className="unimart-dash-nav">
-        <div className="d-flex align-items-center justify-content-between gap-3">
-          
-          {/* Brand Logo */}
-          <div className="d-flex align-items-center gap-3">
-            <div 
-              className="unimart-logo-group" 
-              onClick={handleGoToLogin} 
-              role="button" 
-              tabIndex={0}
-              style={{ cursor: 'pointer' }}
-              title="Return to UNIMART Landing Page"
-            >
-              <div className="unimart-logo-badge">
-                <span className="material-symbols-outlined">local_mall</span>
-              </div>
-              <span>UNIMART</span>
-            </div>
+      {/* Top Navbar */}
+      <Navbar
+        handleGoToLogin={handleGoToLogin}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        handleSellClick={handleSellClick}
+        theme={theme}
+        toggleTheme={toggleTheme}
+        user={user}
+        logout={logout}
+        closeChat={closeChat}
+        navigate={navigate}
+      />
 
-            <button   
-              type="button" 
-              className="btn btn-sm btn-light border rounded-pill d-none d-lg-inline-flex align-items-center gap-1 text-muted"
-              onClick={handleGoToLogin}
-              title="Return to Landing Page"
-            >
-              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>logout</span>
-              <span style={{ fontSize: '0.8rem' }}>Landing Page</span>
-            </button>
-          </div>
+      {/* Subnav & Mobile Search */}
+      <CategoryBar
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        categoryDefs={categoryDefs}
+        selectedCategory={selectedCategory}
+        setSelectedCategory={setSelectedCategory}
+        getCategoryCount={getCategoryCount}
+        pendingCount={pendingCount}
+      />
 
-          {/* Dynamic Search Bar (Desktop) */}
-          <div className="unimart-search-bar d-none d-md-flex">
-            <span className="material-symbols-outlined text-muted me-2" style={{ fontSize: '20px' }}>
-              search
-            </span>
-            <input
-              type="text"
-              placeholder="Search textbooks, handmade crafts, lab tech, perfumes..."
-              className="unimart-search-input"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              aria-label="Search marketplace products"
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                className="btn btn-sm btn-link text-muted p-0 me-1 d-flex align-items-center"
-                onClick={() => setSearchQuery('')}
-                title="Clear search"
-                style={{ textDecoration: 'none' }}
-              >
-                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>close</span>
-              </button>
-            )}
-          </div>
-
-          {/* Right Actions */}
-          <div className="d-flex align-items-center gap-3">
-            {/* Sell Item Button */}
-            {/* Sell Item Button */}
-            <button
-              type="button"
-              className="unimart-sell-btn"
-              onClick={handleSellClick}
-              title="Listing form"
-            >
-              <span className="material-symbols-outlined" style={{ fontSize: '19px' }}>add_circle</span>
-              <span>Sell an Item</span>
-            </button>
-
-            {/* Dark/Light Theme Toggle Button */}
-            <button 
-              type="button" 
-              className="unimart-icon-action-btn unimart-theme-toggle-btn" 
-              onClick={toggleTheme}
-              title={theme === 'dark' ? "Switch to light mode" : "Switch to dark mode"}
-              aria-label="Toggle dark/light theme"
-            >
-              <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>
-                {theme === 'dark' ? 'light_mode' : 'dark_mode'}
-              </span>
-            </button>
-
-            {/* Notification Bell */}
-            <button 
-              type="button" 
-              className="unimart-icon-action-btn" 
-              title="Campus alerts"
-            >
-              <span className="material-symbols-outlined" style={{ fontSize: '21px' }}>notifications</span>
-              <span className="unimart-badge-count">1</span>
-            </button>
-
-            {/* Cart Button */}
-            <button 
-              type="button" 
-              className="unimart-icon-action-btn" 
-              title="Cart items"
-            >
-              <span className="material-symbols-outlined" style={{ fontSize: '21px' }}>shopping_cart</span>
-              <span className="unimart-badge-count">2</span>
-            </button>
-
-            {/* Consolidated Profile Chip with 3 Lines + Dropdown */}
-            <div className="position-relative" ref={userMenuRef}>
-              <div
-                className={`unimart-user-chip ${!user ? 'cursor-pointer' : ''}`}
-                onClick={() => {
-                  if (!user) {
-                    handleGoToLogin();
-                  } else {
-                    setIsUserMenuOpen((prev) => !prev);
-                  }
-                }}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    if (!user) {
-                      handleGoToLogin();
-                    } else {
-                      setIsUserMenuOpen((prev) => !prev);
-                    }
-                  }
-                }}
-                title={
-                  !user
-                    ? 'Guest Mode (Click to Sign In)'
-                    : `${user.name} • ${user.student_id || user.studentId || (checkIsAdmin(user) ? 'ADMIN-001' : '')} • ${checkIsAdmin(user) ? 'Admin' : 'Student'}`
-                }
-                id="unimart-navbar-profile-chip"
-              >
-                {/* Avatar circle with initial */}
-                <div className={`unimart-avatar ${checkIsAdmin(user) ? 'admin-avatar' : ''}`}>
-                  {!user ? 'G' : (user.name ? user.name.charAt(0).toUpperCase() : 'U')}
-                </div>
-
-                {/* 3 Lines: Line 1 name (bold), Line 2 roll number (small, grey), Line 3 access level (small, maroon) */}
-                <div className="unimart-chip-lines">
-                  <span className="unimart-chip-name">
-                    {!user ? 'Guest' : user.name}
-                  </span>
-                  <span className="unimart-chip-roll">
-                    {!user ? 'Not signed in' : (user.student_id || user.studentId || (checkIsAdmin(user) ? 'ADMIN-001' : 'Student Account'))}
-                  </span>
-                  <span className="unimart-chip-role">
-                    {!user ? 'Guest' : checkIsAdmin(user) ? 'Admin' : 'Student'}
-                  </span>
-                </div>
-              </div>
-
-              {/* Profile Dropdown Menu for Logged In User */}
-              {isUserMenuOpen && user && (
-                <div className="unimart-profile-dropdown shadow-lg">
-                  {/* 3 lines displayed inside dropdown (visible especially on mobile where navbar hides text) */}
-                  <div className="unimart-dropdown-user-header p-3 border-bottom">
-                    <div className="d-flex align-items-center gap-2.5 mb-1.5">
-                      <div className={`unimart-avatar ${checkIsAdmin(user) ? 'admin-avatar' : ''}`}>
-                        {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
-                      </div>
-                      <div className="d-flex flex-column text-start">
-                        <span className="fw-bold" style={{ fontSize: '0.88rem', color: 'var(--unimart-text-dark)' }}>
-                          {user.name}
-                        </span>
-                        <span className="text-muted" style={{ fontSize: '0.74rem' }}>
-                          {user.student_id || user.studentId || (checkIsAdmin(user) ? 'ADMIN-001' : 'Student Account')}
-                        </span>
-                        <span className="fw-semibold" style={{ fontSize: '0.74rem', color: '#70182c' }}>
-                          {checkIsAdmin(user) ? 'Admin' : 'Student'}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="text-muted" style={{ fontSize: '0.72rem' }}>
-                      {user.email}
-                    </div>
-                  </div>
-
-                  {/* Admin route link if admin */}
-                  {checkIsAdmin(user) && (
-                    <div className="py-1 border-bottom">
-                      <button
-                        type="button"
-                        className="dropdown-item d-flex align-items-center gap-2 px-3 py-2 text-danger fw-semibold"
-                        style={{ fontSize: '0.8rem' }}
-                        onClick={() => {
-                          setIsUserMenuOpen(false);
-                          navigate('/admin');
-                        }}
-                      >
-                        <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>admin_panel_settings</span>
-                        <span>Admin Dashboard</span>
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Sign Out */}
-                  <div className="p-2">
-                    <button
-                      type="button"
-                      className="btn btn-sm btn-outline-danger w-100 rounded-pill d-flex align-items-center justify-content-center gap-1 py-1"
-                      style={{ fontSize: '0.78rem' }}
-                      onClick={() => {
-                        if (closeChat) closeChat();
-                        logout();
-                        setIsUserMenuOpen(false);
-                      }}
-                    >
-                      <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>logout</span>
-                      <span>Sign Out</span>
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-        </div>
-      </nav>
-
-  
-      {/* Responsive Mobile Search Bar */}
-      <div className="unimart-mobile-search-bar d-md-none px-3 py-2 bg-white border-bottom">
-        <div className="unimart-search-bar w-100">
-          <span className="material-symbols-outlined text-muted me-2" style={{ fontSize: '20px' }}>
-            search
-          </span>
-          <input
-            type="text"
-            placeholder="Search textbooks, crafts, tech..."
-            className="unimart-search-input"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            aria-label="Search marketplace products"
-          />
-          {searchQuery && (
-            <button
-              type="button"
-              className="btn btn-sm btn-link text-muted p-0 me-1 d-flex align-items-center"
-              onClick={() => setSearchQuery('')}
-              title="Clear search"
-              style={{ textDecoration: 'none' }}
-            >
-              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>close</span>
-            </button>
-          )}
-        </div>
-      </div>
-
-      <div className="unimart-subnav">
-        <div className="unimart-cat-pills" role="tablist" aria-label="Category Filters">
-          {categoryDefs.map((cat) => {
-            const isActive = selectedCategory === cat.key;
-            return (
-              <button
-                key={cat.key}
-                type="button"
-                role="tab"
-                aria-selected={isActive}
-                className={`unimart-pill-tab ${isActive ? 'active' : ''}`}
-                onClick={() => setSelectedCategory(cat.key)}
-              >
-                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
-                  {cat.icon}
-                </span>
-                <span>{cat.name}</span>
-                <span className="unimart-tab-count-tag">{getCategoryCount(cat.key)}</span>
-              </button>
-            );
-          })}
-
-          {pendingCount > 0 && (
-            <button
-              type="button"
-              role="tab"
-              aria-selected={selectedCategory === 'Pending'}
-              className={`unimart-pill-tab unimart-pill-pending ${selectedCategory === 'Pending' ? 'active' : ''}`}
-              onClick={() => setSelectedCategory(selectedCategory === 'Pending' ? 'All' : 'Pending')}
-              title="View items waiting to be approved"
-            >
-              <span className="material-symbols-outlined unimart-timer-pulse" style={{ fontSize: '18px', color: '#d97706' }}>
-                schedule
-              </span>
-              <span>Waiting Approval</span>
-              <span className="unimart-tab-count-tag count-pending">{pendingCount}</span>
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* ================= MAIN DASHBOARD BODY ================= */}
+      {/* Main Dashboard Body */}
       <main className="container-fluid px-lg-5 py-4">
-        
         {/* Welcome Banner */}
         <div className="d-flex justify-content-between align-items-end mb-4 flex-wrap gap-2">
           <div>
@@ -1207,129 +796,46 @@ export default function Dashboard({ onGoToLogin }) {
           </div>
         </div>
 
-        {/* ================= HERO SPOTLIGHT CARDS (INTERACTIVE QUICK FILTERS) ================= */}
+        {/* Hero Spotlight Cards */}
         <div className="unimart-hero-grid">
-          
-          {/* Card 1: Pre-owned Books (Lime Yellow Palette) */}
-          <div 
-            className={`unimart-spotlight-card card-lime-yellow ${selectedCategory === 'books-notes' ? 'active-spotlight' : ''}`}
-            onClick={() => {
-              setSelectedCategory(selectedCategory === 'books-notes' ? 'All' : 'books-notes');
-              document.getElementById('marketplace-catalog')?.scrollIntoView({ behavior: 'smooth' });
-            }}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                setSelectedCategory(selectedCategory === 'books-notes' ? 'All' : 'books-notes');
-                document.getElementById('marketplace-catalog')?.scrollIntoView({ behavior: 'smooth' });
-              }
-            }}
-            title="Filter by Books & Notes"
-          >
-            <div>
-              <div className="unimart-card-tag">
-                <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>menu_book</span>
-                <span>Books & Notes</span>
-              </div>
-              <div className="unimart-card-serif-title">
-                Pre-owned books
-              </div>
-              <div className="unimart-card-subtitle">
-                Course textbooks & verified notes starting at just ₹250
-              </div>
-            </div>
+          <SpotlightCard
+            colorClass="card-lime-yellow"
+            categoryKey="books-notes"
+            icon="menu_book"
+            tagName="Books & Notes"
+            serifTitle="Pre-owned books"
+            subtitle="Course textbooks & verified notes starting at just ₹250"
+            collectionLabel="Academic Collection"
+            artIcon="📚"
+            selectedCategory={selectedCategory}
+            onSelectCategory={setSelectedCategory}
+          />
 
-            <div className="unimart-view-all-pill">
-              <span>{selectedCategory === 'books-notes' ? 'Active Filter • Click to Reset' : 'Academic Collection'}</span>
-              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
-                {selectedCategory === 'books-notes' ? 'close' : 'arrow_forward'}
-              </span>
-            </div>
+          <SpotlightCard
+            colorClass="card-soft-pink"
+            categoryKey="handmade-art"
+            icon="palette"
+            tagName="Handmade & Art"
+            serifTitle="Best of student art"
+            subtitle="Canvases, Posters, Crochet & Tote bags from ₹199"
+            collectionLabel="Art Collections"
+            artIcon="🎨"
+            selectedCategory={selectedCategory}
+            onSelectCategory={setSelectedCategory}
+          />
 
-            <span className="unimart-card-art-icon">📚</span>
-          </div>
-
-          {/* Card 2: Student Handmade Crafts & Art (Soft Pink Palette) */}
-          <div 
-            className={`unimart-spotlight-card card-soft-pink ${selectedCategory === 'handmade-art' ? 'active-spotlight' : ''}`}
-            onClick={() => {
-              setSelectedCategory(selectedCategory === 'handmade-art' ? 'All' : 'handmade-art');
-              document.getElementById('marketplace-catalog')?.scrollIntoView({ behavior: 'smooth' });
-            }}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                setSelectedCategory(selectedCategory === 'handmade-art' ? 'All' : 'handmade-art');
-                document.getElementById('marketplace-catalog')?.scrollIntoView({ behavior: 'smooth' });
-              }
-            }}
-            title="Filter by Handmade & Art"
-          >
-            <div>
-              <div className="unimart-card-tag">
-                <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>palette</span>
-                <span>Handmade & Art</span>
-              </div>
-              <div className="unimart-card-serif-title">
-                Best of student art
-              </div>
-              <div className="unimart-card-subtitle">
-                Canvases, Posters, Crochet & Tote bags from ₹199
-              </div>
-            </div>
-
-            <div className="unimart-view-all-pill">
-              <span>{selectedCategory === 'handmade-art' ? 'Active Filter • Click to Reset' : 'Art Collections'}</span>
-              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
-                {selectedCategory === 'handmade-art' ? 'close' : 'arrow_forward'}
-              </span>
-            </div>
-
-            <span className="unimart-card-art-icon">🎨</span>
-          </div>
-
-          {/* Card 3: Lab & Engineering Gear (Sky Blue Palette) */}
-          <div 
-            className={`unimart-spotlight-card card-sky-blue ${selectedCategory === 'lab-engineering-gear' ? 'active-spotlight' : ''}`}
-            onClick={() => {
-              setSelectedCategory(selectedCategory === 'lab-engineering-gear' ? 'All' : 'lab-engineering-gear');
-              document.getElementById('marketplace-catalog')?.scrollIntoView({ behavior: 'smooth' });
-            }}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                setSelectedCategory(selectedCategory === 'lab-engineering-gear' ? 'All' : 'lab-engineering-gear');
-                document.getElementById('marketplace-catalog')?.scrollIntoView({ behavior: 'smooth' });
-              }
-            }}
-            title="Filter by Lab & Engineering Gear"
-          >
-            <div>
-              <div className="unimart-card-tag">
-                <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>precision_manufacturing</span>
-                <span>Lab & Engineering</span>
-              </div>
-              <div className="unimart-card-serif-title">
-                Tech & Engineering tools
-              </div>
-              <div className="unimart-card-subtitle">
-                Calculators, robotics kits & lab equipment from ₹450
-              </div>
-            </div>
-
-            <div className="unimart-view-all-pill">
-              <span>{selectedCategory === 'lab-engineering-gear' ? 'Active Filter • Click to Reset' : 'Lab & Tech Collection'}</span>
-              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
-                {selectedCategory === 'lab-engineering-gear' ? 'close' : 'arrow_forward'}
-              </span>
-            </div>
-
-            <span className="unimart-card-art-icon">⚙️</span>
-          </div>
-
+          <SpotlightCard
+            colorClass="card-sky-blue"
+            categoryKey="lab-engineering-gear"
+            icon="precision_manufacturing"
+            tagName="Lab & Engineering"
+            serifTitle="Tech & Engineering tools"
+            subtitle="Calculators, robotics kits & lab equipment from ₹450"
+            collectionLabel="Lab & Tech Collection"
+            artIcon="⚙️"
+            selectedCategory={selectedCategory}
+            onSelectCategory={setSelectedCategory}
+          />
         </div>
 
         {/* Admin Toast Alert */}
@@ -1351,434 +857,32 @@ export default function Dashboard({ onGoToLogin }) {
           </div>
         )}
 
-        {/* ================= FEATURED PRODUCTS SECTION (DYNAMIC FILTERING) ================= */}
-        <div id="marketplace-catalog" className="unimart-section-header">
-          <div className="d-flex align-items-center justify-content-between flex-wrap gap-3">
-            <div>
-              <div className="d-flex align-items-center gap-3 flex-wrap">
-                <h3 className="unimart-section-title mb-0">
-                  <span>Marketplace Catalog</span>
-                  <span className="badge rounded-pill bg-light text-muted border fs-6 fw-semibold">
-                    {filteredProducts.length} {filteredProducts.length === 1 ? 'Item' : 'Items'} Available
-                  </span>
-                </h3>
-              </div>
+        {/* Catalog & Product Grid */}
+        <ListingGrid
+          filteredProducts={filteredProducts}
+          catalogTab={catalogTab}
+          setCatalogTab={setCatalogTab}
+          myListingsCount={myListingsCount}
+          selectedCategory={selectedCategory}
+          setSelectedCategory={setSelectedCategory}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          categories={categories}
+          user={user}
+          handleGoToLogin={handleGoToLogin}
+          handleSellClick={handleSellClick}
+          cardPhotoIndex={cardPhotoIndex}
+          handlePrevPhoto={handlePrevPhoto}
+          handleNextPhoto={handleNextPhoto}
+          setCardPhotoIndex={setCardPhotoIndex}
+          handleWishlistClick={handleWishlistClick}
+          handleChatClick={handleChatClick}
+          handleBuyClick={handleBuyClick}
+          handleEditListingClick={handleEditListingClick}
+          handleDeleteListingClick={handleDeleteListingClick}
+        />
 
-              {/* Catalog Scope Tabs: [ All Listings ] [ My Listings (count) ] */}
-              <div className="d-flex align-items-center gap-2 mt-3" role="tablist" aria-label="Catalog Scope">
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={catalogTab === 'all'}
-                  className={`unimart-pill-tab ${catalogTab === 'all' ? 'active' : ''}`}
-                  onClick={() => setCatalogTab('all')}
-                  id="tab-all-listings"
-                >
-                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>apps</span>
-                  <span>All Listings</span>
-                </button>
-
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={catalogTab === 'my'}
-                  className={`unimart-pill-tab ${catalogTab === 'my' ? 'active' : ''}`}
-                  onClick={() => {
-                    if (!user) {
-                      handleGoToLogin();
-                      return;
-                    }
-                    setCatalogTab('my');
-                  }}
-                  id="tab-my-listings"
-                  title={!user ? "Sign in to view your listings" : "View your active listings"}
-                >
-                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>person</span>
-                  <span>My Listings</span>
-                  <span className="unimart-tab-count-tag">{myListingsCount}</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Active filter tags */}
-            {(selectedCategory !== 'All' || searchQuery.trim() !== '') && (
-              <div className="d-flex align-items-center gap-2 flex-wrap">
-                {selectedCategory !== 'All' && (
-                  <span className="badge bg-white text-dark border rounded-pill px-3 py-2 d-inline-flex align-items-center gap-2 shadow-sm">
-                    <span className="text-muted small">Category:</span>
-                    <strong>{categories.find((c) => c.id === selectedCategory)?.name || (selectedCategory === 'Pending' ? 'Waiting Approval' : selectedCategory)}</strong>
-                    <button
-                      type="button"
-                      className="btn-close ms-1"
-                      style={{ fontSize: '0.65rem' }}
-                      aria-label="Remove category filter"
-                      onClick={() => setSelectedCategory('All')}
-                    />
-                  </span>
-                )}
-                {searchQuery.trim() !== '' && (
-                  <span className="badge bg-white text-dark border rounded-pill px-3 py-2 d-inline-flex align-items-center gap-2 shadow-sm">
-                    <span className="text-muted small">Search:</span>
-                    <strong>"{searchQuery}"</strong>
-                    <button
-                      type="button"
-                      className="btn-close ms-1"
-                      style={{ fontSize: '0.65rem' }}
-                      aria-label="Clear search filter"
-                      onClick={() => setSearchQuery('')}
-                    />
-                  </span>
-                )}
-                <button
-                  type="button"
-                  className="btn btn-link btn-sm text-decoration-none text-danger fw-semibold p-0 ms-1"
-                  onClick={() => {
-                    setSelectedCategory('All');
-                    setSearchQuery('');
-                  }}
-                >
-                  Clear all
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Product Cards Grid or Empty State */}
-        {filteredProducts.length === 0 ? (
-          catalogTab === 'my' && myListingsCount === 0 ? (
-            <div className="unimart-empty-state">
-              <div className="unimart-empty-icon-box">
-                <span className="material-symbols-outlined" style={{ fontSize: '38px', color: 'var(--unimart-maroon)' }}>
-                  storefront
-                </span>
-              </div>
-              <h4 className="fw-bold mb-1">You haven't listed anything yet</h4>
-              <p className="text-muted small mb-3 text-center" style={{ maxWidth: '420px' }}>
-                Share textbooks, handmade crafts, lab tools, or dorm essentials with fellow Chitkara students.
-              </p>
-              <button
-                type="button"
-                className="btn btn-dark rounded-pill px-4 py-2 fw-semibold btn-sm d-inline-flex align-items-center gap-2"
-                onClick={handleSellClick}
-                id="empty-state-sell-btn"
-              >
-                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add_circle</span>
-                <span>Sell an Item</span>
-              </button>
-            </div>
-          ) : (
-            <div className="unimart-empty-state">
-              <div className="unimart-empty-icon-box">
-                <span className="material-symbols-outlined" style={{ fontSize: '38px', color: 'var(--unimart-maroon)' }}>
-                  search_off
-                </span>
-              </div>
-              <h4 className="fw-bold mb-1">No Listings Found</h4>
-              <p className="text-muted small mb-3 text-center" style={{ maxWidth: '420px' }}>
-                {searchQuery.trim()
-                  ? `No products match "${searchQuery}" in ${selectedCategory === 'All' ? 'any category' : (categories.find((c) => c.id === selectedCategory)?.name || selectedCategory)}.`
-                  : `No products available currently in "${categories.find((c) => c.id === selectedCategory)?.name || selectedCategory}".`}
-              </p>
-              <button
-                type="button"
-                className="btn btn-dark rounded-pill px-4 py-2 fw-semibold btn-sm d-inline-flex align-items-center gap-2"
-                onClick={() => {
-                  setSelectedCategory('All');
-                  setSearchQuery('');
-                }}
-              >
-                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>refresh</span>
-                <span>Reset All Filters</span>
-              </button>
-            </div>
-          )
-        ) : (
-          <div className="unimart-products-grid">
-            {filteredProducts.map((item) => {
-              const hasDiscount = typeof item.origPrice === 'number' && !isNaN(item.origPrice) && item.origPrice > item.price;
-              const discountPct = hasDiscount ? Math.round(((item.origPrice - item.price) / item.origPrice) * 100) : 0;
-              const photosList = item.photos && item.photos.length > 0 ? item.photos : (item.image ? [item.image] : []);
-              const activePhotoIdx = cardPhotoIndex[item.id] || 0;
-              const currentImg = photosList[activePhotoIdx] || item.image;
-              const hasMultiplePhotos = photosList.length > 1;
-              const itemCatId = item.category_id || resolveCategoryId(item);
-              const themeClass = CATEGORY_THEME_MAP[itemCatId] || item.categoryTheme || 'theme-academic';
-
-              return (
-                <div key={item.id} className={`unimart-product-card ${themeClass}`}>
-                  <div className="unimart-card-inner">
-                    <div className="unimart-card-top-content">
-                      {/* Image and placeholder banner with category theme */}
-                      <div className={`unimart-card-placeholder-wrap ${themeClass}`}>
-                        <img 
-                          src={currentImg} 
-                          className="unimart-card-image" 
-                          alt={item.title} 
-                          loading="lazy"
-                        />
-                        {/* Preserved background translucent category tint */}
-                        <div className="unimart-category-translucent-tint"></div>
-
-                        {/* Category top glow border */}
-                        <div className="unimart-card-glow-border"></div>
-
-                        {/* Multi-Photo Carousel Arrows & Indicator */}
-                        {hasMultiplePhotos && (
-                          <>
-                            <button
-                              type="button"
-                              className="unimart-card-nav-arrow unimart-card-nav-prev"
-                              onClick={(e) => handlePrevPhoto(e, item.id, photosList.length)}
-                              title="Previous photo"
-                              aria-label="Previous photo"
-                            >
-                              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>chevron_left</span>
-                            </button>
-                            <button
-                              type="button"
-                              className="unimart-card-nav-arrow unimart-card-nav-next"
-                              onClick={(e) => handleNextPhoto(e, item.id, photosList.length)}
-                              title="Next photo"
-                              aria-label="Next photo"
-                            >
-                              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>chevron_right</span>
-                            </button>
-                            <div className="unimart-card-photo-counter" title={`${photosList.length} photos available`}>
-                              <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>photo_library</span>
-                              <span>{activePhotoIdx + 1}/{photosList.length}</span>
-                            </div>
-                            <div className="unimart-card-photo-dots">
-                              {photosList.map((_, pIdx) => (
-                                <span
-                                  key={pIdx}
-                                  className={`unimart-card-photo-dot ${pIdx === activePhotoIdx ? 'active' : ''}`}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setCardPhotoIndex((prev) => ({ ...prev, [item.id]: pIdx }));
-                                  }}
-                                  title={`Photo ${pIdx + 1}`}
-                                />
-                              ))}
-                            </div>
-                          </>
-                        )}
-
-                        <div className="unimart-placeholder-icon-box">
-                          <span className="material-symbols-outlined unimart-placeholder-icon">
-                            {item.icon || 'sell'}
-                          </span>
-                        </div>
-                        <span className="unimart-placeholder-label">
-                          {item.notes || item.meetupSpot || item.pickupSpot || item.category} 
-                        </span>
-                        
-                        {/* Condition Badge */}
-                        <span className="unimart-condition-badge">{item.condition}</span>
-
-                        {/* Timer badge for pending approval */}
-                        {item.status === 'pending' && (
-                          <span className="unimart-pending-timer-badge" title="Waiting to be approved by campus admin">
-                            <span className="material-symbols-outlined unimart-timer-pulse">schedule</span>
-                            <span>Waiting to be approved</span>
-                          </span>
-                        )}
-                        
-                        {/* Wishlist Icon */}
-                        <button 
-                          type="button" 
-                          className="unimart-wishlist-btn" 
-                          title="Add to wishlist"
-                          onClick={(e) => handleWishlistClick(e, item)}
-                        >
-                          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
-                            favorite_border
-                          </span>
-                        </button>
-                      </div>
-
-                      {/* Card Body */}
-                      <div className="unimart-card-body">
-                        {item.status === 'pending' && (
-                          <div className="unimart-pending-strip mb-2">
-                            <div className="d-flex align-items-center gap-1">
-                              <span className="material-symbols-outlined unimart-timer-pulse" style={{ fontSize: '15px', color: '#d97706' }}>schedule</span>
-                              <span className="fw-semibold" style={{ fontSize: '0.72rem', color: '#b45309' }}>Waiting for Approval</span>
-                            </div>
-                            <span className="text-muted" style={{ fontSize: '0.68rem' }}>{item.submittedAt || 'Pending'}</span>
-                          </div>
-                        )}
-
-                        <div className="d-flex justify-content-between align-items-center mb-1">
-                          <span className="unimart-card-category">
-                            {item.category}{item.subcategory ? ` • ${item.subcategory}` : ''}
-                          </span>
-                          <span className={`unimart-badge-chip ${item.status === 'pending' ? 'chip-pending' : ''}`}>
-                            {item.badge}
-                          </span>
-                        </div>
-
-                        <h6 className="unimart-card-title" title={item.title}>
-                          {item.title}
-                        </h6>
-
-                        <div className="d-flex justify-content-between align-items-center mb-1">
-                          <div className="unimart-seller-info">
-                            <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>person</span>
-                            <span>{getDisplaySellerName(item, user)}</span>
-                          </div>
-                          {!isUserListingOwner(item, user) && (
-                            <button
-                              type="button"
-                              className="unimart-card-quick-chat-btn"
-                              onClick={(e) => handleChatClick(e, item)}
-                              title={`Chat with ${getDisplaySellerName(item, user)}`}
-                              aria-label={`Chat with seller ${getDisplaySellerName(item, user)}`}
-                            >
-                              <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>chat</span>
-                              <span>Chat</span>
-                            </button>
-                          )}
-                        </div>
-
-                        {/* Pricing in Indian Rupees (₹) */}
-                        <div className="unimart-price-row mt-auto pt-2">
-                          <div className="d-flex align-items-baseline gap-2 flex-wrap">
-                            <span className="unimart-current-price">
-                              {item.price === 0 ? 'Free' : `₹${item.price.toLocaleString('en-IN')}`}
-                            </span>
-                            {hasDiscount && (
-                              <span className="unimart-orig-price">₹{item.origPrice.toLocaleString('en-IN')}</span>
-                            )}
-                            {hasDiscount && discountPct > 0 && (
-                              <span className="unimart-discount-tag">{discountPct}% OFF</span>
-                            )}
-                            {item.isNegotiable && (
-                              <span className="badge bg-light text-dark border ms-1" style={{ fontSize: '0.65rem' }}>
-                                Negotiable
-                              </span>
-                            )}
-                          </div>
-
-                          {/* Only inside "My Listings" tab, show ✏️ Edit and 🗑️ Delete where cart button is */}
-                          {catalogTab === 'my' && canManageListing(user, item) && !checkIsAdmin(user) ? (
-                            <div className="d-flex align-items-center gap-1.5 unimart-my-card-actions">
-                              <button
-                                type="button"
-                                className="unimart-card-icon-btn unimart-btn-edit"
-                                title="Edit"
-                                onClick={(e) => handleEditListingClick(e, item)}
-                                aria-label={`Edit ${item.title}`}
-                              >
-                                <span className="material-symbols-outlined" style={{ fontSize: '17px' }}>edit</span>
-                              </button>
-                              <button
-                                type="button"
-                                className="unimart-card-icon-btn unimart-btn-delete"
-                                title="Delete"
-                                onClick={(e) => handleDeleteListingClick(e, item)}
-                                aria-label={`Delete ${item.title}`}
-                              >
-                                <span className="material-symbols-outlined" style={{ fontSize: '17px' }}>delete</span>
-                              </button>
-                            </div>
-                          ) : (
-                            <button 
-                              type="button" 
-                              className="unimart-add-cart-btn"
-                              title="Add to cart"
-                              onClick={(e) => handleBuyClick(e, item)}
-                            >
-                              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add_shopping_cart</span>
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Expanded Details Section (Visible on Hover with Ambient Light Bleed synced to active photo) */}
-                    <div className="unimart-expanded-details" style={{ '--card-img': `url(${currentImg})` }}>
-                      <h6 className="unimart-expanded-title" title={item.title}>
-                        {item.title}
-                      </h6>
-                      <div className="unimart-expanded-meta">
-                        <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>badge</span>
-                        <span style={{ fontSize: '0.78rem', marginLeft: '6px' }}>{getDisplaySellerName(item, user)}</span>
-                      </div>
-                      <p className="unimart-expanded-desc">
-                        {item.description || (item.notes ? `Includes: ${item.notes}. ` : '') + `Verified pre-owned item in ${(item.condition || '').toLowerCase()} condition.`}
-                      </p>
-                      <div className="unimart-expanded-price-row">
-                        <span className="unimart-expanded-price">
-                          {item.price === 0 ? 'Free' : `₹${item.price.toLocaleString('en-IN')}`}
-                        </span>
-                        <span className="unimart-expanded-location">
-                          <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>location_on</span>
-                          {item.meetupSpot || item.notes || item.pickupSpot || 'Chitkara Campus'}
-                        </span>
-                      </div>
-                      <div className="unimart-expanded-actions">
-                        {catalogTab === 'my' && canManageListing(user, item) && !checkIsAdmin(user) ? (
-                          <>
-                            <button
-                              type="button"
-                              className="unimart-btn-secondary"
-                              onClick={(e) => handleEditListingClick(e, item)}
-                              title="Edit listing"
-                            >
-                              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>edit</span>
-                              Edit
-                            </button>
-                            <button
-                              type="button"
-                              className="unimart-btn-primary bg-danger border-danger"
-                              onClick={(e) => handleDeleteListingClick(e, item)}
-                              title="Delete listing"
-                            >
-                              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>delete</span>
-                              Delete
-                            </button>
-                          </>
-                        ) : (
-                          <>
-                            <button
-                              type="button"
-                              className="unimart-btn-secondary"
-                              onClick={(e) => handleChatClick(e, item)}
-                              title="Chat with seller"
-                            >
-                              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>chat</span>
-                              Chat
-                            </button>
-                            <button
-                              type="button"
-                              className="unimart-btn-primary"
-                              onClick={(e) => handleBuyClick(e, item)}
-                              title="Add to cart"
-                            >
-                              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add_shopping_cart</span>
-                              + Cart
-                            </button>
-                          </>
-                        )}
-                        <button
-                          type="button"
-                          className="unimart-btn-icon"
-                          title="Quick preview"
-                          onClick={(e) => handleBuyClick(e, item)}
-                        >
-                          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>open_in_new</span>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* ================= SELL CTA BANNER ================= */}
+        {/* Sell CTA Banner */}
         <div className="rounded-4 p-4 p-lg-5 mb-5 text-white position-relative overflow-hidden" style={{ background: 'linear-gradient(135deg, var(--unimart-maroon) 0%, var(--unimart-maroon-dark) 100%)' }}>
           <div className="row align-items-center">
             <div className="col-12 col-lg-8">
@@ -1803,635 +907,45 @@ export default function Dashboard({ onGoToLogin }) {
             </div>
           </div>
         </div>
-
       </main>
 
-      {/* ================= SELL ITEM MODAL (IN RUPEES) ================= */}
-      {isSellModalOpen && (
-        <div 
-          className="unimart-sell-modal-overlay"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setIsSellModalOpen(false);
-          }}
-        >
-          <div className="unimart-sell-modal-box">
-            <button 
-              type="button" 
-              className="unimart-close-btn" 
-              style={{ position: 'absolute', top: '1.25rem', right: '1.25rem' }}
-              onClick={() => setIsSellModalOpen(false)}
-            >
-              <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>close</span>
-            </button>
+      {/* Sell Item Modal */}
+      <SellListingModal
+        isOpen={isSellModalOpen}
+        onClose={() => setIsSellModalOpen(false)}
+        isEditing={isEditing}
+        currentStep={currentStep}
+        setCurrentStep={setCurrentStep}
+        isPublishedSuccess={isPublishedSuccess}
+        setIsPublishedSuccess={setIsPublishedSuccess}
+        editResultType={editResultType}
+        formData={formData}
+        setFormData={setFormData}
+        formErrors={formErrors}
+        categories={categories}
+        selectedCategoryObj={selectedCategoryObj}
+        isBooksCategory={isBooksCategory}
+        handleFieldChange={handleFieldChange}
+        handleCategoryChange={handleCategoryChange}
+        handleBlur={handleBlur}
+        handleNextStep={handleNextStep}
+        conditionDropdownRef={conditionDropdownRef}
+        isConditionOpen={isConditionOpen}
+        setIsConditionOpen={setIsConditionOpen}
+        handleSelectCondition={handleSelectCondition}
+        handleMeetupChange={handleMeetupChange}
+        resetForm={resetForm}
+        fileInputRef={fileInputRef}
+        handlePhotoFiles={handlePhotoFiles}
+        isDragging={isDragging}
+        setIsDragging={setIsDragging}
+        handleAddSamplePhoto={handleAddSamplePhoto}
+        handleMovePhoto={handleMovePhoto}
+        handleRemovePhoto={handleRemovePhoto}
+        handlePublishListing={handlePublishListing}
+      />
 
-            <div className="d-flex align-items-center gap-2 mb-3">
-              <div className="unimart-logo-badge" style={{ width: '32px', height: '32px' }}>
-                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
-                  {isEditing ? 'edit_note' : 'sell'}
-                </span>
-              </div>
-              <h4 className="fw-bold mb-0">{isEditing ? 'Edit Listing' : 'List an Item on UNIMART'}</h4>
-            </div>
-
-            <p className="text-muted small mb-4">
-              {isEditing
-                ? 'Update price, title, description, condition, meetup spot, or photos for your listing.'
-                : 'Sell used semester books, handmade crafts, machinery/lab parts, or fragrances on campus.'}
-            </p>
-
-            {/* Step Progress Indicator */}
-            <div className="unimart-step-indicator-wrapper">
-              <div className="unimart-step-indicator">
-                <span className={`unimart-step-pill ${currentStep === 1 ? 'active' : 'inactive'}`}>
-                  <span className="unimart-step-num">1</span>
-                  <span>Details</span>
-                </span>
-                <span className="unimart-step-divider">—</span>
-                <span className={`unimart-step-pill ${currentStep === 2 ? 'active' : 'inactive'}`}>
-                  <span className="unimart-step-num">2</span>
-                  <span>Photos</span>
-                </span>
-              </div>
-            </div>
-
-            {currentStep === 1 ? (
-              <form onSubmit={handleNextStep} noValidate>
-                {/* Item Title */}
-                <div className="mb-3">
-                  <label className="form-label small fw-semibold" htmlFor="listing-title">
-                    Item Title <span className="unimart-req-asterisk">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    id="listing-title"
-                    placeholder="e.g. Engineering Mathematics Volume 1 / Handmade Crochet Bookmark"
-                    className={`form-control rounded-3 py-2 ${formErrors.title ? 'is-invalid border-danger' : ''}`}
-                    value={formData.title}
-                    onChange={(e) => handleFieldChange('title', e.target.value)}
-                    onBlur={() => handleBlur('title')}
-                  />
-                  {formErrors.title && (
-                    <div className="invalid-feedback d-block text-danger small mt-1" role="alert">
-                      {formErrors.title}
-                    </div>
-                  )}
-                </div>
-
-                {/* Category & Subcategory Row */}
-                <div className="row g-3 mb-3">
-                  <div className={selectedCategoryObj && selectedCategoryObj.subcategories.length === 0 ? "col-12" : "col-md-6"}>
-                    <label className="form-label small fw-semibold" htmlFor="listing-category">
-                      Category <span className="unimart-req-asterisk">*</span>
-                    </label>
-                    <select 
-                      id="listing-category"
-                      className={`form-select rounded-3 py-2 ${formErrors.category_id ? 'is-invalid border-danger' : ''}`}
-                      value={formData.category_id}
-                      onChange={handleCategoryChange}
-                      onBlur={() => handleBlur('category_id')}
-                    >
-                      <option value="">Select a category</option>
-                      {categories.map((cat) => (
-                        <option key={cat.id} value={cat.id}>
-                          {cat.name}
-                        </option>
-                      ))}
-                    </select>
-                    {formErrors.category_id && (
-                      <div className="invalid-feedback d-block text-danger small mt-1" role="alert">
-                        {formErrors.category_id}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Subcategory (optional): Hidden when category has no subcategories */}
-                  {(!selectedCategoryObj || selectedCategoryObj.subcategories.length > 0) && (
-                    <div className="col-md-6">
-                      <label className="form-label small fw-semibold" htmlFor="listing-subcategory">
-                        Subcategory (optional)
-                      </label>
-                      <select
-                        id="listing-subcategory"
-                        className="form-select rounded-3 py-2"
-                        disabled={!selectedCategoryObj}
-                        value={formData.subcategory_id || ''}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setFormData((prev) => ({
-                            ...prev,
-                            subcategory_id: val === '' ? null : val
-                          }));
-                        }}
-                      >
-                        {!selectedCategoryObj ? (
-                          <option value="">Choose a category first</option>
-                        ) : (
-                          <>
-                            <option value="">Not sure / skip</option>
-                            {selectedCategoryObj.subcategories.map((sub) => (
-                              <option key={sub.id} value={sub.id}>
-                                {sub.name}
-                              </option>
-                            ))}
-                          </>
-                        )}
-                      </select>
-                    </div>
-                  )}
-                </div>
-
-                {/* Optional Checkbox for Books & Notes */}
-                {isBooksCategory && (
-                  <div className="form-check mb-3">
-                    <input
-                      className="form-check-input"
-                      type="checkbox"
-                      id="listing-has-notes"
-                      checked={formData.hasNotes}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, hasNotes: e.target.checked }))}
-                      style={{ accentColor: 'var(--unimart-maroon)' }}
-                    />
-                    <label className="form-check-label small text-muted" htmlFor="listing-has-notes">
-                      Has highlighting / handwritten notes
-                    </label>
-                  </div>
-                )}
-
-                {/* Price & Original Price Row */}
-                <div className="row g-3 mb-3">
-                  <div className="col-md-6">
-                    <label className="form-label small fw-semibold" htmlFor="listing-price">
-                      Selling Price (₹ INR) <span className="unimart-req-asterisk">*</span>
-                    </label>
-                    <div className="input-group">
-                      <span className="input-group-text bg-light text-muted fw-bold">₹</span>
-                      <input
-                        type="number"
-                        id="listing-price"
-                        min="1"
-                        max="100000"
-                        placeholder="e.g. 450"
-                        className={`form-control rounded-end-3 py-2 ${formErrors.price ? 'is-invalid border-danger' : ''}`}
-                        value={formData.price}
-                        onChange={(e) => handleFieldChange('price', e.target.value)}
-                        onBlur={() => handleBlur('price')}
-                      />
-                    </div>
-                    {formErrors.price && (
-                      <div className="invalid-feedback d-block text-danger small mt-1" role="alert">
-                        {formErrors.price}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="col-md-6">
-                    <label className="form-label small fw-semibold" htmlFor="listing-orig-price">
-                      Original MRP / Retail Price (₹) <span className="text-muted fw-normal">(Optional)</span>
-                    </label>
-                    <div className="input-group">
-                      <span className="input-group-text bg-light text-muted fw-bold">₹</span>
-                      <input
-                        type="number"
-                        id="listing-orig-price"
-                        min="1"
-                        max="200000"
-                        placeholder="e.g. 1499 (for discount tag)"
-                        className="form-control rounded-end-3 py-2"
-                        value={formData.origPrice || ''}
-                        onChange={(e) => handleFieldChange('origPrice', e.target.value)}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Condition */}
-                <div className="mb-3">
-                  <label className="form-label small fw-semibold" htmlFor="listing-condition-trigger">
-                    Condition <span className="unimart-req-asterisk">*</span>
-                  </label>
-                  <div className="position-relative" ref={conditionDropdownRef}>
-                    <button
-                      type="button"
-                      id="listing-condition-trigger"
-                      className={`form-select text-start rounded-3 py-2 d-flex justify-content-between align-items-center ${
-                        formErrors.condition ? 'is-invalid border-danger' : ''
-                      }`}
-                      onClick={() => setIsConditionOpen(!isConditionOpen)}
-                      onBlur={() => handleBlur('condition')}
-                      aria-expanded={isConditionOpen}
-                      style={{
-                        cursor: 'pointer',
-                        background: '#fff',
-                        borderColor: formErrors.condition ? '#dc3545' : isConditionOpen ? 'var(--unimart-maroon)' : '#dee2e6'
-                      }}
-                    >
-                      <span className={formData.condition ? 'text-dark text-truncate' : 'text-muted'}>
-                        {formData.condition ? (
-                          <strong className="fw-semibold">{formData.condition}</strong>
-                        ) : (
-                          <span className="text-muted">Select condition...</span>
-                        )}
-                      </span>
-                      <span className="material-symbols-outlined text-muted" style={{ fontSize: '20px' }}>
-                        {isConditionOpen ? 'expand_less' : 'expand_more'}
-                      </span>
-                    </button>
-
-                    {isConditionOpen && (
-                      <div className="unimart-condition-dropdown">
-                        {CONDITION_OPTIONS.map((opt) => (
-                          <div
-                            key={opt.value}
-                            className={`unimart-condition-item ${formData.condition === opt.value ? 'selected' : ''}`}
-                            onMouseDown={(e) => {
-                              e.preventDefault();
-                              handleSelectCondition(opt.value);
-                            }}
-                          >
-                            <div className="unimart-condition-name">{opt.label}</div>
-                            <div className="unimart-condition-hint">{opt.hint}</div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  {formErrors.condition && (
-                    <div className="invalid-feedback d-block text-danger small mt-1" role="alert">
-                      {formErrors.condition}
-                    </div>
-                  )}
-                </div>
-
-                {/* Meetup Spot */}
-                <div className="mb-3">
-                  <label className="form-label small fw-semibold" htmlFor="listing-meetup">
-                    Meetup Spot <span className="unimart-req-asterisk">*</span>
-                  </label>
-                  <select
-                    id="listing-meetup"
-                    className={`form-select rounded-3 py-2 ${formErrors.meetupSpot ? 'is-invalid border-danger' : ''}`}
-                    value={formData.meetupSpot}
-                    onChange={handleMeetupChange}
-                    onBlur={() => handleBlur('meetupSpot')}
-                  >
-                    <option value="">Select campus meetup spot</option>
-                    {MEETUP_OPTIONS.map((spot) => (
-                      <option key={spot} value={spot}>{spot}</option>
-                    ))}
-                  </select>
-                  {formErrors.meetupSpot && (
-                    <div className="invalid-feedback d-block text-danger small mt-1" role="alert">
-                      {formErrors.meetupSpot}
-                    </div>
-                  )}
-
-                  {formData.meetupSpot === 'Other' && (
-                    <div className="mt-2">
-                      <label className="form-label small fw-semibold" htmlFor="listing-custom-meetup">
-                        Specify spot <span className="unimart-req-asterisk">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        id="listing-custom-meetup"
-                        className={`form-control rounded-3 py-2 ${formErrors.customMeetupSpot ? 'is-invalid border-danger' : ''}`}
-                        placeholder="e.g. Block C Common Room / Tennis Court"
-                        value={formData.customMeetupSpot}
-                        onChange={(e) => handleFieldChange('customMeetupSpot', e.target.value)}
-                        onBlur={() => handleBlur('customMeetupSpot')}
-                      />
-                      {formErrors.customMeetupSpot && (
-                        <div className="invalid-feedback d-block text-danger small mt-1" role="alert">
-                          {formErrors.customMeetupSpot}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* Description */}
-                <div className="mb-4">
-                  <div className="d-flex justify-content-between align-items-center mb-1">
-                    <label className="form-label small fw-semibold mb-0" htmlFor="listing-description">
-                      Description <span className="unimart-req-asterisk">*</span>
-                    </label>
-                    <span className={`unimart-char-counter small ${formData.description.length > 1000 ? 'text-danger' : 'text-muted'}`}>
-                      {formData.description.length} / 1000
-                    </span>
-                  </div>
-                  <textarea
-                    id="listing-description"
-                    rows="3"
-                    placeholder="Provide key details about item condition, edition, features, or reasons for selling (min 20 characters)..."
-                    className={`form-control rounded-3 ${formErrors.description ? 'is-invalid border-danger' : ''}`}
-                    value={formData.description}
-                    onChange={(e) => handleFieldChange('description', e.target.value)}
-                    onBlur={() => handleBlur('description')}
-                  ></textarea>
-                  {formErrors.description && (
-                    <div className="invalid-feedback d-block text-danger small mt-1" role="alert">
-                      {formErrors.description}
-                    </div>
-                  )}
-                </div>
-
-                {/* Bottom of Step 1: Next Button */}
-                <button 
-                  type="submit" 
-                  className="unimart-sell-btn w-100 justify-content-center py-2 fs-6"
-                >
-                  <span>Next: Add Photos</span>
-                  <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>arrow_forward</span>
-                </button>
-              </form>
-            ) : isPublishedSuccess ? (
-              editResultType === 'price_only' ? (
-                <div className="text-center py-4">
-                  <div 
-                    className="rounded-circle d-inline-flex align-items-center justify-content-center mb-3"
-                    style={{ width: '72px', height: '72px', background: 'rgba(16, 185, 129, 0.15)', color: '#059669' }}
-                  >
-                    <span className="material-symbols-outlined" style={{ fontSize: '40px' }}>check_circle</span>
-                  </div>
-                  <h4 className="fw-bold mb-2">Price Updated Successfully!</h4>
-                  <div className="d-inline-flex align-items-center gap-1 px-3 py-1 rounded-pill mb-3" style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#047857', fontSize: '0.82rem', fontWeight: 600 }}>
-                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>verified</span>
-                    <span>Auto-Accepted • Live in Marketplace</span>
-                  </div>
-                  <p className="text-muted small mb-4" style={{ maxWidth: '400px', margin: '0 auto' }}>
-                    The price for <strong>"{formData.title}"</strong> has been updated to <strong>₹{Number(formData.price).toLocaleString('en-IN')}</strong> and remains live for campus buyers.
-                  </p>
-                  <div className="d-flex justify-content-center gap-2">
-                    <button
-                      type="button"
-                      className="unimart-sell-btn py-2 px-4"
-                      onClick={() => {
-                        setIsPublishedSuccess(false);
-                        setIsSellModalOpen(false);
-                        resetForm();
-                      }}
-                    >
-                      <span>Done</span>
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-4">
-                  <div 
-                    className="rounded-circle d-inline-flex align-items-center justify-content-center mb-3"
-                    style={{ width: '72px', height: '72px', background: 'rgba(245, 158, 11, 0.15)', color: '#d97706' }}
-                  >
-                    <span className="material-symbols-outlined unimart-timer-pulse" style={{ fontSize: '40px' }}>schedule</span>
-                  </div>
-                  <h4 className="fw-bold mb-2">{isEditing ? 'Edits Submitted for Approval!' : 'Item Submitted for Approval!'}</h4>
-                  <div className="d-inline-flex align-items-center gap-1 px-3 py-1 rounded-pill mb-3" style={{ background: 'rgba(245, 158, 11, 0.12)', color: '#b45309', fontSize: '0.82rem', fontWeight: 600 }}>
-                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>hourglass_top</span>
-                    <span>⏳ Waiting for Approval (Sent to Admin Panel)</span>
-                  </div>
-                  <p className="text-muted small mb-4" style={{ maxWidth: '400px', margin: '0 auto' }}>
-                    Your updated details for <strong>"{formData.title}"</strong> have been sent to the Admin Panel under <em>Pending Approvals</em>. A campus admin will review and approve the changes.
-                  </p>
-                  <div className="d-flex justify-content-center gap-2">
-                    <button
-                      type="button"
-                      className="unimart-sell-btn py-2 px-4"
-                      onClick={() => {
-                        setIsPublishedSuccess(false);
-                        setIsSellModalOpen(false);
-                        resetForm();
-                        const catEl = document.getElementById('marketplace-catalog');
-                        if (catEl) catEl.scrollIntoView({ behavior: 'smooth' });
-                      }}
-                    >
-                      <span>View in Catalog</span>
-                      <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_forward</span>
-                    </button>
-                  </div>
-                </div>
-              )
-            ) : (
-              <div>
-                {/* Step 2 Form */}
-                <form onSubmit={handlePublishListing} noValidate>
-                  {/* Summary Review Strip */}
-                  <div className="unimart-review-summary-card d-flex justify-content-between align-items-center mb-3">
-                    <div>
-                      <div className="fw-bold text-truncate" style={{ maxWidth: '320px', fontSize: '0.92rem' }}>
-                        {formData.title || 'Untitled Item'}
-                      </div>
-                      <div className="small text-muted d-flex align-items-center gap-2 mt-1">
-                        <span className="badge bg-light text-dark border rounded-pill px-2 py-0.5">
-                          {selectedCategoryObj?.name || 'Category'}
-                        </span>
-                        <span>•</span>
-                        <span className="fw-bold text-success">₹{Number(formData.price || 0).toLocaleString('en-IN')}</span>
-                        <span>•</span>
-                        <span>{formData.condition}</span>
-                        <span>•</span>
-                        <span>📍 {formData.meetupSpot === 'Other' ? formData.customMeetupSpot : formData.meetupSpot}</span>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      className="btn btn-sm btn-link text-decoration-none fw-semibold p-0 text-muted"
-                      onClick={() => setCurrentStep(1)}
-                      title="Edit item details"
-                    >
-                      Edit Details
-                    </button>
-                  </div>
-
-                  {/* Dropzone */}
-                  <div className="mb-3">
-                    <label className="form-label small fw-semibold d-flex justify-content-between align-items-center mb-1">
-                      <span>Item Photos <span className="unimart-req-asterisk">*</span></span>
-                      <span className="text-muted small">{formData.photos.length} / 4 photos added</span>
-                    </label>
-
-                    <input 
-                      type="file"
-                      ref={fileInputRef}
-                      className="d-none"
-                      multiple
-                      accept="image/*"
-                      onChange={(e) => handlePhotoFiles(e.target.files)}
-                    />
-
-                    <div
-                      className={`unimart-photo-dropzone ${isDragging ? 'dragging' : ''}`}
-                      onClick={() => fileInputRef.current && fileInputRef.current.click()}
-                      onDragOver={(e) => {
-                        e.preventDefault();
-                        setIsDragging(true);
-                      }}
-                      onDragLeave={(e) => {
-                        e.preventDefault();
-                        setIsDragging(false);
-                      }}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        setIsDragging(false);
-                        handlePhotoFiles(e.dataTransfer.files);
-                      }}
-                    >
-                      <div className="unimart-dropzone-icon-wrap mb-2">
-                        <span className="material-symbols-outlined" style={{ fontSize: '36px' }}>
-                          add_photo_alternate
-                        </span>
-                      </div>
-                      <div className="fw-semibold small mb-1">
-                        Drag & drop photos here, or <span className="text-decoration-underline" style={{ color: 'var(--unimart-maroon)' }}>browse files</span>
-                      </div>
-                      <div className="text-muted" style={{ fontSize: '0.75rem' }}>
-                        Supports JPG, PNG, WebP (Max 15MB each, auto-compressed, up to 4 photos)
-                      </div>
-                    </div>
-
-                    {formErrors.photos && (
-                      <div className="invalid-feedback d-block text-danger small mt-1" role="alert">
-                        {formErrors.photos}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Quick Campus Demo Photos */}
-                  <div className="mb-4">
-                    <div className="text-muted small mb-2" style={{ fontSize: '0.78rem' }}>
-                      Don't have photos ready? Pick a campus sample photo:
-                    </div>
-                    <div className="d-flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        className="unimart-sample-photo-pill"
-                        onClick={() => handleAddSamplePhoto(imgCalcBook)}
-                        title="Add Calculus Textbook photo"
-                        disabled={formData.photos.length >= 4}
-                      >
-                        <span>📚 Textbook</span>
-                      </button>
-                      <button
-                        type="button"
-                        className="unimart-sample-photo-pill"
-                        onClick={() => handleAddSamplePhoto(imgMatchaMug)}
-                        title="Add Ceramic Mug photo"
-                        disabled={formData.photos.length >= 4}
-                      >
-                        <span>☕ Ceramic Craft</span>
-                      </button>
-                      <button
-                        type="button"
-                        className="unimart-sample-photo-pill"
-                        onClick={() => handleAddSamplePhoto(imgGraphCalc)}
-                        title="Add Calculator photo"
-                        disabled={formData.photos.length >= 4}
-                      >
-                        <span>🔬 Tech Calculator</span>
-                      </button>
-                      <button
-                        type="button"
-                        className="unimart-sample-photo-pill"
-                        onClick={() => handleAddSamplePhoto(imgRoomSpray)}
-                        title="Add Botanical Room Spray photo"
-                        disabled={formData.photos.length >= 4}
-                      >
-                        <span>🌿 Botanical Spray</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Photo Previews */}
-                  {formData.photos.length > 0 && (
-                    <div className="mb-4">
-                      <div className="small fw-semibold mb-2">Uploaded Photos ({formData.photos.length}/4) — click arrows to reorder</div>
-                      <div className="unimart-photo-previews-grid">
-                        {formData.photos.map((photo, idx) => (
-                          <div key={idx} className="unimart-photo-preview-item">
-                            <img src={photo} alt={`Upload ${idx + 1}`} className="unimart-photo-preview-img" />
-                            {idx === 0 && (
-                              <span className="unimart-cover-badge">★ Cover</span>
-                            )}
-
-                            {/* Reorder buttons: move left / move right */}
-                            <div className="unimart-photo-reorder-bar">
-                              {idx > 0 && (
-                                <button
-                                  type="button"
-                                  className="unimart-photo-move-btn"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleMovePhoto(idx, -1);
-                                  }}
-                                  title="Move photo left"
-                                  aria-label="Move photo left"
-                                >
-                                  <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>arrow_back</span>
-                                </button>
-                              )}
-                              {idx < formData.photos.length - 1 && (
-                                <button
-                                  type="button"
-                                  className="unimart-photo-move-btn"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleMovePhoto(idx, 1);
-                                  }}
-                                  title="Move photo right"
-                                  aria-label="Move photo right"
-                                >
-                                  <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>arrow_forward</span>
-                                </button>
-                              )}
-                            </div>
-
-                            <button
-                              type="button"
-                              className="unimart-photo-remove-btn"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleRemovePhoto(idx);
-                              }}
-                              title="Remove photo"
-                              aria-label="Remove photo"
-                            >
-                              <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>close</span>
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Action Buttons: Back & Publish / Save Changes */}
-                  <div className="d-flex align-items-center justify-content-between gap-3 pt-2">
-                    <button
-                      type="button"
-                      className="btn btn-outline-secondary rounded-pill px-4 py-2"
-                      onClick={() => setCurrentStep(1)}
-                    >
-                      <span className="d-flex align-items-center gap-1">
-                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_back</span>
-                        <span>Back to Details</span>
-                      </span>
-                    </button>
-
-                    <button
-                      type="submit"
-                      className="unimart-sell-btn py-2 px-4 justify-content-center flex-grow-1"
-                      id="save-changes-btn"
-                    >
-                      <span>{isEditing ? 'Save Changes' : 'Publish Item to Campus'}</span>
-                      <span className="material-symbols-outlined" style={{ fontSize: '19px' }}>
-                        {isEditing ? 'save' : 'check_circle'}
-                      </span>
-                    </button>
-                  </div>
-                </form>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* ================= FOOTER ================= */}
+      {/* Footer */}
       <footer className="unimart-dash-footer">
         <div className="container-fluid d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
           <div>
@@ -2443,7 +957,6 @@ export default function Dashboard({ onGoToLogin }) {
             </button>
             <span className="text-muted small">Campus Meetup Safety</span>
             <span className="text-muted small">Student Maker Guidelines</span>
-            
           </div>
         </div>
       </footer>

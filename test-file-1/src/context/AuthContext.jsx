@@ -10,7 +10,7 @@ export function AuthProvider({ children }) {
     try {
       const raw = localStorage.getItem('unimart_active_session_user_v1');
       if (raw) return JSON.parse(raw);
-    } catch (e) {}
+    } catch (_e) {}
     return null;
   });
 
@@ -69,7 +69,7 @@ export function AuthProvider({ children }) {
         isAdmin: checkIsAdmin(user),
         login,
         register,
-        logout,
+        logout
       }}
     >
       {children}

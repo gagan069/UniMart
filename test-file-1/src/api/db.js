@@ -32,7 +32,7 @@ export function getTable(tableName) {
   try {
     const raw = localStorage.getItem(key);
     if (raw) return JSON.parse(raw);
-  } catch (e) {
+  } catch (_e) {
     if (memoryStore[key]) return memoryStore[key];
   }
   return null;
@@ -42,7 +42,7 @@ export function setTable(tableName, data) {
   const key = `${DB_PREFIX}${tableName}_${DB_VERSION}`;
   try {
     localStorage.setItem(key, JSON.stringify(data));
-  } catch (e) {
+  } catch (_e) {
     // Fallback for private browsing
     memoryStore[key] = data;
   }
