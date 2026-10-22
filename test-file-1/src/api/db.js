@@ -20,7 +20,7 @@ import imgArduinoKit from '../assets/products/arduino_kit.jpg';
 import imgSolidPerfume from '../assets/products/solid_perfume.jpg';
 
 const DB_PREFIX = 'unimart_db_';
-const DB_VERSION = 'v4';
+const DB_VERSION = 'v5';
 
 // In-memory fallback if localStorage throws in private / restricted browsing
 const memoryStore = {};
@@ -57,6 +57,7 @@ const SEED_USERS = [
     student_id: 'ADMIN-001',
     password_hash: 'Unimart@123',
     role: 'admin',
+    department: null,
     created_at: new Date('2026-01-01').toISOString()
   },
   {
@@ -66,6 +67,7 @@ const SEED_USERS = [
     student_id: '2110990696',
     password_hash: 'student123',
     role: 'student',
+    department: null,
     created_at: new Date('2026-01-15').toISOString()
   },
   {
@@ -75,7 +77,58 @@ const SEED_USERS = [
     student_id: '2110990697',
     password_hash: 'student123',
     role: 'student',
+    department: 'Math Dept',
     created_at: new Date('2026-01-20').toISOString()
+  },
+  {
+    id: 'student_c',
+    name: 'Nisha R.',
+    email: 'nisha.r@chitkara.edu.in',
+    student_id: '2110990698',
+    password_hash: 'student123',
+    role: 'student',
+    department: 'Fine Arts',
+    created_at: new Date('2026-01-21').toISOString()
+  },
+  {
+    id: 'student_d',
+    name: 'Madhur T.',
+    email: 'madhur.t@chitkara.edu.in',
+    student_id: '2110990699',
+    password_hash: 'student123',
+    role: 'student',
+    department: 'Engineering',
+    created_at: new Date('2026-01-22').toISOString()
+  },
+  {
+    id: 'student_e',
+    name: 'Charlie W.',
+    email: 'charlie.w@chitkara.edu.in',
+    student_id: '2110990700',
+    password_hash: 'student123',
+    role: 'student',
+    department: 'Biochem Maker',
+    created_at: new Date('2026-01-23').toISOString()
+  },
+  {
+    id: 'student_f',
+    name: 'Simran D.',
+    email: 'simran.d@chitkara.edu.in',
+    student_id: '2110990701',
+    password_hash: 'student123',
+    role: 'student',
+    department: 'Design Club',
+    created_at: new Date('2026-01-24').toISOString()
+  },
+  {
+    id: 'student_g',
+    name: 'Harsh P.',
+    email: 'harsh.p@chitkara.edu.in',
+    student_id: '2110990702',
+    password_hash: 'student123',
+    role: 'student',
+    department: 'Maker Collective',
+    created_at: new Date('2026-01-25').toISOString()
   }
 ];
 
@@ -100,7 +153,7 @@ const SEED_LISTINGS = [
   },
   {
     id: 2,
-    seller_id: 'student_b',
+    seller_id: 'student_c',
     title: 'Handcrafted Matcha Mug',
     category_id: 'handmade-art',
     subcategory_id: null,
@@ -118,7 +171,7 @@ const SEED_LISTINGS = [
   },
   {
     id: 3,
-    seller_id: 'student_b',
+    seller_id: 'student_d',
     title: 'Color Graphing Calculator',
     category_id: 'lab-engineering-gear',
     subcategory_id: null,
@@ -136,7 +189,7 @@ const SEED_LISTINGS = [
   },
   {
     id: 4,
-    seller_id: 'student_b',
+    seller_id: 'student_e',
     title: 'Botanical Room Spray: Cedar & Wild Lavender (50ml)',
     category_id: 'perfumes-grooming',
     subcategory_id: null,
@@ -172,7 +225,7 @@ const SEED_LISTINGS = [
   },
   {
     id: 6,
-    seller_id: 'student_b',
+    seller_id: 'student_f',
     title: 'Block-Printed Canvas Tote Bag (Sunflower Edition)',
     category_id: 'handmade-art',
     subcategory_id: null,
@@ -208,7 +261,7 @@ const SEED_LISTINGS = [
   },
   {
     id: 8,
-    seller_id: 'student_b',
+    seller_id: 'student_g',
     title: 'Solid Amber & Sandalwood Wax Cologne (15g Pocket Tin)',
     category_id: 'perfumes-grooming',
     subcategory_id: null,

@@ -53,19 +53,17 @@ export const resolveCategoryId = (item) => {
   return matched ? matched.id : 'books-notes';
 };
 
+export const isUserListingOwner = (item, currentUser) => {
+  if (!currentUser || !item) return false;
+  if (item.seller_id && currentUser.id && item.seller_id === currentUser.id) return true;
+  const baseName = (item.seller || '').replace(/\s*\(You\)/i, '').trim().toLowerCase();
+  const userName = (currentUser.name || '').trim().toLowerCase();
+  return Boolean(userName && (baseName === userName || baseName.startsWith(userName)));
+};
+
 export const getDisplaySellerName = (item, currentUser) => {
   if (!item?.seller) return 'Campus Member';
   const baseName = item.seller.replace(/\s*\(You\)/i, '').trim();
-  const isOwner = currentUser && (
-    item.seller_id === currentUser.id ||
-    baseName.toLowerCase() === (currentUser.name || '').toLowerCase()
-  );
+  const isOwner = isUserListingOwner(item, currentUser);
   return isOwner ? `${baseName} (You)` : baseName;
-};
-
-export const isUserListingOwner = (item, currentUser) => {
-  if (!currentUser) return false;
-  if (item.seller_id === currentUser.id) return true;
-  const baseName = (item.seller || '').replace(/\s*\(You\)/i, '').trim().toLowerCase();
-  return Boolean(currentUser.name && baseName === currentUser.name.toLowerCase());
 };

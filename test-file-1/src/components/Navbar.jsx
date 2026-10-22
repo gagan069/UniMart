@@ -6,6 +6,7 @@ export default function Navbar({
   searchQuery,
   setSearchQuery,
   handleSellClick,
+  onSearchSubmit,
   theme,
   toggleTheme,
   user,
@@ -60,8 +61,20 @@ export default function Navbar({
         </div>
 
         {/* Dynamic Search Bar (Desktop) */}
-        <div className="unimart-search-bar d-none d-md-flex">
-          <span className="material-symbols-outlined text-muted me-2" style={{ fontSize: '20px' }}>
+        <form
+          className="unimart-search-bar d-none d-md-flex"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (onSearchSubmit) onSearchSubmit(searchQuery);
+          }}
+        >
+          <span
+            className="material-symbols-outlined text-muted me-2"
+            style={{ fontSize: '20px', cursor: onSearchSubmit ? 'pointer' : 'default' }}
+            onClick={() => {
+              if (onSearchSubmit) onSearchSubmit(searchQuery);
+            }}
+          >
             search
           </span>
           <input
@@ -70,6 +83,12 @@ export default function Navbar({
             className="unimart-search-input"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                if (onSearchSubmit) onSearchSubmit(searchQuery);
+              }
+            }}
             aria-label="Search marketplace products"
           />
           {searchQuery && (
@@ -83,7 +102,7 @@ export default function Navbar({
               <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>close</span>
             </button>
           )}
-        </div>
+        </form>
 
         {/* Right Actions */}
         <div className="d-flex align-items-center gap-3">

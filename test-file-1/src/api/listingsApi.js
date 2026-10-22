@@ -22,6 +22,9 @@ function populateListing(item, photosTable, usersTable) {
     .map((p) => p.url);
 
   const seller = (usersTable || []).find((u) => u.id === item.seller_id);
+  const sellerDisplayName = seller
+    ? (seller.department ? `${seller.name} (${seller.department})` : seller.name)
+    : (item.seller || 'Campus Student');
   const catObj = categories.find((c) => c.id === item.category_id);
   const subcatObj = catObj?.subcategories?.find((s) => s.id === item.subcategory_id);
 
@@ -29,8 +32,9 @@ function populateListing(item, photosTable, usersTable) {
     ...item,
     photos,
     image: photos[0] || null,
-    seller: seller ? seller.name : 'Campus Student',
+    seller: sellerDisplayName,
     seller_name: seller ? seller.name : 'Campus Student',
+    seller_department: seller?.department || null,
     seller_email: seller ? seller.email : '',
     category: catObj ? catObj.name : 'General',
     subcategory: subcatObj ? subcatObj.name : (item.subcategory || null),

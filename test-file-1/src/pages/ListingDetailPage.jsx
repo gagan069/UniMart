@@ -33,6 +33,7 @@ export default function ListingDetailPage() {
   const productList = useSelector((state) => state.listings.items) || [];
   const [activePhotoIdx, setActivePhotoIdx] = useState(0);
   const [toastAlert, setToastAlert] = useState(null);
+  const [detailSearch, setDetailSearch] = useState('');
 
   useEffect(() => {
     if (productList.length === 0) {
@@ -129,13 +130,19 @@ export default function ListingDetailPage() {
     setTimeout(() => setToastAlert(null), 3000);
   };
 
+  const handleSearchSubmit = (q) => {
+    const trimmed = (q !== undefined ? q : detailSearch).trim();
+    navigate(trimmed ? `/?q=${encodeURIComponent(trimmed)}` : '/');
+  };
+
   return (
     <div className="unimart-dashboard-wrap">
       {/* Navbar */}
       <Navbar
         handleGoToLogin={() => navigate('/login')}
-        searchQuery=""
-        setSearchQuery={(q) => navigate(`/?q=${encodeURIComponent(q)}`)}
+        searchQuery={detailSearch}
+        setSearchQuery={setDetailSearch}
+        onSearchSubmit={handleSearchSubmit}
         handleSellClick={handleSellClick}
         theme={theme}
         toggleTheme={toggleTheme}
