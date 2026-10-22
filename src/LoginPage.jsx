@@ -1,22 +1,50 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from './context/AuthContext.jsx';
+import { useTheme } from './context/ThemeContext.jsx';
+import { useChat } from './context/ChatContext.jsx';
+import { SEEDED_USERS } from './lib/mockUsers.js';
 import './LoginPage.css';
 import welcomeStudentImg from './assets/welcome_student.jpg';
+import welcomeStudentDarkImg from './assets/welcome_student_dark.jpg';
 import campusParkImg from './assets/campus_park.jpg';
+import campusParkDarkImg from './assets/campus_park_dark.jpg';
 
-export default function LoginPage({ onGoToDashboard }) {
+export default function LoginPage({
+  onGoToDashboard,
+  initialMode = 'login',
+  initialPage = 1,
+  autoOpenModal = false
+}) {
+  const auth = useAuth();
+  const { theme, toggleTheme } = useTheme();
+  const isDark = theme === 'dark';
+  const currentWelcomeImg = isDark ? welcomeStudentDarkImg : welcomeStudentImg;
+  const currentCampusImg = isDark ? campusParkDarkImg : campusParkImg;
+  const chat = useChat();
+
+  // Ensure chat is closed when on the login / register page
+  useEffect(() => {
+    if (chat?.closeChat) {
+      chat.closeChat();
+    }
+  }, []);
+
   // Page 1 = Welcome Screen (Expansive skater artwork)
   // Page 2 = Campus Gateway (Full campus illustration with Login & Register below)
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(initialPage);
 
   // Popup Modal states
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState('login'); // 'login' | 'register'
+  const [isModalOpen, setIsModalOpen] = useState(autoOpenModal || initialMode === 'register');
+  const [modalMode, setModalMode] = useState(initialMode);
 
   // Form states
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [studentId, setStudentId] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
@@ -43,41 +71,121 @@ export default function LoginPage({ onGoToDashboard }) {
     setIsModalOpen(true);
   };
 
-  const handleDemoFill = () => {
-    setEmail('satkar.student@university.edu');
-    setPassword('student123');
+  const handleDemoFill = (userType = 'student_a') => {
+    let target = SEEDED_USERS[1];
+    if (userType === 'student_b') target = SEEDED_USERS[2];
+    if (userType === 'admin') target = SEEDED_USERS[0];
+
+    setEmail(target.email);
+    setPassword(target.password);
+    setFieldErrors({});
     setAlertInfo({
       type: 'info',
-      message: 'Demo credentials populated. Click "Sign In" below.'
+      message: `Populated ${target.name} (${target.role.toUpperCase()}) credentials. Click "Sign In" below.`
     });
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setAlertInfo(null);
+  const validateRegister = () => {
+    const errs = {};
+    if (!fullName.trim()) errs.fullName = 'Full Name is required.';
+    if (!studentId.trim()) errs.studentId = 'Student ID is required.';
 
-    setTimeout(() => {
-      setIsLoading(false);
-      setAlertInfo({
-        type: 'success',
-        message: modalMode === 'login'
-          ? `Welcome back, ${email.split('@')[0]}! Redirecting to campus dashboard...`
-          : `Registration complete! Redirecting to UNIMART...`
-      });
-      setTimeout(() => {
-        if (onGoToDashboard) onGoToDashboard();
-      }, 1000);
-    }, 850);
+    const trimmedEmail = email.trim().toLowerCase();
+    if (!trimmedEmail) {
+      errs.email = 'College email is required.';
+    } else if (!trimmedEmail.endsWith('@chitkara.edu.in')) {
+      errs.email = 'Only official university emails ending in @chitkara.edu.in are allowed.';
+    }
+
+    if (!password) {
+      errs.password = 'Password is required.';
+    } else if (password.length < 6) {
+      errs.password = 'Password must be at least 6 characters.';
+    }
+
+    if (!confirmPassword) {
+      errs.confirmPassword = 'Confirm Password is required.';
+    } else if (confirmPassword !== password) {
+      errs.confirmPassword = 'Passwords do not match.';
+    }
+
+    setFieldErrors(errs);
+    return Object.keys(errs).length === 0;
   };
 
-  const handleSkip = () => {
-    if (onGoToDashboard) {
-      onGoToDashboard();
-    } else {
-      setGuestNotice(true);
-      setTimeout(() => setGuestNotice(false), 3500);
+  const navigate = useNavigate();
+  const goToDashboard = () => {
+    if (onGoToDashboard) onGoToDashboard();
+    else navigate('/');
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setAlertInfo(null);
+
+    if (modalMode === 'register') {
+      const isValid = validateRegister();
+      if (!isValid) return;
+
+      setIsLoading(true);
+      try {
+        const newStudent = await auth.register({
+          name: fullName,
+          email,
+          student_id: studentId,
+          password
+        });
+        setAlertInfo({
+          type: 'success',
+          message: `Registration successful! Welcome, ${newStudent.name}. Redirecting...`
+        });
+        setTimeout(() => {
+          goToDashboard();
+        }, 800);
+      } catch (err) {
+        setAlertInfo({
+          type: 'danger',
+          message: err.message || 'Registration failed. Please check your details.'
+        });
+      } finally {
+        setIsLoading(false);
+      }
+      return;
     }
+
+    // Login mode
+    if (!email.trim() || !password) {
+      setAlertInfo({
+        type: 'danger',
+        message: 'Please enter both your college email and password.'
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const sessionUser = await auth.login({ email, password });
+      setAlertInfo({
+        type: 'success',
+        message: `Welcome back, ${sessionUser.name} (${sessionUser.role.toUpperCase()})! Redirecting...`
+      });
+      setTimeout(() => {
+        goToDashboard();
+      }, 700);
+    } catch (err) {
+      setAlertInfo({
+        type: 'danger',
+        message: err.message || 'Invalid email or password. Please check your Chitkara credentials.'
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSkip = async () => {
+    // Guest mode: log out any current user so user === null
+    if (auth?.logout) await auth.logout();
+    goToDashboard();
   };
 
   return (
@@ -99,13 +207,39 @@ export default function LoginPage({ onGoToDashboard }) {
         </a>
 
         <div className="d-flex align-items-center gap-2">
+          {/* Theme Toggle Button */}
+          <button
+            type="button"
+            className="unimart-theme-toggle-btn"
+            onClick={toggleTheme}
+            title={theme === 'dark' ? "Switch to light mode" : "Switch to dark mode"}
+            aria-label="Toggle dark/light theme"
+            style={{
+              width: '38px',
+              height: '38px',
+              borderRadius: '50%',
+              border: '1px solid var(--unimart-maroon-border, #e3e6ec)',
+              background: 'rgba(255, 255, 255, 0.85)',
+              color: 'var(--unimart-text-dark, #181b20)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer'
+            }}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: '19px' }}>
+              {theme === 'dark' ? 'light_mode' : 'dark_mode'}
+            </span>
+          </button>
+
           {onGoToDashboard && (
             <button
               type="button"
               className="btn btn-sm btn-light border rounded-pill px-3 fw-semibold text-muted d-none d-sm-inline-flex align-items-center gap-1"
-              onClick={onGoToDashboard}
+              onClick={handleSkip}
+              title="Continue as Guest (View-only mode)"
             >
-              <span>Explore Marketplace</span>
+              <span>Explore as Guest</span>
               <span className="material-symbols-outlined" style={{ fontSize: '17px' }}>arrow_forward</span>
             </button>
           )}
@@ -131,7 +265,7 @@ export default function LoginPage({ onGoToDashboard }) {
         aria-label="Previous Page"
       >
         <span className="material-symbols-outlined">chevron_left</span>
-      </button>₹199
+      </button>
 
       <button
         type="button"
@@ -162,7 +296,7 @@ export default function LoginPage({ onGoToDashboard }) {
             {/* Expansive Responsive Banner Frame matching the reference */}
             <div className="unimart-welcome-artwork-frame">
               <img 
-                src={welcomeStudentImg} 
+                src={currentWelcomeImg} 
                 alt="Student jumping with skateboard" 
               />
             </div>
@@ -230,7 +364,7 @@ export default function LoginPage({ onGoToDashboard }) {
             {/* Expansive Artwork Banner with full bench, trees, and path visible */}
             <div className="unimart-gateway-artwork-frame">
               <img 
-                src={campusParkImg} 
+                src={currentCampusImg} 
                 alt="Campus street and park scenery" 
               />
             </div>
@@ -399,37 +533,47 @@ export default function LoginPage({ onGoToDashboard }) {
             )}
 
             {/* Form */}
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} noValidate>
               {modalMode === 'register' && (
                 <>
                   <div className="mb-3">
-                    <label className="form-label small fw-semibold text-dark mb-1">Full Name</label>
+                    <label className="form-label small fw-semibold text-dark mb-1">
+                      Full Name <span className="text-danger">*</span>
+                    </label>
                     <div className="unimart-input-group">
                       <input
                         type="text"
                         required
-                        className="unimart-form-field"
-                        placeholder="e.g. Satkar Sharma"
+                        className={`unimart-form-field ${fieldErrors.fullName ? 'border-danger' : ''}`}
+                        placeholder="e.g. Satkar Singh"
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
                       />
                       <span className="material-symbols-outlined unimart-input-icon">person</span>
                     </div>
+                    {fieldErrors.fullName && (
+                      <div className="text-danger small mt-1">{fieldErrors.fullName}</div>
+                    )}
                   </div>
 
                   <div className="mb-3">
-                    <label className="form-label small fw-semibold text-dark mb-1">Student ID</label>
+                    <label className="form-label small fw-semibold text-dark mb-1">
+                      Student ID <span className="text-danger">*</span>
+                    </label>
                     <div className="unimart-input-group">
                       <input
                         type="text"
                         required
-                        className="unimart-form-field"
-                        placeholder="e.g. CS-2025-014"
+                        className={`unimart-form-field ${fieldErrors.studentId ? 'border-danger' : ''}`}
+                        placeholder="e.g. 2110990696"
                         value={studentId}
                         onChange={(e) => setStudentId(e.target.value)}
                       />
                       <span className="material-symbols-outlined unimart-input-icon">badge</span>
                     </div>
+                    {fieldErrors.studentId && (
+                      <div className="text-danger small mt-1">{fieldErrors.studentId}</div>
+                    )}
                   </div>
                 </>
               )}
@@ -437,35 +581,64 @@ export default function LoginPage({ onGoToDashboard }) {
               {/* Email */}
               <div className="mb-3">
                 <div className="d-flex justify-content-between align-items-center mb-1">
-                  <label className="form-label small fw-semibold text-dark mb-0">College Email</label>
+                  <label className="form-label small fw-semibold text-dark mb-0">
+                    College Email <span className="text-danger">*</span>
+                  </label>
                   {modalMode === 'login' && (
-                    <button
-                      type="button"
-                      className="unimart-demo-btn"
-                      onClick={handleDemoFill}
-                    >
-                      <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>bolt</span>
-                      <span>Demo Fill</span>
-                    </button>
+                    <div className="d-flex gap-1">
+                      <button
+                        type="button"
+                        className="unimart-demo-btn"
+                        onClick={() => handleDemoFill('student_a')}
+                        title="Fill Student A (Satkar)"
+                      >
+                        <span>Student A</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="unimart-demo-btn"
+                        onClick={() => handleDemoFill('student_b')}
+                        title="Fill Student B (Priya)"
+                      >
+                        <span>Student B</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="unimart-demo-btn"
+                        onClick={() => handleDemoFill('admin')}
+                        title="Fill Admin (Campus Admin)"
+                      >
+                        <span>Admin</span>
+                      </button>
+                    </div>
                   )}
                 </div>
                 <div className="unimart-input-group">
                   <input
                     type="email"
                     required
-                    className="unimart-form-field"
-                    placeholder="student@university.edu"
+                    className={`unimart-form-field ${fieldErrors.email ? 'border-danger' : ''}`}
+                    placeholder="student@chitkara.edu.in"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                   />
                   <span className="material-symbols-outlined unimart-input-icon">mail</span>
                 </div>
+                {fieldErrors.email ? (
+                  <div className="text-danger small mt-1">{fieldErrors.email}</div>
+                ) : modalMode === 'register' ? (
+                  <div className="text-muted small mt-1" style={{ fontSize: '0.75rem' }}>
+                    Must be your verified Chitkara email (@chitkara.edu.in)
+                  </div>
+                ) : null}
               </div>
 
               {/* Password */}
               <div className="mb-3">
                 <div className="d-flex justify-content-between align-items-center mb-1">
-                  <label className="form-label small fw-semibold text-dark mb-0">Password</label>
+                  <label className="form-label small fw-semibold text-dark mb-0">
+                    Password <span className="text-danger">*</span>
+                  </label>
                   {modalMode === 'login' && (
                     <a
                       href="#forgot"
@@ -487,7 +660,7 @@ export default function LoginPage({ onGoToDashboard }) {
                   <input
                     type={showPassword ? 'text' : 'password'}
                     required
-                    className="unimart-form-field"
+                    className={`unimart-form-field ${fieldErrors.password ? 'border-danger' : ''}`}
                     placeholder="Enter password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -504,7 +677,33 @@ export default function LoginPage({ onGoToDashboard }) {
                     </span>
                   </button>
                 </div>
+                {fieldErrors.password && (
+                  <div className="text-danger small mt-1">{fieldErrors.password}</div>
+                )}
               </div>
+
+              {/* Confirm Password (Registration only) */}
+              {modalMode === 'register' && (
+                <div className="mb-3">
+                  <label className="form-label small fw-semibold text-dark mb-1">
+                    Confirm Password <span className="text-danger">*</span>
+                  </label>
+                  <div className="unimart-input-group">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      required
+                      className={`unimart-form-field ${fieldErrors.confirmPassword ? 'border-danger' : ''}`}
+                      placeholder="Confirm password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                    />
+                    <span className="material-symbols-outlined unimart-input-icon">lock_reset</span>
+                  </div>
+                  {fieldErrors.confirmPassword && (
+                    <div className="text-danger small mt-1">{fieldErrors.confirmPassword}</div>
+                  )}
+                </div>
+              )}
 
               {/* Remember me */}
               <div className="form-check mb-3">
