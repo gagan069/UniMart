@@ -143,7 +143,7 @@ export default function ListingCard({
 
           {/* Card Body */}
           <div className="unimart-card-body">
-            {item.status === 'pending' && (
+            {item.status === 'pending' ? (
               <div className="unimart-pending-strip mb-2">
                 <div className="d-flex align-items-center gap-1">
                   <span className="material-symbols-outlined unimart-timer-pulse" style={{ fontSize: '15px', color: '#d97706' }}>schedule</span>
@@ -151,7 +151,15 @@ export default function ListingCard({
                 </div>
                 <span className="text-muted" style={{ fontSize: '0.68rem' }}>{item.submittedAt || 'Pending'}</span>
               </div>
-            )}
+            ) : (isUserListingOwner(item, user) && item.hasPendingEdit) ? (
+              <div className="unimart-pending-strip mb-2" title="Your proposed edits are waiting for campus admin review">
+                <div className="d-flex align-items-center gap-1">
+                  <span className="material-symbols-outlined unimart-timer-pulse" style={{ fontSize: '15px', color: '#d97706' }}>schedule</span>
+                  <span className="fw-semibold" style={{ fontSize: '0.72rem', color: '#b45309' }}>Edit pending review</span>
+                </div>
+                <span className="text-muted" style={{ fontSize: '0.68rem' }}>Under review</span>
+              </div>
+            ) : null}
 
             <div className="d-flex justify-content-between align-items-center mb-1" style={{ minWidth: 0, gap: '0.5rem' }}>
               <span

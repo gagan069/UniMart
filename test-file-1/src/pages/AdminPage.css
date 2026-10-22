@@ -212,3 +212,50 @@
 [data-theme="dark"] .unimart-admin-thumb {
   border-color: rgba(255, 255, 255, 0.1);
 }
+
+.unimart-stat-card.stat-info {
+  background: rgba(14, 165, 233, 0.06);
+  border-color: rgba(14, 165, 233, 0.25);
+}
+
+[data-theme="dark"] .unimart-stat-card.stat-info {
+  background: rgba(14, 165, 233, 0.12);
+  border-color: rgba(14, 165, 233, 0.28);
+}
+
+.unimart-diff-row {
+  background-color: rgba(245, 158, 11, 0.03);
+}
+
+.unimart-diff-row td {
+  padding: 0.5rem 1.25rem 1.25rem 1.25rem !important;
+  border-bottom: 2px solid rgba(245, 158, 11, 0.2) !important;
+}
+
+[data-theme="dark"] .unimart-diff-row td {
+  background: rgba(0, 0, 0, 0.2) !important;
+  border-bottom-color: rgba(245, 158, 11, 0.3) !important;
+}
+
+[data-theme="dark"] .unimart-diff-row .table {
+  --bs-table-bg: transparent;
+  --bs-table-color: #f1f5f9;
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .unimart-diff-row .table thead th {
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .unimart-diff-row .table td {
+  color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] .unimart-diff-row .table td.text-muted {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .unimart-diff-row .text-dark {
+  color: #f1f5f9 !important;
+}

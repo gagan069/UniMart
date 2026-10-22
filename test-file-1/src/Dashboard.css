@@ -2000,7 +2000,8 @@
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
 }
 
-.unimart-admin-toast.toast-danger {
+.unimart-admin-toast.toast-danger,
+.unimart-admin-toast.toast-error {
   background: #fef2f2;
   border: 1px solid #fecaca;
   color: #991b1b;
@@ -2010,6 +2011,18 @@
   background: #f0fdf4;
   border: 1px solid #bbf7d0;
   color: #166534;
+}
+
+.unimart-admin-toast.toast-warning {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #92400e;
+}
+
+.unimart-admin-toast.toast-info {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #334155;
 }
 
 /* Footer */
@@ -2675,7 +2688,8 @@
   color: #ffffff;
 }
 
-[data-theme="dark"] .unimart-admin-toast.toast-danger {
+[data-theme="dark"] .unimart-admin-toast.toast-danger,
+[data-theme="dark"] .unimart-admin-toast.toast-error {
   background: #2a1215;
   border-color: rgba(239, 68, 68, 0.35);
   color: #fca5a5;
@@ -2685,6 +2699,18 @@
   background: #0f241a;
   border-color: rgba(34, 197, 94, 0.35);
   color: #86efac;
+}
+
+[data-theme="dark"] .unimart-admin-toast.toast-warning {
+  background: #291e0a;
+  border-color: rgba(245, 158, 11, 0.35);
+  color: #fcd34d;
+}
+
+[data-theme="dark"] .unimart-admin-toast.toast-info {
+  background: #1e293b;
+  border-color: rgba(148, 163, 184, 0.25);
+  color: #cbd5e1;
 }
 
 /* --- Theme Toggle Button Micro-Animation --- */

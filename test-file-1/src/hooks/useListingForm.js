@@ -445,26 +445,6 @@ export function useListingForm({ user, productList = [], dispatch, setAdminAlert
         return;
       }
 
-      // Non-price changes go to admin panel
-      const originalVersion = existingItem.originalVersion || {
-        title: existingItem.title,
-        category: existingItem.category,
-        category_id: existingItem.category_id || existingCatId,
-        subcategory_id: existingItem.subcategory_id || null,
-        price: existingItem.price,
-        origPrice: existingItem.origPrice,
-        condition: existingItem.condition,
-        icon: existingItem.icon,
-        categoryTheme: existingItem.categoryTheme,
-        notes: existingItem.notes,
-        image: existingItem.image,
-        photos: existingItem.photos,
-        description: existingItem.description,
-        hasNotes: existingItem.hasNotes,
-        status: existingItem.status === 'pending' ? 'approved' : (existingItem.status || 'approved'),
-        badge: existingItem.badge === 'Waiting for Approval' ? 'Verified' : (existingItem.badge || 'Verified')
-      };
-
       const parsedOrig = formData.origPrice ? Number(formData.origPrice) : (existingItem?.origPrice || null);
 
       dispatch(
@@ -487,22 +467,25 @@ export function useListingForm({ user, productList = [], dispatch, setAdminAlert
             photos: formData.photos,
             description: formData.description,
             seller: user?.name || (existingItem?.seller ? existingItem.seller.replace(/\s*\(You\)/i, '').trim() : 'Campus Student'),
-            status: 'pending',
-            badge: 'Waiting for Approval',
-            pendingType: 'edit',
-            originalVersion,
             editedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
           },
           currentUser: user
         })
       );
 
+      const alertText =
+        existingItem?.status === 'rejected'
+          ? `Listing "${formData.title}" resubmitted to Admin for approval ⏳`
+          : existingItem?.status === 'approved'
+          ? `Listing edits for "${formData.title}" submitted to Admin for approval ⏳`
+          : `Listing updates for "${formData.title}" saved ⏳`;
+
       setEditResultType('pending_approval');
       setIsPublishedSuccess(true);
       if (setAdminAlert) {
         setAdminAlert({
           type: 'warning',
-          text: `Listing edits for "${formData.title}" submitted to Admin for approval ⏳`
+          text: alertText
         });
       }
       setTimeout(() => {

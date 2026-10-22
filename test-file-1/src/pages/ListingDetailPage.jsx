@@ -16,6 +16,8 @@ import {
   fetchListings,
   updateListing as updateListingAction
 } from '../store/slices/listingsSlice.js';
+import { useToast } from '../hooks/useToast.js';
+import ToastAlert from '../components/ToastAlert.jsx';
 import Navbar from '../components/Navbar.jsx';
 import NotFound from './NotFound.jsx';
 import FloatingChatButton from '../components/chat/FloatingChatButton.jsx';
@@ -32,7 +34,7 @@ export default function ListingDetailPage() {
 
   const productList = useSelector((state) => state.listings.items) || [];
   const [activePhotoIdx, setActivePhotoIdx] = useState(0);
-  const [toastAlert, setToastAlert] = useState(null);
+  const { toast: toastAlert, showToast: setToastAlert, hideToast } = useToast(3500);
   const [detailSearch, setDetailSearch] = useState('');
 
   useEffect(() => {
@@ -110,7 +112,6 @@ export default function ListingDetailPage() {
       type: 'success',
       text: 'Wishlist feature will be available in Phase 6.'
     });
-    setTimeout(() => setToastAlert(null), 3000);
   };
 
   const handleToggleSold = () => {
@@ -127,7 +128,6 @@ export default function ListingDetailPage() {
       type: 'success',
       text: newStatus === 'sold' ? 'Listing marked as Sold' : 'Listing marked as Available'
     });
-    setTimeout(() => setToastAlert(null), 3000);
   };
 
   const handleSearchSubmit = (q) => {
@@ -182,23 +182,7 @@ export default function ListingDetailPage() {
         </div>
 
         {/* Toast Alert */}
-        {toastAlert && (
-          <div className={`unimart-admin-toast ${toastAlert.type === 'danger' ? 'toast-danger' : 'toast-success'} mb-4`} role="alert">
-            <div className="d-flex align-items-center gap-2">
-              <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>
-                {toastAlert.type === 'danger' ? 'error' : 'check_circle'}
-              </span>
-              <span className="fw-semibold small">{toastAlert.text}</span>
-              <button
-                type="button"
-                className="btn-close ms-auto"
-                style={{ fontSize: '0.7rem' }}
-                onClick={() => setToastAlert(null)}
-                aria-label="Dismiss alert"
-              ></button>
-            </div>
-          </div>
-        )}
+        <ToastAlert toast={toastAlert} onClose={hideToast} />
 
         {/* Detail Layout Grid */}
         <div className="row g-4 mb-5">

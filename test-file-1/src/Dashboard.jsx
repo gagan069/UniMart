@@ -16,6 +16,8 @@ import {
   selectMyListings
 } from './store/selectors.js';
 import { useListingForm } from './hooks/useListingForm.js';
+import { useToast } from './hooks/useToast.js';
+import ToastAlert from './components/ToastAlert.jsx';
 
 import {
   CONDITION_OPTIONS,
@@ -53,7 +55,7 @@ export default function Dashboard({ onGoToLogin }) {
   const navigate = useNavigate();
   const { openChatWithItem, closeChat } = useChat();
 
-  const [adminAlert, setAdminAlert] = useState(null);
+  const { toast: adminAlert, showToast: setAdminAlert, hideToast: hideAdminAlert } = useToast(3500);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState(() => {
     try {
@@ -386,23 +388,7 @@ export default function Dashboard({ onGoToLogin }) {
         </div>
 
         {/* Admin Toast Alert */}
-        {adminAlert && (
-          <div className={`unimart-admin-toast ${adminAlert.type === 'danger' ? 'toast-danger' : adminAlert.type === 'warning' ? 'toast-warning' : adminAlert.type === 'info' ? 'toast-info' : 'toast-success'} mb-4`} role="alert">
-            <div className="d-flex align-items-center gap-2">
-              <span className="material-symbols-outlined" style={{ fontSize: '22px' }}>
-                {adminAlert.type === 'danger' ? 'delete_forever' : adminAlert.type === 'warning' ? 'schedule' : adminAlert.type === 'info' ? 'info' : 'check_circle'}
-              </span>
-              <span className="fw-semibold small">{adminAlert.text}</span>
-              <button
-                type="button"
-                className="btn-close ms-auto"
-                style={{ fontSize: '0.7rem' }}
-                onClick={() => setAdminAlert(null)}
-                aria-label="Dismiss alert"
-              ></button>
-            </div>
-          </div>
-        )}
+        <ToastAlert toast={adminAlert} onClose={hideAdminAlert} />
 
         {/* Catalog & Product Grid */}
         <ListingGrid
