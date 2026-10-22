@@ -50,7 +50,7 @@ export default function CategoryBar({
     };
   }, []);
 
-  // Close filter dropdown on outside click
+  // Close filter dropdown on outside click or Escape key
   useEffect(() => {
     if (!isFilterDropdownOpen) return;
     const handleClickOutside = (e) => {
@@ -58,8 +58,17 @@ export default function CategoryBar({
         setIsFilterDropdownOpen(false);
       }
     };
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setIsFilterDropdownOpen(false);
+      }
+    };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
   }, [isFilterDropdownOpen]);
 
   // Compute active filters count (excluding category and search, which have their own pills)

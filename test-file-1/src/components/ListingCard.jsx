@@ -149,17 +149,19 @@ export default function ListingCard({
                 </div>
                 <span className="text-muted" style={{ fontSize: '0.68rem' }}>Under review</span>
               </div>
-            ) : (
-              <div className="unimart-card-meta-line mb-1 text-truncate" title={subcategoryName ? `${item.category} • ${subcategoryName}` : item.category}>
-                <span className="unimart-meta-category">{item.category}</span>
-                {subcategoryName && (
-                  <>
-                    <span className="unimart-meta-divider">•</span>
-                    <span className="unimart-meta-subcategory">{subcategoryName}</span>
-                  </>
-                )}
-              </div>
-            )}
+            ) : null}
+
+            <div className="d-flex justify-content-between align-items-center mb-1" style={{ minWidth: 0, gap: '0.5rem' }}>
+              <span
+                className="unimart-card-category"
+                title={subcategoryName ? `${item.category} • ${subcategoryName}` : item.category}
+              >
+                {item.category}{subcategoryName ? ` • ${subcategoryName}` : ''}
+              </span>
+              <span className={`unimart-badge-chip flex-shrink-0 ${item.status === 'pending' ? 'chip-pending' : ''}`}>
+                {item.status === 'sold' ? 'Sold' : (item.badge || 'Verified')}
+              </span>
+            </div>
 
             <h6 className="unimart-card-title" title={item.title}>
               {item.title}
