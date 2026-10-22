@@ -97,11 +97,17 @@ export const listingsApi = {
       filtered = filtered.filter((item) => {
         const catObj = categories.find((c) => c.id === item.category_id);
         const catName = catObj ? catObj.name.toLowerCase() : '';
+        const subcatObj = catObj?.subcategories?.find((s) => s.id === item.subcategory_id);
+        const subcatName = subcatObj ? subcatObj.name.toLowerCase() : (item.subcategory || '').toLowerCase();
+        const seller = users.find((u) => u.id === item.seller_id);
+        const sellerName = seller ? seller.name.toLowerCase() : '';
         return (
           (item.title || '').toLowerCase().includes(q) ||
           (item.description || '').toLowerCase().includes(q) ||
           (item.meetup_spot || '').toLowerCase().includes(q) ||
-          catName.includes(q)
+          catName.includes(q) ||
+          subcatName.includes(q) ||
+          sellerName.includes(q)
         );
       });
     }

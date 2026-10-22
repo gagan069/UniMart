@@ -14,8 +14,8 @@ export default function ListingCard({
   onWishlistClick,
   onChatClick,
   onBuyClick,
-  onEditListingClick,
-  onDeleteListingClick,
+  handleEditListingClick,
+  handleDeleteListingClick,
   onToggleSoldClick
 }) {
   const hasDiscount = typeof item.origPrice === 'number' && !isNaN(item.origPrice) && item.origPrice > item.price;
@@ -149,19 +149,17 @@ export default function ListingCard({
                 </div>
                 <span className="text-muted" style={{ fontSize: '0.68rem' }}>Under review</span>
               </div>
-            ) : null}
-
-            <div className="d-flex justify-content-between align-items-center mb-1" style={{ minWidth: 0, gap: '0.5rem' }}>
-              <span
-                className="unimart-card-category"
-                title={subcategoryName ? `${item.category} • ${subcategoryName}` : item.category}
-              >
-                {item.category}{subcategoryName ? ` • ${subcategoryName}` : ''}
-              </span>
-              <span className={`unimart-badge-chip flex-shrink-0 ${item.status === 'pending' ? 'chip-pending' : ''}`}>
-                {item.status === 'sold' ? 'Sold' : (item.badge || 'Verified')}
-              </span>
-            </div>
+            ) : (
+              <div className="unimart-card-meta-line mb-1 text-truncate" title={subcategoryName ? `${item.category} • ${subcategoryName}` : item.category}>
+                <span className="unimart-meta-category">{item.category}</span>
+                {subcategoryName && (
+                  <>
+                    <span className="unimart-meta-divider">•</span>
+                    <span className="unimart-meta-subcategory">{subcategoryName}</span>
+                  </>
+                )}
+              </div>
+            )}
 
             <h6 className="unimart-card-title" title={item.title}>
               {item.title}
@@ -176,9 +174,13 @@ export default function ListingCard({
                 <button
                   type="button"
                   className="unimart-card-quick-chat-btn"
-                  onClick={(e) => onChatClick && onChatClick(e, item)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (onChatClick) onChatClick(e, item);
+                  }}
                   title={`Chat with ${getDisplaySellerName(item, user)}`}
                   aria-label={`Chat with seller ${getDisplaySellerName(item, user)}`}
+                  id={`resting-chat-btn-${item.id}`}
                 >
                   <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>chat</span>
                   <span>Chat</span>
@@ -223,7 +225,7 @@ export default function ListingCard({
                     type="button"
                     className="unimart-card-icon-btn unimart-btn-edit"
                     title="Edit"
-                    onClick={(e) => onEditListingClick && onEditListingClick(e, item)}
+                    onClick={(e) => handleEditListingClick && handleEditListingClick(e, item)}
                     aria-label={`Edit ${item.title}`}
                   >
                     <span className="material-symbols-outlined" style={{ fontSize: '17px' }}>edit</span>
@@ -232,7 +234,7 @@ export default function ListingCard({
                     type="button"
                     className="unimart-card-icon-btn unimart-btn-delete"
                     title="Delete"
-                    onClick={(e) => onDeleteListingClick && onDeleteListingClick(e, item)}
+                    onClick={(e) => handleDeleteListingClick && handleDeleteListingClick(e, item)}
                     aria-label={`Delete ${item.title}`}
                   >
                     <span className="material-symbols-outlined" style={{ fontSize: '17px' }}>delete</span>
@@ -279,7 +281,10 @@ export default function ListingCard({
                 <button
                   type="button"
                   className="unimart-btn-secondary"
-                  onClick={(e) => onToggleSoldClick && onToggleSoldClick(e, item)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (onToggleSoldClick) onToggleSoldClick(e, item);
+                  }}
                   title={item.status === 'sold' ? "Mark as Available" : "Mark as Sold"}
                 >
                   <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
@@ -290,7 +295,10 @@ export default function ListingCard({
                 <button
                   type="button"
                   className="unimart-btn-secondary"
-                  onClick={(e) => onEditListingClick && onEditListingClick(e, item)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (handleEditListingClick) handleEditListingClick(e, item);
+                  }}
                   title="Edit listing"
                 >
                   <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>edit</span>
@@ -299,7 +307,10 @@ export default function ListingCard({
                 <button
                   type="button"
                   className="unimart-btn-primary bg-danger border-danger"
-                  onClick={(e) => onDeleteListingClick && onDeleteListingClick(e, item)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (handleDeleteListingClick) handleDeleteListingClick(e, item);
+                  }}
                   title="Delete listing"
                 >
                   <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>delete</span>
@@ -310,9 +321,13 @@ export default function ListingCard({
               <>
                 <button
                   type="button"
-                  className="unimart-btn-secondary"
-                  onClick={(e) => onChatClick && onChatClick(e, item)}
+                  className="unimart-btn-secondary unimart-hover-chat-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (onChatClick) onChatClick(e, item);
+                  }}
                   title="Chat with seller"
+                  id={`hover-chat-btn-${item.id}`}
                 >
                   <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>chat</span>
                   Chat
@@ -320,7 +335,10 @@ export default function ListingCard({
                 <button
                   type="button"
                   className="unimart-btn-primary"
-                  onClick={(e) => onBuyClick && onBuyClick(e, item)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (onBuyClick) onBuyClick(e, item);
+                  }}
                   title="Add to cart"
                 >
                   <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add_shopping_cart</span>

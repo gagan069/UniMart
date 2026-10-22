@@ -56,24 +56,39 @@ export default function Dashboard({ onGoToLogin }) {
   const { openChatWithItem, closeChat } = useChat();
 
   const { toast: adminAlert, showToast: setAdminAlert, hideToast: hideAdminAlert } = useToast(3500);
-  const [selectedCategory, setSelectedCategory] = useState('All');
-  const [searchQuery, setSearchQuery] = useState(() => {
+
+  // Helper to read initial query params
+  const getInitialParam = (key, defaultVal = '') => {
     try {
       if (typeof window !== 'undefined' && window.location.search) {
-        const q = new URLSearchParams(window.location.search).get('q');
-        if (q) return q;
+        const p = new URLSearchParams(window.location.search).get(key);
+        if (p !== null && p !== undefined) return p;
       }
     } catch {
       // ignore
     }
-    return '';
+    return defaultVal;
+  };
+
+  const [selectedCategory, setSelectedCategory] = useState(() => getInitialParam('cat', 'All'));
+  const [searchQuery, setSearchQuery] = useState(() => getInitialParam('q', ''));
+  const [minPrice, setMinPrice] = useState(() => getInitialParam('min', ''));
+  const [maxPrice, setMaxPrice] = useState(() => getInitialParam('max', ''));
+  const [conditionFilter, setConditionFilter] = useState(() => getInitialParam('cond', ''));
+  const [sortBy, setSortBy] = useState(() => getInitialParam('sort', 'newest'));
+  const [catalogTab, setCatalogTab] = useState(() => {
+    const t = getInitialParam('tab', 'all');
+    return t === 'my' || t === 'all' ? t : 'all';
   });
+
   const [cardPhotoIndex, setCardPhotoIndex] = useState({});
 
   // Listings from Redux store using centralized selectors
   const visibleListings = useSelector(selectVisibleListings(user));
   const myListings = useSelector(selectMyListings(user?.id));
   const rawListings = useSelector((state) => state.listings.items) || [];
+  const listingsStatus = useSelector((state) => state.listings.status);
+  const listingsError = useSelector((state) => state.listings.error);
 
   // Form management via custom hook
   const listingForm = useListingForm({
@@ -104,30 +119,65 @@ export default function Dashboard({ onGoToLogin }) {
     }
   }, [location.state]);
 
-  // Sync search query when navigating with URL params (?q=)
+  // Keep all filters synchronized in URL (?q=&cat=&min=&max=&cond=&sort=&tab=)
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams();
+      if (searchQuery.trim()) params.set('q', searchQuery.trim());
+      if (selectedCategory && selectedCategory !== 'All') params.set('cat', selectedCategory);
+      if (minPrice && String(minPrice).trim() !== '') params.set('min', String(minPrice).trim());
+      if (maxPrice && String(maxPrice).trim() !== '') params.set('max', String(maxPrice).trim());
+      if (conditionFilter && conditionFilter !== '' && conditionFilter !== 'All') params.set('cond', conditionFilter);
+      if (sortBy && sortBy !== 'newest') params.set('sort', sortBy);
+      if (catalogTab && catalogTab !== 'all') params.set('tab', catalogTab);
+
+      const searchStr = params.toString() ? '?' + params.toString() : '';
+      const targetUrl = searchStr ? window.location.pathname + searchStr : window.location.pathname;
+      if (window.location.search !== searchStr) {
+        window.history.replaceState({}, '', targetUrl);
+      }
+    } catch {
+      // ignore
+    }
+  }, [searchQuery, selectedCategory, minPrice, maxPrice, conditionFilter, sortBy, catalogTab]);
+
+  // Sync state when navigating back/forward or when URL params change externally
   useEffect(() => {
     try {
       const params = new URLSearchParams(location.search);
-      const q = params.get('q');
-      if (q !== null && q !== undefined) {
-        setSearchQuery((prev) => (prev !== q ? q : prev));
-      }
+      const q = params.get('q') || '';
+      const cat = params.get('cat') || 'All';
+      const min = params.get('min') || '';
+      const max = params.get('max') || '';
+      const cond = params.get('cond') || '';
+      const sort = params.get('sort') || 'newest';
+      const tab = params.get('tab') || 'all';
+
+      setSearchQuery((prev) => (prev !== q ? q : prev));
+      setSelectedCategory((prev) => (prev !== cat ? cat : prev));
+      setMinPrice((prev) => (prev !== min ? min : prev));
+      setMaxPrice((prev) => (prev !== max ? max : prev));
+      setConditionFilter((prev) => (prev !== cond ? cond : prev));
+      setSortBy((prev) => (prev !== sort ? sort : prev));
+      setCatalogTab((prev) => (prev !== tab ? (tab === 'my' ? 'my' : 'all') : prev));
     } catch {
       // ignore
     }
   }, [location.search]);
 
-  const [catalogTab, setCatalogTab] = useState(() => {
-    try {
-      if (typeof window !== 'undefined' && window.location.search) {
-        const t = new URLSearchParams(window.location.search).get('tab');
-        if (t === 'my' || t === 'all') return t;
-      }
-    } catch {
-      // ignore
-    }
-    return 'all';
-  });
+  // Clear all browsing filters
+  const handleClearAll = () => {
+    setSearchQuery('');
+    setSelectedCategory('All');
+    setMinPrice('');
+    setMaxPrice('');
+    setConditionFilter('');
+    setSortBy('newest');
+  };
+
+  const handleRetryListings = () => {
+    dispatch(fetchListings({ currentUser: user }));
+  };
 
   // Revert to 'all' if user logs out while on 'my' tab
   useEffect(() => {
@@ -169,44 +219,82 @@ export default function Dashboard({ onGoToLogin }) {
   const pendingCount = activeScopedProducts.filter((item) => item.status === 'pending').length;
 
   const getCategoryCount = (key) => {
-    if (key === 'All') return `${activeScopedProducts.length} items`;
-    if (key === 'Pending') return `${pendingCount} items`;
+    if (key === 'All') return activeScopedProducts.length + ' items';
+    if (key === 'Pending') return pendingCount + ' items';
     const count = activeScopedProducts.filter((item) => {
       const itemCatId = resolveCategoryId(item);
       const catObj = categories.find((c) => c.id === key);
       return itemCatId === key || item.category === key || (catObj && item.category === catObj.name);
     }).length;
-    return `${count} items`;
+    return count + ' items';
   };
 
-  // Dynamic product filtering by category and live search query
-  const filteredProducts = activeScopedProducts.filter((item) => {
-    const itemCatId = resolveCategoryId(item);
-    const catObj = categories.find((c) => c.id === selectedCategory);
-    const matchesCategory =
-      selectedCategory === 'All'
-        ? true
-        : selectedCategory === 'Pending'
-        ? item.status === 'pending'
-        : itemCatId === selectedCategory ||
-          item.category === selectedCategory ||
-          (catObj && item.category === catObj.name);
+  // Dynamic product filtering and sorting
+  const filteredProducts = activeScopedProducts
+    .filter((item) => {
+      const itemCatId = resolveCategoryId(item);
+      const catObj = categories.find((c) => c.id === selectedCategory);
+      const matchesCategory =
+        selectedCategory === 'All'
+          ? true
+          : selectedCategory === 'Pending'
+          ? item.status === 'pending'
+          : itemCatId === selectedCategory ||
+            item.category === selectedCategory ||
+            (catObj && item.category === catObj.name);
 
-    const q = searchQuery.trim().toLowerCase();
-    if (!q) return matchesCategory;
+      if (!matchesCategory) return false;
 
-    const matchesSearch =
-      (item.title || '').toLowerCase().includes(q) ||
-      (item.category || '').toLowerCase().includes(q) ||
-      (item.seller || '').toLowerCase().includes(q) ||
-      (item.notes && item.notes.toLowerCase().includes(q)) ||
-      (item.badge && item.badge.toLowerCase().includes(q)) ||
-      (item.condition && item.condition.toLowerCase().includes(q)) ||
-      (item.description && item.description.toLowerCase().includes(q)) ||
-      (item.status && item.status.toLowerCase().includes(q));
+      // Price range filters (min & max ₹)
+      if (minPrice !== undefined && String(minPrice).trim() !== '') {
+        const minVal = parseFloat(minPrice);
+        if (!isNaN(minVal) && Number(item.price) < minVal) return false;
+      }
+      if (maxPrice !== undefined && String(maxPrice).trim() !== '') {
+        const maxVal = parseFloat(maxPrice);
+        if (!isNaN(maxVal) && Number(item.price) > maxVal) return false;
+      }
 
-    return matchesCategory && matchesSearch;
-  });
+      // Condition filter
+      if (conditionFilter && conditionFilter !== '' && conditionFilter !== 'All') {
+        if (item.condition !== conditionFilter) return false;
+      }
+
+      // Live search query matching title, category, subcategory, seller, notes, badge, condition, description, status
+      const q = searchQuery.trim().toLowerCase();
+      if (!q) return true;
+
+      const subcategoryName =
+        item.subcategory ||
+        categories.find((c) => c.id === itemCatId)?.subcategories?.find((s) => s.id === item.subcategory_id)?.name ||
+        '';
+      const sellerDisplayName = getDisplaySellerName(item, user);
+
+      const matchesSearch =
+        (item.title || '').toLowerCase().includes(q) ||
+        (item.category || '').toLowerCase().includes(q) ||
+        subcategoryName.toLowerCase().includes(q) ||
+        (item.seller || '').toLowerCase().includes(q) ||
+        (item.seller_name || '').toLowerCase().includes(q) ||
+        sellerDisplayName.toLowerCase().includes(q) ||
+        (item.notes && item.notes.toLowerCase().includes(q)) ||
+        (item.badge && item.badge.toLowerCase().includes(q)) ||
+        (item.condition && item.condition.toLowerCase().includes(q)) ||
+        (item.description && item.description.toLowerCase().includes(q)) ||
+        (item.status && item.status.toLowerCase().includes(q));
+
+      return matchesSearch;
+    })
+    .sort((a, b) => {
+      if (sortBy === 'price_asc') {
+        return (Number(a.price) || 0) - (Number(b.price) || 0);
+      }
+      if (sortBy === 'price_desc') {
+        return (Number(b.price) || 0) - (Number(a.price) || 0);
+      }
+      // 'newest' preserves original catalog/chronological order
+      return 0;
+    });
 
   const handleDeleteListingClick = (e, item) => {
     if (e) e.stopPropagation();
@@ -314,6 +402,15 @@ export default function Dashboard({ onGoToLogin }) {
         setSelectedCategory={setSelectedCategory}
         getCategoryCount={getCategoryCount}
         pendingCount={pendingCount}
+        minPrice={minPrice}
+        setMinPrice={setMinPrice}
+        maxPrice={maxPrice}
+        setMaxPrice={setMaxPrice}
+        conditionFilter={conditionFilter}
+        setConditionFilter={setConditionFilter}
+        sortBy={sortBy}
+        setSortBy={setSortBy}
+        onClearFilters={handleClearAll}
       />
 
       {/* Main Dashboard Body */}
@@ -394,6 +491,18 @@ export default function Dashboard({ onGoToLogin }) {
           setSelectedCategory={setSelectedCategory}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
+          minPrice={minPrice}
+          setMinPrice={setMinPrice}
+          maxPrice={maxPrice}
+          setMaxPrice={setMaxPrice}
+          conditionFilter={conditionFilter}
+          setConditionFilter={setConditionFilter}
+          sortBy={sortBy}
+          setSortBy={setSortBy}
+          onClearAll={handleClearAll}
+          listingsStatus={listingsStatus}
+          listingsError={listingsError}
+          onRetry={handleRetryListings}
           categories={categories}
           user={user}
           handleGoToLogin={handleGoToLogin}

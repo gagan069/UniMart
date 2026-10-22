@@ -2745,3 +2745,153 @@
 .unimart-theme-toggle-btn .material-symbols-outlined {
   transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
+
+/* ================= PHASE 4: SUBNAV FILTERS DROPDOWN & PLACEHOLDER SKELETONS ================= */
+.unimart-subnav-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  position: relative;
+}
+
+.unimart-filter-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.unimart-pill-filters {
+  white-space: nowrap;
+}
+
+.unimart-tab-count-tag.count-active-filter {
+  background: var(--unimart-maroon);
+  color: #ffffff;
+}
+
+.unimart-filters-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 290px;
+  background: #ffffff;
+  border: 1px solid var(--unimart-maroon-border);
+  border-radius: 16px;
+  box-shadow: 0 16px 36px rgba(112, 24, 44, 0.16), 0 4px 12px rgba(0, 0, 0, 0.06);
+  z-index: 1060;
+  padding: 1rem 1.15rem;
+  animation: unimartFilterFade 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes unimartFilterFade {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.unimart-filters-dropdown-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid rgba(112, 24, 44, 0.08);
+  margin-bottom: 0.75rem;
+}
+
+.unimart-filters-dropdown-body .form-control-sm,
+.unimart-filters-dropdown-body .form-select-sm {
+  font-size: 0.825rem;
+  padding: 0.4rem 0.65rem;
+  border-color: #e2e8f0;
+}
+
+.unimart-filters-dropdown-body .form-control-sm:focus,
+.unimart-filters-dropdown-body .form-select-sm:focus {
+  border-color: var(--unimart-maroon);
+  box-shadow: 0 0 0 3px rgba(112, 24, 44, 0.12);
+}
+
+/* Catalog Faded Placeholder Skeleton Cards */
+.unimart-card-placeholder-skeleton {
+  cursor: default !important;
+  pointer-events: none;
+  opacity: 0.75;
+  animation: unimartSkeletonPulse 1.6s ease-in-out infinite;
+}
+
+@keyframes unimartSkeletonPulse {
+  0%, 100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 0.95;
+  }
+}
+
+.unimart-card-placeholder-skeleton .unimart-card-placeholder-wrap.skeleton-box {
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.unimart-card-placeholder-skeleton .skeleton-line {
+  background: #e2e8f0;
+  border-radius: 999px;
+}
+
+.unimart-card-placeholder-skeleton .skeleton-title {
+  height: 18px;
+  width: 82%;
+}
+
+.unimart-card-placeholder-skeleton .skeleton-seller {
+  height: 14px;
+  width: 48%;
+}
+
+.unimart-card-placeholder-skeleton .skeleton-chat-btn {
+  height: 24px;
+  width: 60px;
+}
+
+.unimart-card-placeholder-skeleton .skeleton-price {
+  height: 22px;
+  width: 36%;
+}
+
+.unimart-card-placeholder-skeleton .skeleton-cart-btn {
+  height: 32px;
+  width: 32px;
+  border-radius: 50%;
+}
+
+/* Dark mode styling for filters dropdown and skeletons */
+[data-theme="dark"] .unimart-filters-dropdown-menu {
+  background: #111a24;
+  border-color: #273746;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.55);
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .unimart-filters-dropdown-header {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .unimart-filters-dropdown-body .form-control-sm,
+[data-theme="dark"] .unimart-filters-dropdown-body .form-select-sm {
+  background: #1a2634;
+  border-color: #2d3f52;
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .unimart-card-placeholder-skeleton .unimart-card-placeholder-wrap.skeleton-box {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+}
+
+[data-theme="dark"] .unimart-card-placeholder-skeleton .skeleton-line {
+  background: #334155;
+}
