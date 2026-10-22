@@ -22,7 +22,8 @@ export default function ListingGrid({
   handleChatClick,
   handleBuyClick,
   handleEditListingClick,
-  handleDeleteListingClick
+  handleDeleteListingClick,
+  onToggleSoldClick
 }) {
   return (
     <>
@@ -185,6 +186,7 @@ export default function ListingGrid({
               onBuyClick={handleBuyClick}
               onEditListingClick={handleEditListingClick}
               onDeleteListingClick={handleDeleteListingClick}
+              onToggleSoldClick={onToggleSoldClick}
             />
           ))}
         </div>

@@ -1,5 +1,7 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { canManageListing, isAdmin as checkIsAdmin } from '../lib/permissions.js';
+import { categories } from '../lib/categories.js';
 import { CATEGORY_THEME_MAP, resolveCategoryId, getDisplaySellerName, isUserListingOwner } from '../lib/constants.js';
 
 export default function ListingCard({
@@ -14,8 +16,10 @@ export default function ListingCard({
   onChatClick,
   onBuyClick,
   onEditListingClick,
-  onDeleteListingClick
+  onDeleteListingClick,
+  onToggleSoldClick
 }) {
+  const navigate = useNavigate();
   const hasDiscount = typeof item.origPrice === 'number' && !isNaN(item.origPrice) && item.origPrice > item.price;
   const discountPct = hasDiscount ? Math.round(((item.origPrice - item.price) / item.origPrice) * 100) : 0;
   const photosList = item.photos && item.photos.length > 0 ? item.photos : (item.image ? [item.image] : []);
@@ -25,9 +29,21 @@ export default function ListingCard({
   const itemCatId = item.category_id || resolveCategoryId(item);
   const themeClass = CATEGORY_THEME_MAP[itemCatId] || item.categoryTheme || 'theme-academic';
 
+  const subcategoryName = item.subcategory || (
+    categories.find((c) => c.id === itemCatId)?.subcategories?.find((s) => s.id === item.subcategory_id)?.name
+  );
+
+  const handleCardClick = (e) => {
+    // Prevent navigating if clicking an interactive control
+    if (e.target.closest('button') || e.target.closest('.unimart-card-photo-dot') || e.target.closest('a')) {
+      return;
+    }
+    navigate(`/listing/${item.id}`);
+  };
+
   return (
     <div className={`unimart-product-card ${themeClass}`}>
-      <div className="unimart-card-inner">
+      <div className="unimart-card-inner" onClick={handleCardClick} role="button" tabIndex={0}>
         <div className="unimart-card-top-content">
           {/* Image and placeholder banner with category theme */}
           <div className={`unimart-card-placeholder-wrap ${themeClass}`}>
@@ -37,10 +53,7 @@ export default function ListingCard({
               alt={item.title} 
               loading="lazy"
             />
-            {/* Preserved background translucent category tint */}
             <div className="unimart-category-translucent-tint"></div>
-
-            {/* Category top glow border */}
             <div className="unimart-card-glow-border"></div>
 
             {/* Multi-Photo Carousel Arrows & Indicator */}
@@ -96,12 +109,23 @@ export default function ListingCard({
             {/* Condition Badge */}
             <span className="unimart-condition-badge">{item.condition}</span>
 
-            {/* Timer badge for pending approval */}
-            {item.status === 'pending' && (
-              <span className="unimart-pending-timer-badge" title="Waiting to be approved by campus admin">
-                <span className="material-symbols-outlined unimart-timer-pulse">schedule</span>
-                <span>Waiting to be approved</span>
+            {/* Status Badge: In My Listings show Pending / Approved / Rejected / Sold */}
+            {catalogTab === 'my' ? (
+              <span className={`unimart-pending-timer-badge status-badge-${item.status || 'approved'}`} title={`Status: ${item.status || 'approved'}`}>
+                <span className={`material-symbols-outlined ${item.status === 'pending' ? 'unimart-timer-pulse' : ''}`} style={{ fontSize: '14px' }}>
+                  {item.status === 'pending' ? 'schedule' : item.status === 'sold' ? 'sell' : item.status === 'rejected' ? 'cancel' : 'check_circle'}
+                </span>
+                <span>
+                  {item.status === 'pending' ? 'Pending' : item.status === 'sold' ? 'Sold' : item.status === 'rejected' ? 'Rejected' : 'Approved'}
+                </span>
               </span>
+            ) : (
+              item.status === 'pending' && (
+                <span className="unimart-pending-timer-badge" title="Waiting to be approved by campus admin">
+                  <span className="material-symbols-outlined unimart-timer-pulse">schedule</span>
+                  <span>Waiting to be approved</span>
+                </span>
+              )
             )}
             
             {/* Wishlist Icon */}
@@ -131,10 +155,10 @@ export default function ListingCard({
 
             <div className="d-flex justify-content-between align-items-center mb-1">
               <span className="unimart-card-category">
-                {item.category}{item.subcategory ? ` • ${item.subcategory}` : ''}
+                {item.category}{subcategoryName ? ` • ${subcategoryName}` : ''}
               </span>
               <span className={`unimart-badge-chip ${item.status === 'pending' ? 'chip-pending' : ''}`}>
-                {item.badge}
+                {item.status === 'sold' ? 'Sold' : (item.badge || 'Verified')}
               </span>
             </div>
 
@@ -180,9 +204,20 @@ export default function ListingCard({
                 )}
               </div>
 
-              {/* Only inside "My Listings" tab, show ✏️ Edit and 🗑️ Delete where cart button is */}
+              {/* Only inside "My Listings" tab, show Mark as Sold, Edit, and Delete */}
               {catalogTab === 'my' && canManageListing(user, item) && !checkIsAdmin(user) ? (
                 <div className="d-flex align-items-center gap-1.5 unimart-my-card-actions">
+                  <button
+                    type="button"
+                    className={`unimart-card-icon-btn ${item.status === 'sold' ? 'unimart-btn-available' : 'unimart-btn-sold'}`}
+                    title={item.status === 'sold' ? "Mark as Available" : "Mark as Sold"}
+                    onClick={(e) => onToggleSoldClick && onToggleSoldClick(e, item)}
+                    aria-label={item.status === 'sold' ? `Mark ${item.title} as Available` : `Mark ${item.title} as Sold`}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '17px' }}>
+                      {item.status === 'sold' ? 'published_with_changes' : 'sell'}
+                    </span>
+                  </button>
                   <button
                     type="button"
                     className="unimart-card-icon-btn unimart-btn-edit"
@@ -216,7 +251,7 @@ export default function ListingCard({
           </div>
         </div>
 
-        {/* Expanded Details Section (Visible on Hover with Ambient Light Bleed synced to active photo) */}
+        {/* Expanded Details Section */}
         <div className="unimart-expanded-details" style={{ '--card-img': `url(${currentImg})` }}>
           <h6 className="unimart-expanded-title" title={item.title}>
             {item.title}
@@ -240,6 +275,17 @@ export default function ListingCard({
           <div className="unimart-expanded-actions">
             {catalogTab === 'my' && canManageListing(user, item) && !checkIsAdmin(user) ? (
               <>
+                <button
+                  type="button"
+                  className="unimart-btn-secondary"
+                  onClick={(e) => onToggleSoldClick && onToggleSoldClick(e, item)}
+                  title={item.status === 'sold' ? "Mark as Available" : "Mark as Sold"}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
+                    {item.status === 'sold' ? 'published_with_changes' : 'sell'}
+                  </span>
+                  {item.status === 'sold' ? 'Available' : 'Mark Sold'}
+                </button>
                 <button
                   type="button"
                   className="unimart-btn-secondary"
@@ -285,7 +331,10 @@ export default function ListingCard({
               type="button"
               className="unimart-btn-icon"
               title="Quick preview"
-              onClick={(e) => onBuyClick && onBuyClick(e, item)}
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/listing/${item.id}`);
+              }}
             >
               <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>open_in_new</span>
             </button>

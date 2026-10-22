@@ -46,7 +46,9 @@ export const selectVisibleListings = (user) => (state) => {
     );
   }
   return items.filter((item) => {
-    // Owner sees all their own listings regardless of status
+    // Sold items leave the public catalog but stay in My Listings
+    if (item.status === 'sold') return false;
+    // Owner sees all their own pending/approved/rejected listings
     if (item.seller_id === user.id) return true;
     // For other sellers, only show approved or reserved
     return item.status === 'approved' || item.status === 'reserved';

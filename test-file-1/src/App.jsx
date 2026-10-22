@@ -5,6 +5,7 @@ import Dashboard from "./Dashboard.jsx";
 import AdminPage from "./pages/AdminPage.jsx";
 import Layout from "./layouts/Layout.jsx";
 import NotFound from "./pages/NotFound.jsx";
+import ListingDetailPage from "./pages/ListingDetailPage.jsx";
 import { useAuth } from "./context/AuthContext.jsx";
 import { isAdmin } from "./lib/permissions.js";
 
@@ -44,6 +45,7 @@ function App() {
       />
       <Route path="/" element={<Layout />}>
         <Route index element={<Dashboard onGoToLogin={() => navigate("/login")} />} />
+        <Route path="listing/:id" element={<ListingDetailPage />} />
         <Route
           path="admin"
           element={

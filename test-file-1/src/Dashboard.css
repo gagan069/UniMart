@@ -1201,6 +1201,55 @@
   box-shadow: 0 4px 10px rgba(220, 38, 38, 0.2);
 }
 
+.unimart-card-icon-btn.unimart-btn-sold {
+  color: #d97706;
+}
+
+.unimart-card-icon-btn.unimart-btn-sold:hover {
+  background: #fffbeb;
+  border-color: #fcd34d;
+  color: #b45309;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(217, 119, 6, 0.2);
+}
+
+.unimart-card-icon-btn.unimart-btn-available {
+  color: #059669;
+}
+
+.unimart-card-icon-btn.unimart-btn-available:hover {
+  background: #ecfdf5;
+  border-color: #6ee7b7;
+  color: #047857;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(5, 150, 105, 0.2);
+}
+
+/* My Listings Status Badges (styled like Waiting for Approval badge) */
+.unimart-pending-timer-badge.status-badge-approved {
+  background: rgba(16, 185, 129, 0.15) !important;
+  color: #059669 !important;
+  border-color: rgba(16, 185, 129, 0.3) !important;
+}
+
+.unimart-pending-timer-badge.status-badge-sold {
+  background: rgba(100, 116, 139, 0.2) !important;
+  color: #64748b !important;
+  border-color: rgba(100, 116, 139, 0.35) !important;
+}
+
+.unimart-pending-timer-badge.status-badge-rejected {
+  background: rgba(239, 68, 68, 0.15) !important;
+  color: #dc2626 !important;
+  border-color: rgba(239, 68, 68, 0.3) !important;
+}
+
+.unimart-pending-timer-badge.status-badge-pending {
+  background: rgba(245, 158, 11, 0.15) !important;
+  color: #d97706 !important;
+  border-color: rgba(245, 158, 11, 0.3) !important;
+}
+
 /* ================= EXPANDED DETAILS SECTION (HOTSTAR / UNIMART EXPANDING HOVER CARD) ================= */
 .unimart-expanded-details,
 .expanded-details {

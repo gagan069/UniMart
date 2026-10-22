@@ -23,6 +23,7 @@ function populateListing(item, photosTable, usersTable) {
 
   const seller = (usersTable || []).find((u) => u.id === item.seller_id);
   const catObj = categories.find((c) => c.id === item.category_id);
+  const subcatObj = catObj?.subcategories?.find((s) => s.id === item.subcategory_id);
 
   return {
     ...item,
@@ -32,10 +33,20 @@ function populateListing(item, photosTable, usersTable) {
     seller_name: seller ? seller.name : 'Campus Student',
     seller_email: seller ? seller.email : '',
     category: catObj ? catObj.name : 'General',
-    condition: item.item_condition,
-    origPrice: item.original_price,
-    notes: item.meetup_spot,
-    badge: item.status === 'pending' ? 'Waiting for Approval' : (item.badge || 'Verified')
+    subcategory: subcatObj ? subcatObj.name : (item.subcategory || null),
+    subcategory_id: item.subcategory_id || null,
+    condition: item.item_condition || item.condition,
+    origPrice: item.original_price || item.origPrice,
+    notes: item.meetup_spot || item.notes,
+    hasNotes: item.hasNotes !== undefined ? item.hasNotes : Boolean(item.has_notes),
+    has_notes: item.hasNotes !== undefined ? item.hasNotes : Boolean(item.has_notes),
+    badge: item.status === 'pending'
+      ? 'Waiting for Approval'
+      : item.status === 'sold'
+      ? 'Sold'
+      : item.status === 'rejected'
+      ? 'Rejected'
+      : (item.badge || 'Verified')
   };
 }
 
@@ -201,10 +212,21 @@ export const listingsApi = {
       updates.photos === undefined &&
       updates.meetup_spot === undefined;
 
-    if (isPriceOnly || isAdmin) {
-      // Price-only or admin updates apply immediately
+    const isStatusOnly =
+      updates.status !== undefined &&
+      updates.title === undefined &&
+      updates.category_id === undefined &&
+      updates.item_condition === undefined &&
+      updates.description === undefined &&
+      updates.photos === undefined &&
+      updates.meetup_spot === undefined &&
+      updates.price === undefined;
+
+    if (isPriceOnly || isStatusOnly || isAdmin) {
+      // Price-only, status-only, or admin updates apply immediately
       listings[itemIndex] = {
         ...existingItem,
+        status: updates.status || existingItem.status,
         price: newPrice,
         original_price: updates.origPrice !== undefined ? Number(updates.origPrice) : existingItem.original_price,
         updated_at: new Date().toISOString()
@@ -212,7 +234,11 @@ export const listingsApi = {
       setTable('listings', listings);
 
       const populated = populateListing(listings[itemIndex], photosTable, users);
-      return { data: populated, editType: 'price_only', message: 'Price updated live!' };
+      return {
+        data: populated,
+        editType: isStatusOnly ? 'status_only' : 'price_only',
+        message: isStatusOnly ? `Status updated to ${updates.status}` : 'Price updated live!'
+      };
     }
 
     // Save snapshot of previous approved version in listing_pending_edits
@@ -227,7 +253,8 @@ export const listingsApi = {
         original_price: updates.origPrice !== undefined ? Number(updates.origPrice) : existingItem.original_price,
         item_condition: updates.condition || updates.item_condition || existingItem.item_condition,
         meetup_spot: updates.notes || updates.meetup_spot || existingItem.meetup_spot,
-        description: updates.description !== undefined ? updates.description : existingItem.description
+        description: updates.description !== undefined ? updates.description : existingItem.description,
+        has_notes: updates.hasNotes !== undefined ? Boolean(updates.hasNotes) : (updates.has_notes !== undefined ? Boolean(updates.has_notes) : existingItem.has_notes)
       },
       created_at: new Date().toISOString()
     });
@@ -244,6 +271,7 @@ export const listingsApi = {
       item_condition: updates.condition || updates.item_condition || existingItem.item_condition,
       meetup_spot: updates.notes || updates.meetup_spot || existingItem.meetup_spot,
       description: updates.description !== undefined ? updates.description : existingItem.description,
+      has_notes: updates.hasNotes !== undefined ? Boolean(updates.hasNotes) : (updates.has_notes !== undefined ? Boolean(updates.has_notes) : existingItem.has_notes),
       status: 'pending',
       pending_type: 'edit',
       updated_at: new Date().toISOString()

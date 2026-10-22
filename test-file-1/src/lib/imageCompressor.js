@@ -37,10 +37,14 @@ export async function compressImage(file, maxDimension = 1200, quality = 0.75) {
             return resolve(e.target.result);
           }
 
+          // Fill white background so transparent PNGs do not turn black when compressed to JPEG
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillRect(0, 0, width, height);
+
           ctx.drawImage(img, 0, 0, width, height);
           const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
           resolve(compressedDataUrl);
-        } catch (err) {
+        } catch {
           resolve(e.target.result);
         }
       };
