@@ -602,6 +602,78 @@
   --gradient-dark: linear-gradient(180deg, #3a1754 0%, #230d34 50%, #100419 100%);
 }
 
+/* Category: Electronics & Gadgets (Neon Cyan / Electric Teal) */
+.unimart-product-card.theme-electronics,
+.hover-card.theme-electronics {
+  --cat-accent: #06b6d4;
+  --cat-tint-bg: #0891b2;
+  --cat-glow-grad: linear-gradient(90deg, #a5f3fc 0%, #22d3ee 60%, #0891b2 100%);
+  --cat-glow-rgb: 6, 182, 212;
+  --cat-badge-bg: #ecfeff;
+  --cat-badge-color: #0e7490;
+  --gradient-dark: linear-gradient(180deg, #0d3844 0%, #08242c 50%, #031217 100%);
+}
+
+/* Category: Stationery & Supplies (Warm Tangerine / Coral Amber) */
+.unimart-product-card.theme-stationery,
+.hover-card.theme-stationery {
+  --cat-accent: #f97316;
+  --cat-tint-bg: #ea580c;
+  --cat-glow-grad: linear-gradient(90deg, #ffedd5 0%, #fb923c 60%, #ea580c 100%);
+  --cat-glow-rgb: 249, 115, 22;
+  --cat-badge-bg: #fff7ed;
+  --cat-badge-color: #c2410c;
+  --gradient-dark: linear-gradient(180deg, #44230d 0%, #2b1607 50%, #160a03 100%);
+}
+
+/* Category: Hostel & Room Essentials (Emerald / Cozy Forest) */
+.unimart-product-card.theme-hostel,
+.hover-card.theme-hostel {
+  --cat-accent: #10b981;
+  --cat-tint-bg: #059669;
+  --cat-glow-grad: linear-gradient(90deg, #d1fae5 0%, #34d399 60%, #059669 100%);
+  --cat-glow-rgb: 16, 185, 129;
+  --cat-badge-bg: #ecfdf5;
+  --cat-badge-color: #047857;
+  --gradient-dark: linear-gradient(180deg, #0e3d29 0%, #08271a 50%, #03140c 100%);
+}
+
+/* Category: Fashion & Accessories (Ruby Crimson / Sunset Rose) */
+.unimart-product-card.theme-fashion,
+.hover-card.theme-fashion {
+  --cat-accent: #f43f5e;
+  --cat-tint-bg: #e11d48;
+  --cat-glow-grad: linear-gradient(90deg, #ffe4e6 0%, #fb7185 60%, #e11d48 100%);
+  --cat-glow-rgb: 244, 63, 94;
+  --cat-badge-bg: #fff1f2;
+  --cat-badge-color: #be123c;
+  --gradient-dark: linear-gradient(180deg, #45101a 0%, #2b090f 50%, #170407 100%);
+}
+
+/* Category: Sports, Fitness & Cycles (Athletic Lime / Kinetic Green) */
+.unimart-product-card.theme-sports,
+.hover-card.theme-sports {
+  --cat-accent: #84cc16;
+  --cat-tint-bg: #65a30d;
+  --cat-glow-grad: linear-gradient(90deg, #ecfccb 0%, #a3e635 60%, #65a30d 100%);
+  --cat-glow-rgb: 132, 204, 22;
+  --cat-badge-bg: #f7fee7;
+  --cat-badge-color: #4d7c0f;
+  --gradient-dark: linear-gradient(180deg, #273d09 0%, #192705 50%, #0d1502 100%);
+}
+
+/* Category: Other Campus Items (Modern Indigo / Velvet Slate) */
+.unimart-product-card.theme-other,
+.hover-card.theme-other {
+  --cat-accent: #6366f1;
+  --cat-tint-bg: #4f46e5;
+  --cat-glow-grad: linear-gradient(90deg, #e0e7ff 0%, #818cf8 60%, #4f46e5 100%);
+  --cat-glow-rgb: 99, 102, 241;
+  --cat-badge-bg: #eef2ff;
+  --cat-badge-color: #4338ca;
+  --gradient-dark: linear-gradient(180deg, #1e1b4b 0%, #131033 50%, #0a081c 100%);
+}
+
 @media (hover: hover) and (pointer: fine) {
   .unimart-product-card:is(:hover, .is-hovered),
   .hover-card:is(:hover, .is-hovered) {
@@ -697,6 +769,54 @@
 .unimart-product-card.theme-scents:is(:hover, .is-hovered) .unimart-expanded-details,
 .hover-card.theme-scents:is(:hover, .is-hovered) .expanded-details {
   background: var(--gradient-dark, linear-gradient(180deg, #3a1754 0%, #230d34 50%, #100419 100%));
+  border-color: rgba(var(--cat-glow-rgb), 0.45);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4), 0 0 32px rgba(var(--cat-glow-rgb), 0.25);
+}
+
+.unimart-product-card:has(.theme-electronics):is(:hover, .is-hovered) .unimart-expanded-details,
+.unimart-product-card.theme-electronics:is(:hover, .is-hovered) .unimart-expanded-details,
+.hover-card.theme-electronics:is(:hover, .is-hovered) .expanded-details {
+  background: var(--gradient-dark, linear-gradient(180deg, #0d3844 0%, #08242c 50%, #031217 100%));
+  border-color: rgba(var(--cat-glow-rgb), 0.45);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4), 0 0 32px rgba(var(--cat-glow-rgb), 0.25);
+}
+
+.unimart-product-card:has(.theme-stationery):is(:hover, .is-hovered) .unimart-expanded-details,
+.unimart-product-card.theme-stationery:is(:hover, .is-hovered) .unimart-expanded-details,
+.hover-card.theme-stationery:is(:hover, .is-hovered) .expanded-details {
+  background: var(--gradient-dark, linear-gradient(180deg, #44230d 0%, #2b1607 50%, #160a03 100%));
+  border-color: rgba(var(--cat-glow-rgb), 0.45);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4), 0 0 32px rgba(var(--cat-glow-rgb), 0.25);
+}
+
+.unimart-product-card:has(.theme-hostel):is(:hover, .is-hovered) .unimart-expanded-details,
+.unimart-product-card.theme-hostel:is(:hover, .is-hovered) .unimart-expanded-details,
+.hover-card.theme-hostel:is(:hover, .is-hovered) .expanded-details {
+  background: var(--gradient-dark, linear-gradient(180deg, #0e3d29 0%, #08271a 50%, #03140c 100%));
+  border-color: rgba(var(--cat-glow-rgb), 0.45);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4), 0 0 32px rgba(var(--cat-glow-rgb), 0.25);
+}
+
+.unimart-product-card:has(.theme-fashion):is(:hover, .is-hovered) .unimart-expanded-details,
+.unimart-product-card.theme-fashion:is(:hover, .is-hovered) .unimart-expanded-details,
+.hover-card.theme-fashion:is(:hover, .is-hovered) .expanded-details {
+  background: var(--gradient-dark, linear-gradient(180deg, #45101a 0%, #2b090f 50%, #170407 100%));
+  border-color: rgba(var(--cat-glow-rgb), 0.45);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4), 0 0 32px rgba(var(--cat-glow-rgb), 0.25);
+}
+
+.unimart-product-card:has(.theme-sports):is(:hover, .is-hovered) .unimart-expanded-details,
+.unimart-product-card.theme-sports:is(:hover, .is-hovered) .unimart-expanded-details,
+.hover-card.theme-sports:is(:hover, .is-hovered) .expanded-details {
+  background: var(--gradient-dark, linear-gradient(180deg, #273d09 0%, #192705 50%, #0d1502 100%));
+  border-color: rgba(var(--cat-glow-rgb), 0.45);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4), 0 0 32px rgba(var(--cat-glow-rgb), 0.25);
+}
+
+.unimart-product-card:has(.theme-other):is(:hover, .is-hovered) .unimart-expanded-details,
+.unimart-product-card.theme-other:is(:hover, .is-hovered) .unimart-expanded-details,
+.hover-card.theme-other:is(:hover, .is-hovered) .expanded-details {
+  background: var(--gradient-dark, linear-gradient(180deg, #1e1b4b 0%, #131033 50%, #0a081c 100%));
   border-color: rgba(var(--cat-glow-rgb), 0.45);
   box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4), 0 0 32px rgba(var(--cat-glow-rgb), 0.25);
 }
@@ -826,9 +946,27 @@
   justify-content: center;
   cursor: pointer;
   z-index: 12;
-  transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease, background 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.2s ease;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
   padding: 0;
+}
+
+.unimart-product-card:is(:hover, .is-hovered) .unimart-card-nav-arrow,
+.hover-card:is(:hover, .is-hovered) .unimart-card-nav-arrow {
+  opacity: 1;
+  pointer-events: auto;
+  visibility: visible;
+}
+
+@media (hover: none) {
+  .unimart-card-nav-arrow {
+    opacity: 1;
+    pointer-events: auto;
+    visibility: visible;
+  }
 }
 
 .unimart-card-nav-arrow:hover {
@@ -949,6 +1087,10 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: var(--unimart-maroon);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .unimart-badge-chip {
@@ -1079,6 +1221,55 @@
   color: #b91c1c;
   transform: translateY(-2px);
   box-shadow: 0 4px 10px rgba(220, 38, 38, 0.2);
+}
+
+.unimart-card-icon-btn.unimart-btn-sold {
+  color: #d97706;
+}
+
+.unimart-card-icon-btn.unimart-btn-sold:hover {
+  background: #fffbeb;
+  border-color: #fcd34d;
+  color: #b45309;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(217, 119, 6, 0.2);
+}
+
+.unimart-card-icon-btn.unimart-btn-available {
+  color: #059669;
+}
+
+.unimart-card-icon-btn.unimart-btn-available:hover {
+  background: #ecfdf5;
+  border-color: #6ee7b7;
+  color: #047857;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(5, 150, 105, 0.2);
+}
+
+/* My Listings Status Badges (styled like Waiting for Approval badge) */
+.unimart-pending-timer-badge.status-badge-approved {
+  background: rgba(16, 185, 129, 0.15) !important;
+  color: #059669 !important;
+  border-color: rgba(16, 185, 129, 0.3) !important;
+}
+
+.unimart-pending-timer-badge.status-badge-sold {
+  background: rgba(100, 116, 139, 0.2) !important;
+  color: #64748b !important;
+  border-color: rgba(100, 116, 139, 0.35) !important;
+}
+
+.unimart-pending-timer-badge.status-badge-rejected {
+  background: rgba(239, 68, 68, 0.15) !important;
+  color: #dc2626 !important;
+  border-color: rgba(239, 68, 68, 0.3) !important;
+}
+
+.unimart-pending-timer-badge.status-badge-pending {
+  background: rgba(245, 158, 11, 0.15) !important;
+  color: #d97706 !important;
+  border-color: rgba(245, 158, 11, 0.3) !important;
 }
 
 /* ================= EXPANDED DETAILS SECTION (HOTSTAR / UNIMART EXPANDING HOVER CARD) ================= */
@@ -1827,7 +2018,8 @@
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
 }
 
-.unimart-admin-toast.toast-danger {
+.unimart-admin-toast.toast-danger,
+.unimart-admin-toast.toast-error {
   background: #fef2f2;
   border: 1px solid #fecaca;
   color: #991b1b;
@@ -1837,6 +2029,18 @@
   background: #f0fdf4;
   border: 1px solid #bbf7d0;
   color: #166534;
+}
+
+.unimart-admin-toast.toast-warning {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #92400e;
+}
+
+.unimart-admin-toast.toast-info {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #334155;
 }
 
 /* Footer */
@@ -2146,7 +2350,7 @@
 
 /* Soft-Pink Spotlight Card in Dark Mode (Neon velvet rose on deep blackberry) */
 [data-theme="dark"] .card-soft-pink {
-  background:linear-gradient(145deg, #7c3756 0%, #1a0610 100%);
+  background: linear-gradient(145deg, #7c3756 0%, #1a0610 100%);
   border: 1px solid rgba(244, 114, 182, 0.26);
   box-shadow: 0 10px 32px rgba(0, 0, 0, 0.45), 0 0 28px rgba(244, 114, 182, 0.07);
 }
@@ -2502,7 +2706,8 @@
   color: #ffffff;
 }
 
-[data-theme="dark"] .unimart-admin-toast.toast-danger {
+[data-theme="dark"] .unimart-admin-toast.toast-danger,
+[data-theme="dark"] .unimart-admin-toast.toast-error {
   background: #2a1215;
   border-color: rgba(239, 68, 68, 0.35);
   color: #fca5a5;
@@ -2512,6 +2717,18 @@
   background: #0f241a;
   border-color: rgba(34, 197, 94, 0.35);
   color: #86efac;
+}
+
+[data-theme="dark"] .unimart-admin-toast.toast-warning {
+  background: #291e0a;
+  border-color: rgba(245, 158, 11, 0.35);
+  color: #fcd34d;
+}
+
+[data-theme="dark"] .unimart-admin-toast.toast-info {
+  background: #1e293b;
+  border-color: rgba(148, 163, 184, 0.25);
+  color: #cbd5e1;
 }
 
 /* --- Theme Toggle Button Micro-Animation --- */

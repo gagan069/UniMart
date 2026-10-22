@@ -10,12 +10,29 @@ export function ThemeProvider({ children }) {
         if (t === 'dark' || t === 'light') return t;
       }
     } catch (e) {}
-    return localStorage.getItem('unimart-theme') || 'light';
+
+    try {
+      const savedTheme = localStorage.getItem('unimart-theme');
+      if (savedTheme === 'dark' || savedTheme === 'light') {
+        return savedTheme;
+      }
+    } catch (e) {
+      // In private browsing or sandboxed iframes, localStorage may throw
+    }
+
+    return 'light';
   });
 
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('unimart-theme', theme);
+    try {
+      document.documentElement.setAttribute('data-theme', theme);
+    } catch (e) {}
+
+    try {
+      localStorage.setItem('unimart-theme', theme);
+    } catch (e) {
+      // Ignore storage access errors in private/incognito windows
+    }
   }, [theme]);
 
   const toggleTheme = () => {

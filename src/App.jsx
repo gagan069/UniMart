@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import React from "react";
+import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import LoginPage from "./LoginPage.jsx";
 import Dashboard from "./Dashboard.jsx";
 import AdminPage from "./pages/AdminPage.jsx";
@@ -22,61 +22,28 @@ function ProtectedAdminRoute({ children }) {
   return children;
 }
 
-function MainScreen({ view: propView, setView: propSetView }) {
-  // 'dashboard' | 'login'
-  const [internalView, setInternalView] = useState(() => {
-    try {
-      if (typeof window !== 'undefined') {
-        const params = new URLSearchParams(window.location.search);
-        if (params.get('view') === 'landing' || params.get('view') === 'login') return 'login';
-        if (window.location.hash === '#landing' || window.location.hash === '#login') return 'login';
-      }
-    } catch (e) {}
-    return "dashboard";
-  });
-
-  const view = propView !== undefined ? propView : internalView;
-  const setView = propSetView || setInternalView;
-
-  return (
-    <>
-      {view === "login" ? (
-        <LoginPage onGoToDashboard={() => setView("dashboard")} />
-      ) : (
-        <Dashboard onGoToLogin={() => setView("login")} />
-      )}
-    </>
-  );
-}
-
 function App() {
-  const [view, setView] = useState(() => {
-    try {
-      if (typeof window !== 'undefined') {
-        const params = new URLSearchParams(window.location.search);
-        if (params.get('view') === 'landing' || params.get('view') === 'login') return 'login';
-        if (window.location.hash === '#landing' || window.location.hash === '#login') return 'login';
-      }
-    } catch (e) {}
-    return "dashboard";
-  });
-
-  const isLoginPage = view === "login";
+  const navigate = useNavigate();
 
   return (
     <Routes>
-      <Route path="/" element={<Layout isLoginPage={isLoginPage} />}>
-        <Route index element={<MainScreen view={view} setView={setView} />} />
-        <Route
-          path="login"
-          element={
-            <LoginPage
-              onGoToDashboard={() => {
-                setView("dashboard");
-              }}
-            />
-          }
-        />
+      <Route
+        path="/login"
+        element={<LoginPage onGoToDashboard={() => navigate("/")} />}
+      />
+      <Route
+        path="/register"
+        element={
+          <LoginPage
+            initialMode="register"
+            initialPage={2}
+            autoOpenModal={true}
+            onGoToDashboard={() => navigate("/")}
+          />
+        }
+      />
+      <Route path="/" element={<Layout />}>
+        <Route index element={<Dashboard onGoToLogin={() => navigate("/login")} />} />
         <Route
           path="admin"
           element={

@@ -1,26 +1,42 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext.jsx';
 import { useTheme } from './context/ThemeContext.jsx';
-import { SEEDED_USERS, findUserByCredentials, registerNewStudent } from './lib/mockUsers.js';
+import { useChat } from './context/ChatContext.jsx';
+import { SEEDED_USERS } from './lib/mockUsers.js';
 import './LoginPage.css';
 import welcomeStudentImg from './assets/welcome_student.jpg';
 import welcomeStudentDarkImg from './assets/welcome_student_dark.jpg';
 import campusParkImg from './assets/campus_park.jpg';
 import campusParkDarkImg from './assets/campus_park_dark.jpg';
 
-export default function LoginPage({ onGoToDashboard }) {
+export default function LoginPage({
+  onGoToDashboard,
+  initialMode = 'login',
+  initialPage = 1,
+  autoOpenModal = false
+}) {
   const auth = useAuth();
   const { theme, toggleTheme } = useTheme();
   const isDark = theme === 'dark';
   const currentWelcomeImg = isDark ? welcomeStudentDarkImg : welcomeStudentImg;
   const currentCampusImg = isDark ? campusParkDarkImg : campusParkImg;
+  const chat = useChat();
+
+  // Ensure chat is closed when on the login / register page
+  useEffect(() => {
+    if (chat?.closeChat) {
+      chat.closeChat();
+    }
+  }, []);
+
   // Page 1 = Welcome Screen (Expansive skater artwork)
   // Page 2 = Campus Gateway (Full campus illustration with Login & Register below)
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(initialPage);
 
   // Popup Modal states
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState('login'); // 'login' | 'register'
+  const [isModalOpen, setIsModalOpen] = useState(autoOpenModal || initialMode === 'register');
+  const [modalMode, setModalMode] = useState(initialMode);
 
   // Form states
   const [email, setEmail] = useState('');
@@ -97,7 +113,13 @@ export default function LoginPage({ onGoToDashboard }) {
     return Object.keys(errs).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const navigate = useNavigate();
+  const goToDashboard = () => {
+    if (onGoToDashboard) onGoToDashboard();
+    else navigate('/');
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setAlertInfo(null);
 
@@ -106,24 +128,28 @@ export default function LoginPage({ onGoToDashboard }) {
       if (!isValid) return;
 
       setIsLoading(true);
-      setTimeout(() => {
-        setIsLoading(false);
-        const newStudent = registerNewStudent({
+      try {
+        const newStudent = await auth.register({
           name: fullName,
           email,
-          studentId,
+          student_id: studentId,
           password
         });
-        if (auth?.login) auth.login(newStudent);
-
         setAlertInfo({
           type: 'success',
           message: `Registration successful! Welcome, ${newStudent.name}. Redirecting...`
         });
         setTimeout(() => {
-          if (onGoToDashboard) onGoToDashboard();
+          goToDashboard();
         }, 800);
-      }, 700);
+      } catch (err) {
+        setAlertInfo({
+          type: 'danger',
+          message: err.message || 'Registration failed. Please check your details.'
+        });
+      } finally {
+        setIsLoading(false);
+      }
       return;
     }
 
@@ -137,51 +163,29 @@ export default function LoginPage({ onGoToDashboard }) {
     }
 
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      const matched = findUserByCredentials(email, password);
-      let sessionUser = matched;
-
-      if (!sessionUser) {
-        // Fallback demo for custom student logins with valid chitkara email
-        if (email.trim().toLowerCase().endsWith('@chitkara.edu.in')) {
-          sessionUser = {
-            id: `student_${Date.now()}`,
-            name: email.split('@')[0],
-            email: email.trim().toLowerCase(),
-            studentId: '2110990696',
-            role: 'student'
-          };
-        } else {
-          setAlertInfo({
-            type: 'danger',
-            message: 'Invalid credentials. Please use seeded accounts (Admin / Student A / Student B) or register with @chitkara.edu.in.'
-          });
-          return;
-        }
-      }
-
-      if (auth?.login) auth.login(sessionUser);
-
+    try {
+      const sessionUser = await auth.login({ email, password });
       setAlertInfo({
         type: 'success',
         message: `Welcome back, ${sessionUser.name} (${sessionUser.role.toUpperCase()})! Redirecting...`
       });
       setTimeout(() => {
-        if (onGoToDashboard) onGoToDashboard();
+        goToDashboard();
       }, 700);
-    }, 600);
+    } catch (err) {
+      setAlertInfo({
+        type: 'danger',
+        message: err.message || 'Invalid email or password. Please check your Chitkara credentials.'
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleSkip = () => {
+  const handleSkip = async () => {
     // Guest mode: log out any current user so user === null
-    if (auth?.logout) auth.logout();
-    if (onGoToDashboard) {
-      onGoToDashboard();
-    } else {
-      setGuestNotice(true);
-      setTimeout(() => setGuestNotice(false), 3500);
-    }
+    if (auth?.logout) await auth.logout();
+    goToDashboard();
   };
 
   return (

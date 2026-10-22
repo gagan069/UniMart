@@ -675,6 +675,11 @@ html, body {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
 }
 
+[data-theme="dark"] .unimart-welcome-title .maroon-accent,
+[data-theme="dark"] .unimart-brand-title-serif {
+  color: #9f2944;
+}
+
 [data-theme="dark"] .unimart-nav-arrow:hover:not(:disabled) {
   background: linear-gradient(135deg, var(--unimart-maroon) 0%, var(--unimart-maroon-dark) 100%);
   border-color: #7e1028;
@@ -724,64 +729,17 @@ html, body {
   color: #94a3b8;
 }
 
-/* Landing Page Dark Theme Elements */
-[data-theme="dark"] .unimart-welcome-artwork-frame,
-[data-theme="dark"] .unimart-gateway-artwork-frame {
-  background-color: #10131a;
-  border: 1px solid rgba(255, 255, 255, 0.64);
-  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.55);
+/* Dark Theme Artwork Enhancements */
+[data-theme='dark'] .unimart-welcome-artwork-frame,
+[data-theme='dark'] .unimart-gateway-artwork-frame {
+  background-color: #0b0f17;
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.5);
 }
 
-[data-theme="dark"] .unimart-welcome-title {
-  color: #f8fafc;
+[data-theme='dark'] .unimart-welcome-artwork-frame img,
+[data-theme='dark'] .unimart-gateway-artwork-frame img {
+  border-radius: 18px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
-
-[data-theme="dark"] .unimart-welcome-title .maroon-accent {
-  color: #9f2944;
-}
-
-[data-theme="dark"] .unimart-welcome-text {
-  color: #94a3b8;
-}
-
-[data-theme="dark"] .unimart-brand-title-serif {
-  color: #9f2944;
-}
-
-[data-theme="dark"] .unimart-tiny-arrow {
-  color: #64748b;
-}
-
-[data-theme="dark"] .unimart-tiny-arrow:hover:not(:disabled) {
-  color: #fb7185;
-  background-color: rgba(251, 113, 133, 0.12);
-}
-
-[data-theme="dark"] .unimart-page-dot {
-  background-color: rgba(255, 255, 255, 0.18);
-}
-
-[data-theme="dark"] .unimart-page-dot.active {
-  background-color: #e11d48;
-}
-
-[data-theme="dark"] .unimart-login-pill-btn {
-  background: #111622;
-  border-color: rgba(255, 255, 255, 0.16);
-  color: #f8fafc;
-}
-
-[data-theme="dark"] .unimart-login-pill-btn:hover {
-  background: #171f2e;
-  border-color: #fb7185;
-  color: #fb7185;
-}
-
-[data-theme="dark"] .unimart-skip-btn {
-  color: #64748b;
-}
-
-[data-theme="dark"] .unimart-skip-btn:hover {
-  color: #fb7185;
-}
-
