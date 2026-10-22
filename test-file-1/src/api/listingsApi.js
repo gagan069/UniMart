@@ -221,25 +221,81 @@ export const listingsApi = {
     }
 
     const newPrice = updates.price !== undefined ? Number(updates.price) : existingItem.price;
-    const isPriceOnly =
-      updates.title === undefined &&
-      updates.category_id === undefined &&
-      updates.item_condition === undefined &&
-      updates.description === undefined &&
-      updates.photos === undefined &&
-      updates.meetup_spot === undefined &&
-      updates.notes === undefined;
+
+    // Fetch existing live photos to compare
+    const currentListingPhotos = photosTable
+      .filter((p) => Number(p.listing_id) === Number(existingItem.id))
+      .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+      .map((p) => p.url);
+
+    // Compare each submitted field's VALUE to the live listing.
+    // Fields sent with unchanged values count as unchanged.
+    const isTitleChanged =
+      updates.title !== undefined &&
+      (updates.title || '').trim() !== (existingItem.title || '').trim();
+
+    const isCategoryChanged =
+      updates.category_id !== undefined &&
+      String(updates.category_id) !== String(existingItem.category_id);
+
+    const existingSubcat = existingItem.subcategory_id != null ? String(existingItem.subcategory_id) : null;
+    const newSubcat = updates.subcategory_id != null ? String(updates.subcategory_id) : null;
+    const isSubcategoryChanged = updates.subcategory_id !== undefined && newSubcat !== existingSubcat;
+
+    const updatedCondition = updates.condition !== undefined ? updates.condition : updates.item_condition;
+    const isConditionChanged =
+      updatedCondition !== undefined &&
+      updatedCondition !== (existingItem.item_condition || existingItem.condition || '');
+
+    const updatedMeetup = updates.notes !== undefined ? updates.notes : updates.meetup_spot;
+    const isMeetupChanged =
+      updatedMeetup !== undefined &&
+      updatedMeetup.trim() !== (existingItem.meetup_spot || existingItem.notes || '').trim();
+
+    const isDescChanged =
+      updates.description !== undefined &&
+      (updates.description || '').trim() !== (existingItem.description || '').trim();
+
+    const updatedHasNotes = updates.hasNotes !== undefined ? updates.hasNotes : updates.has_notes;
+    const isNotesChanged =
+      updatedHasNotes !== undefined &&
+      Boolean(updatedHasNotes) !== Boolean(existingItem.has_notes ?? existingItem.hasNotes);
+
+    const isPhotosChanged =
+      Array.isArray(updates.photos)
+        ? (updates.photos.length !== currentListingPhotos.length ||
+           updates.photos.some((url, idx) => url !== currentListingPhotos[idx]))
+        : (updates.image !== undefined && updates.image !== currentListingPhotos[0]);
+
+    const isNonPriceContentChanged =
+      isTitleChanged ||
+      isCategoryChanged ||
+      isSubcategoryChanged ||
+      isConditionChanged ||
+      isMeetupChanged ||
+      isDescChanged ||
+      isNotesChanged ||
+      isPhotosChanged;
+
+    const isPriceChanged =
+      updates.price !== undefined &&
+      Number(updates.price) !== Number(existingItem.price);
+
+    const isOrigPriceChanged =
+      updates.origPrice !== undefined &&
+      (existingItem.original_price == null
+        ? updates.origPrice != null
+        : Number(updates.origPrice) !== Number(existingItem.original_price));
 
     const isStatusOnly =
       updates.status !== undefined &&
-      updates.title === undefined &&
-      updates.category_id === undefined &&
-      updates.item_condition === undefined &&
-      updates.description === undefined &&
-      updates.photos === undefined &&
-      updates.meetup_spot === undefined &&
-      updates.notes === undefined &&
-      updates.price === undefined;
+      !isNonPriceContentChanged &&
+      !isPriceChanged &&
+      !isOrigPriceChanged;
+
+    const isPriceOnly =
+      !isNonPriceContentChanged &&
+      (isPriceChanged || isOrigPriceChanged);
 
     if (isStatusOnly || isAdmin) {
       // Direct status or admin updates apply immediately
@@ -248,7 +304,7 @@ export const listingsApi = {
         status: updates.status || existingItem.status,
         badge: updates.badge !== undefined ? updates.badge : existingItem.badge,
         price: newPrice,
-        original_price: updates.origPrice !== undefined ? Number(updates.origPrice) : existingItem.original_price,
+        original_price: updates.origPrice !== undefined ? (updates.origPrice ? Number(updates.origPrice) : null) : existingItem.original_price,
         updated_at: new Date().toISOString()
       };
       setTable('listings', listings);
@@ -258,6 +314,15 @@ export const listingsApi = {
         data: populated,
         editType: isStatusOnly ? 'status_only' : 'admin_update',
         message: isStatusOnly ? `Status updated to ${updates.status}` : 'Listing updated'
+      };
+    }
+
+    if (!isNonPriceContentChanged && !isPriceChanged && !isOrigPriceChanged) {
+      const populated = populateListing(existingItem, photosTable, users, pendingEditsTable);
+      return {
+        data: populated,
+        editType: 'no_change',
+        message: 'No changes detected'
       };
     }
 
@@ -271,7 +336,7 @@ export const listingsApi = {
         category_id: updates.category_id !== undefined ? updates.category_id : existingItem.category_id,
         subcategory_id: updates.subcategory_id !== undefined ? updates.subcategory_id : existingItem.subcategory_id,
         price: newPrice,
-        original_price: updates.origPrice !== undefined ? Number(updates.origPrice) : existingItem.original_price,
+        original_price: updates.origPrice !== undefined ? (updates.origPrice ? Number(updates.origPrice) : null) : existingItem.original_price,
         item_condition: updates.condition || updates.item_condition || existingItem.item_condition,
         meetup_spot: updates.notes || updates.meetup_spot || existingItem.meetup_spot,
         description: updates.description !== undefined ? updates.description : existingItem.description,
@@ -305,7 +370,7 @@ export const listingsApi = {
       const populated = populateListing(listings[itemIndex], currentPhotos, users, pendingEditsTable);
       return {
         data: populated,
-        editType: 'pending_resubmission',
+        editType: existingItem.status === 'rejected' ? 'resubmission' : 'pending_resubmission',
         message: existingItem.status === 'rejected' ? 'Listing resubmitted for admin approval!' : 'Listing updated!'
       };
     }
@@ -315,7 +380,7 @@ export const listingsApi = {
       listings[itemIndex] = {
         ...existingItem,
         price: newPrice,
-        original_price: updates.origPrice !== undefined ? Number(updates.origPrice) : existingItem.original_price,
+        original_price: updates.origPrice !== undefined ? (updates.origPrice ? Number(updates.origPrice) : null) : existingItem.original_price,
         updated_at: new Date().toISOString()
       };
       setTable('listings', listings);
@@ -339,12 +404,6 @@ export const listingsApi = {
 
     // Remove any previous pending edit for this listing so there's never more than one
     pendingEditsTable = pendingEditsTable.filter((pe) => Number(pe.listing_id) !== Number(existingItem.id));
-
-    // Get current photos of existing listing
-    const currentListingPhotos = photosTable
-      .filter((p) => Number(p.listing_id) === Number(existingItem.id))
-      .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
-      .map((p) => p.url);
 
     const proposedPhotos = Array.isArray(updates.photos) ? updates.photos : currentListingPhotos;
 

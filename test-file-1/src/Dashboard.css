@@ -946,9 +946,27 @@
   justify-content: center;
   cursor: pointer;
   z-index: 12;
-  transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease, background 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.2s ease;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
   padding: 0;
+}
+
+.unimart-product-card:is(:hover, .is-hovered) .unimart-card-nav-arrow,
+.hover-card:is(:hover, .is-hovered) .unimart-card-nav-arrow {
+  opacity: 1;
+  pointer-events: auto;
+  visibility: visible;
+}
+
+@media (hover: none) {
+  .unimart-card-nav-arrow {
+    opacity: 1;
+    pointer-events: auto;
+    visibility: visible;
+  }
 }
 
 .unimart-card-nav-arrow:hover {

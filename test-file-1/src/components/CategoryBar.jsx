@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 
 export default function CategoryBar({
   searchQuery,
@@ -9,6 +9,24 @@ export default function CategoryBar({
   getCategoryCount,
   pendingCount
 }) {
+  const pillsRef = useRef(null);
+
+  useEffect(() => {
+    const el = pillsRef.current;
+    if (!el) return;
+    const handleWheel = (e) => {
+      // Normal vertical mouse wheel over the row scrolls it sideways
+      if (e.deltaY !== 0) {
+        e.preventDefault();
+        el.scrollLeft += e.deltaY;
+      }
+    };
+    el.addEventListener('wheel', handleWheel, { passive: false });
+    return () => {
+      el.removeEventListener('wheel', handleWheel);
+    };
+  }, []);
+
   return (
     <>
       {/* Responsive Mobile Search Bar */}
@@ -41,7 +59,7 @@ export default function CategoryBar({
 
       {/* Category Pills Subnav */}
       <div className="unimart-subnav">
-        <div className="unimart-cat-pills" role="tablist" aria-label="Category Filters">
+        <div ref={pillsRef} className="unimart-cat-pills" role="tablist" aria-label="Category Filters">
           {categoryDefs.map((cat) => {
             const isActive = selectedCategory === cat.key;
             return (

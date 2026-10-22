@@ -30,7 +30,7 @@ export const updateListing = createAsyncThunk(
   async ({ id, updates, currentUser }, { rejectWithValue }) => {
     try {
       const response = await listingsApi.updateListing(id, updates, currentUser);
-      return response.data;
+      return { data: response.data, editType: response.editType, message: response.message };
     } catch (err) {
       return rejectWithValue(err.message || 'Failed to update listing');
     }
@@ -109,10 +109,11 @@ export const listingsSlice = createSlice({
 
       // updateListing
       .addCase(updateListing.fulfilled, (state, action) => {
-        if (action.payload) {
-          const index = state.items.findIndex((item) => item.id === action.payload.id);
+        const item = action.payload?.data || action.payload;
+        if (item && item.id) {
+          const index = state.items.findIndex((i) => i.id === item.id);
           if (index !== -1) {
-            state.items[index] = action.payload;
+            state.items[index] = item;
           }
         }
       })

@@ -1,5 +1,4 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { canManageListing, isAdmin as checkIsAdmin } from '../lib/permissions.js';
 import { categories } from '../lib/categories.js';
 import { CATEGORY_THEME_MAP, resolveCategoryId, getDisplaySellerName, isUserListingOwner } from '../lib/constants.js';
@@ -19,7 +18,6 @@ export default function ListingCard({
   onDeleteListingClick,
   onToggleSoldClick
 }) {
-  const navigate = useNavigate();
   const hasDiscount = typeof item.origPrice === 'number' && !isNaN(item.origPrice) && item.origPrice > item.price;
   const discountPct = hasDiscount ? Math.round(((item.origPrice - item.price) / item.origPrice) * 100) : 0;
   const photosList = item.photos && item.photos.length > 0 ? item.photos : (item.image ? [item.image] : []);
@@ -33,17 +31,9 @@ export default function ListingCard({
     categories.find((c) => c.id === itemCatId)?.subcategories?.find((s) => s.id === item.subcategory_id)?.name
   );
 
-  const handleCardClick = (e) => {
-    // Prevent navigating if clicking an interactive control
-    if (e.target.closest('button') || e.target.closest('.unimart-card-photo-dot') || e.target.closest('a')) {
-      return;
-    }
-    navigate(`/listing/${item.id}`);
-  };
-
   return (
     <div className={`unimart-product-card ${themeClass}`}>
-      <div className="unimart-card-inner" onClick={handleCardClick} role="button" tabIndex={0}>
+      <div className="unimart-card-inner">
         <div className="unimart-card-top-content">
           {/* Image and placeholder banner with category theme */}
           <div className={`unimart-card-placeholder-wrap ${themeClass}`}>
@@ -338,17 +328,6 @@ export default function ListingCard({
                 </button>
               </>
             )}
-            <button
-              type="button"
-              className="unimart-btn-icon"
-              title="Quick preview"
-              onClick={(e) => {
-                e.stopPropagation();
-                navigate(`/listing/${item.id}`);
-              }}
-            >
-              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>open_in_new</span>
-            </button>
           </div>
         </div>
       </div>

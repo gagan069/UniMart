@@ -104,7 +104,7 @@ export default function Dashboard({ onGoToLogin }) {
     }
   }, [location.state]);
 
-  // Sync search query and sell modal triggers when navigating with URL params or router state
+  // Sync search query when navigating with URL params (?q=)
   useEffect(() => {
     try {
       const params = new URLSearchParams(location.search);
@@ -112,16 +112,10 @@ export default function Dashboard({ onGoToLogin }) {
       if (q !== null && q !== undefined) {
         setSearchQuery((prev) => (prev !== q ? q : prev));
       }
-      if (location.state?.openSell || params.get('sell') === 'true') {
-        if (user) {
-          listingForm.openSellModal();
-        }
-        window.history.replaceState({}, document.title, location.pathname + (q ? `?q=${encodeURIComponent(q)}` : ''));
-      }
     } catch {
       // ignore
     }
-  }, [location.search, location.state, location.pathname, user, listingForm]);
+  }, [location.search]);
 
   const [catalogTab, setCatalogTab] = useState(() => {
     try {

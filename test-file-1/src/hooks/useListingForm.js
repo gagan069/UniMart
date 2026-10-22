@@ -360,7 +360,7 @@ export function useListingForm({ user, productList = [], dispatch, setAdminAlert
     setIsSellModalOpen(true);
   };
 
-  const handlePublishListing = (e) => {
+  const handlePublishListing = async (e) => {
     if (e) e.preventDefault();
     if (formData.photos.length === 0) {
       setFormErrors((prev) => ({
@@ -415,39 +415,9 @@ export function useListingForm({ user, productList = [], dispatch, setAdminAlert
         return;
       }
 
-      // Rule: If ONLY the price was updated, auto-accept immediately and keep listing active
-      if (!isContentChanged && isPriceChanged) {
-        const parsedOrig = formData.origPrice ? Number(formData.origPrice) : (existingItem?.origPrice || null);
-        dispatch(
-          updateListingAction({
-            id: editingId,
-            updates: {
-              price: newPrice,
-              origPrice: parsedOrig && parsedOrig > newPrice ? parsedOrig : (existingItem?.origPrice && existingItem.origPrice > newPrice ? existingItem.origPrice : null),
-              category_id: existingCatId
-            },
-            currentUser: user
-          })
-        );
-
-        setEditResultType('price_only');
-        setIsPublishedSuccess(true);
-        if (setAdminAlert) {
-          setAdminAlert({
-            type: 'success',
-            text: `Price for "${existingItem?.title || 'Listing'}" updated to ₹${newPrice.toLocaleString('en-IN')}`
-          });
-        }
-        setTimeout(() => {
-          closeSellModal();
-          if (setAdminAlert) setAdminAlert(null);
-        }, 1800);
-        return;
-      }
-
       const parsedOrig = formData.origPrice ? Number(formData.origPrice) : (existingItem?.origPrice || null);
 
-      dispatch(
+      const actionResult = await dispatch(
         updateListingAction({
           id: editingId,
           updates: {
@@ -457,7 +427,7 @@ export function useListingForm({ user, productList = [], dispatch, setAdminAlert
             subcategory: subcategoryName,
             subcategory_id: formData.subcategory_id || null,
             price: newPrice,
-            origPrice: parsedOrig && parsedOrig > newPrice ? parsedOrig : null,
+            origPrice: parsedOrig && parsedOrig > newPrice ? parsedOrig : (existingItem?.origPrice && existingItem.origPrice > newPrice ? existingItem.origPrice : null),
             condition: formData.condition,
             icon: categoryIcon,
             categoryTheme: categoryTheme,
@@ -473,25 +443,67 @@ export function useListingForm({ user, productList = [], dispatch, setAdminAlert
         })
       );
 
-      const alertText =
-        existingItem?.status === 'rejected'
-          ? `Listing "${formData.title}" resubmitted to Admin for approval ⏳`
-          : existingItem?.status === 'approved'
-          ? `Listing edits for "${formData.title}" submitted to Admin for approval ⏳`
-          : `Listing updates for "${formData.title}" saved ⏳`;
+      if (updateListingAction.fulfilled.match(actionResult)) {
+        const payload = actionResult.payload;
+        const editType = payload?.editType;
 
-      setEditResultType('pending_approval');
-      setIsPublishedSuccess(true);
-      if (setAdminAlert) {
-        setAdminAlert({
-          type: 'warning',
-          text: alertText
-        });
+        if (editType === 'no_change') {
+          closeSellModal();
+          return;
+        }
+
+        if (editType === 'price_only') {
+          setEditResultType('price_only');
+          setIsPublishedSuccess(true);
+          if (setAdminAlert) {
+            setAdminAlert({
+              type: 'success',
+              text: `Price for "${existingItem?.title || formData.title}" updated to ₹${newPrice.toLocaleString('en-IN')}`
+            });
+          }
+          setTimeout(() => {
+            closeSellModal();
+            if (setAdminAlert) setAdminAlert(null);
+          }, 1800);
+          return;
+        }
+
+        if (editType === 'resubmission') {
+          setEditResultType('pending_approval');
+          setIsPublishedSuccess(true);
+          if (setAdminAlert) {
+            setAdminAlert({
+              type: 'warning',
+              text: `Listing "${formData.title}" resubmitted to Admin for approval ⏳`
+            });
+          }
+          setTimeout(() => {
+            closeSellModal();
+            if (setAdminAlert) setAdminAlert(null);
+          }, 2500);
+          return;
+        }
+
+        // Pending edit on live listing ('pending_approval') or general update
+        const alertText =
+          existingItem?.status === 'approved'
+            ? `Listing edits for "${formData.title}" submitted to Admin for approval ⏳`
+            : `Listing updates for "${formData.title}" saved ⏳`;
+
+        setEditResultType('pending_approval');
+        setIsPublishedSuccess(true);
+        if (setAdminAlert) {
+          setAdminAlert({
+            type: 'warning',
+            text: alertText
+          });
+        }
+        setTimeout(() => {
+          closeSellModal();
+          if (setAdminAlert) setAdminAlert(null);
+        }, 2500);
+        return;
       }
-      setTimeout(() => {
-        closeSellModal();
-        if (setAdminAlert) setAdminAlert(null);
-      }, 2500);
       return;
     }
 
