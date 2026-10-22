@@ -22,9 +22,21 @@ function ProtectedAdminRoute({ children }) {
   return children;
 }
 
-function MainScreen() {
+function MainScreen({ view: propView, setView: propSetView }) {
   // 'dashboard' | 'login'
-  const [view, setView] = useState("dashboard");
+  const [internalView, setInternalView] = useState(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('view') === 'landing' || params.get('view') === 'login') return 'login';
+        if (window.location.hash === '#landing' || window.location.hash === '#login') return 'login';
+      }
+    } catch (e) {}
+    return "dashboard";
+  });
+
+  const view = propView !== undefined ? propView : internalView;
+  const setView = propSetView || setInternalView;
 
   return (
     <>
@@ -38,10 +50,33 @@ function MainScreen() {
 }
 
 function App() {
+  const [view, setView] = useState(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('view') === 'landing' || params.get('view') === 'login') return 'login';
+        if (window.location.hash === '#landing' || window.location.hash === '#login') return 'login';
+      }
+    } catch (e) {}
+    return "dashboard";
+  });
+
+  const isLoginPage = view === "login";
+
   return (
     <Routes>
-      <Route path="/" element={<Layout />}>
-        <Route index element={<MainScreen />} />
+      <Route path="/" element={<Layout isLoginPage={isLoginPage} />}>
+        <Route index element={<MainScreen view={view} setView={setView} />} />
+        <Route
+          path="login"
+          element={
+            <LoginPage
+              onGoToDashboard={() => {
+                setView("dashboard");
+              }}
+            />
+          }
+        />
         <Route
           path="admin"
           element={

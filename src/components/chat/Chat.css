@@ -2,6 +2,16 @@
    UNIMART CHAT SYSTEM (CENTERED FLOATING WINDOW THEME)
    ========================================================================== */
 
+/* Do not display messages floating button, minimized dock bar, or chat modal on login / landing page */
+body:has(.unimart-app-shell) .unimart-chat-floating-btn,
+body:has(.unimart-app-shell) .unimart-chat-minimized-bar,
+body:has(.unimart-app-shell) .unimart-chat-modal-overlay,
+.unimart-app-shell ~ .unimart-chat-floating-btn,
+.unimart-app-shell ~ .unimart-chat-minimized-bar,
+.unimart-app-shell ~ .unimart-chat-modal-overlay {
+  display: none !important;
+}
+
 /* ----------------- Floating Trigger Button (Bottom Right) ----------------- */
 .unimart-chat-floating-btn {
   position: fixed;

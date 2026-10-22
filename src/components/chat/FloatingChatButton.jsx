@@ -1,8 +1,23 @@
 import React from 'react';
+import { useLocation } from 'react-router-dom';
 import { useChat } from '../../context/ChatContext.jsx';
 import './Chat.css';
 
-export default function FloatingChatButton() {
+export default function FloatingChatButton({ isLoginPage }) {
+  const location = useLocation();
+  const isLogin = Boolean(
+    isLoginPage ||
+    location.pathname === '/login' ||
+    location.search.includes('view=login') ||
+    location.search.includes('view=landing') ||
+    location.hash === '#login' ||
+    location.hash === '#landing'
+  );
+
+  if (isLogin) {
+    return null;
+  }
+
   const {
     isOpen,
     isMinimized,
