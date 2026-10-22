@@ -675,9 +675,14 @@ html, body {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
 }
 
+[data-theme="dark"] .unimart-welcome-title .maroon-accent,
+[data-theme="dark"] .unimart-brand-title-serif {
+  color: #9f2944;
+}
+
 [data-theme="dark"] .unimart-nav-arrow:hover:not(:disabled) {
-  background: #e11d48;
-  border-color: #e11d48;
+  background: linear-gradient(135deg, var(--unimart-maroon) 0%, var(--unimart-maroon-dark) 100%);
+  border-color: #7e1028;
   color: #ffffff;
 }
 

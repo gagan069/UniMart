@@ -2266,7 +2266,7 @@
 
 /* Lime-Yellow Spotlight Card in Dark Mode (Luminous chartreuse on deep olive slate) */
 [data-theme="dark"] .card-lime-yellow {
-  background: linear-gradient(145deg, #172312 0%, #0d170a 100%);
+  background: linear-gradient(145deg, #498032 0%, #0d170a 100%);
   border: 1px solid rgba(190, 242, 100, 0.24);
   box-shadow: 0 10px 32px rgba(0, 0, 0, 0.45), 0 0 28px rgba(190, 242, 100, 0.07);
 }
@@ -2299,7 +2299,7 @@
 
 /* Sky-Blue Spotlight Card in Dark Mode (Electric ice blue on deep midnight ocean) */
 [data-theme="dark"] .card-sky-blue {
-  background: linear-gradient(145deg, #0c2036 0%, #061220 100%);
+  background: linear-gradient(145deg, #24476e 0%, #061220 100%);
   border: 1px solid rgba(56, 189, 248, 0.26);
   box-shadow: 0 10px 32px rgba(0, 0, 0, 0.45), 0 0 28px rgba(56, 189, 248, 0.07);
 }
@@ -2332,7 +2332,7 @@
 
 /* Soft-Pink Spotlight Card in Dark Mode (Neon velvet rose on deep blackberry) */
 [data-theme="dark"] .card-soft-pink {
-  background: linear-gradient(145deg, #2d0e1c 0%, #1a0610 100%);
+  background: linear-gradient(145deg, #7c3756 0%, #1a0610 100%);
   border: 1px solid rgba(244, 114, 182, 0.26);
   box-shadow: 0 10px 32px rgba(0, 0, 0, 0.45), 0 0 28px rgba(244, 114, 182, 0.07);
 }
