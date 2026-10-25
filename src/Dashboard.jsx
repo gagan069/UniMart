@@ -1,36 +1,76 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
+import { useTheme } from './context/ThemeContext.jsx';
+import { useAuth } from './context/AuthContext.jsx';
+import { useChat } from './context/ChatContext.jsx';
+import { canManageListing } from './lib/permissions.js';
+import { categories } from './lib/categories.js';
+import {
+  fetchListings,
+  updateListing as updateListingAction,
+  deleteListing as deleteListingAction
+} from './store/slices/listingsSlice.js';
+import {
+  selectVisibleListings,
+  selectMyListings
+} from './store/selectors.js';
+import { useListingForm } from './hooks/useListingForm.js';
+import { useToast } from './hooks/useToast.js';
+import ToastAlert from './components/ToastAlert.jsx';
+
+import {
+  CONDITION_OPTIONS,
+  MEETUP_OPTIONS,
+  CATEGORY_THEME_MAP,
+  resolveCategoryId,
+  getDisplaySellerName,
+  isUserListingOwner
+} from './lib/constants.js';
+
+import Navbar from './components/Navbar.jsx';
+import CategoryBar from './components/CategoryBar.jsx';
+import SpotlightCard from './components/SpotlightCard.jsx';
+import ListingGrid from './components/ListingGrid.jsx';
+import SellListingModal from './components/SellListingModal/SellListingModal.jsx';
+import FloatingChatButton from './components/chat/FloatingChatButton.jsx';
+import ChatModal from './components/chat/ChatModal.jsx';
 import './Dashboard.css';
 
+// Re-export constants and helpers for backward compatibility
+export {
+  CONDITION_OPTIONS,
+  MEETUP_OPTIONS,
+  CATEGORY_THEME_MAP,
+  resolveCategoryId,
+  getDisplaySellerName,
+  isUserListingOwner
+};
+
 export default function Dashboard({ onGoToLogin }) {
-  // Modal & Popup visibility states
-  const [isSellModalOpen, setIsSellModalOpen] = useState(false);
-  const [isCartOpen, setIsCartOpen] = useState(false);
-  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [toastMessage, setToastMessage] = useState(null);
+  const { theme, toggleTheme } = useTheme();
+  const { user, logout } = useAuth() || {};
+  const dispatch = useDispatch();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { openChatWithItem, closeChat } = useChat();
 
-  // Active Category & Search Filters
-  const [activeCategory, setActiveCategory] = useState('All Categories');
-  const [searchQuery, setSearchQuery] = useState('');
-
-  // Wishlist state (IDs of items favorited)
-  const [wishlist, setWishlist] = useState([2]);
-
-  // Ref for marketplace catalog scroll target
-  const catalogRef = useRef(null);
-  const navActionsRef = useRef(null);
-
-  // Listing form state (in INR)
-  const [newItem, setNewItem] = useState({
-    title: '',
-    category: 'Handmade Crafts',
-    price: '',
-    condition: 'Brand New',
-    description: '',
-    seller: 'Satkar (You)'
+  const { toast: adminAlert, showToast: setAdminAlert, hideToast: hideAdminAlert } = useToast(3500);
+  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [searchQuery, setSearchQuery] = useState(() => {
+    try {
+      if (typeof window !== 'undefined' && window.location.search) {
+        const q = new URLSearchParams(window.location.search).get('q');
+        if (q) return q;
+      }
+    } catch {
+      // ignore
+    }
+    return '';
   });
+  const [cardPhotoIndex, setCardPhotoIndex] = useState({});
 
-  // Campus Notifications (initial count 3 to match design badge)
+  // Interactive notifications state
   const [notifications, setNotifications] = useState([
     {
       id: 1,
@@ -58,225 +98,30 @@ export default function Dashboard({ onGoToLogin }) {
     }
   ]);
 
-  // Initial products catalogue (priced in INR ₹)
-  const [products, setProducts] = useState([
-    {
-      id: 1,
-      title: 'Calculus: Early Transcendentals (8th Ed)',
-      category: 'Textbooks & Notes',
-      price: 450,
-      origPrice: 1499,
-      condition: 'Like New',
-      seller: 'Priya K. (Math Dept)',
-      icon: 'menu_book',
-      categoryTheme: 'theme-academic',
-      badge: 'Academic Pick',
-      notes: 'Semester 1 & 2 Core'
-    },
-    {
-      id: 2,
-      title: 'Handcrafted Ceramic Matcha Mug & Saucer',
-      category: 'Handmade Crafts',
-      price: 350,
-      origPrice: 699,
-      condition: 'Handmade',
-      seller: "Elena R. (Fine Arts '26)",
-      icon: 'palette',
-      categoryTheme: 'theme-crafts',
-      badge: 'Student Artisan',
-      notes: 'Hand-thrown Glaze'
-    },
-    {
-      id: 3,
-      title: 'TI-84 Plus CE Color Graphing Calculator',
-      category: 'Machinery & Tech',
-      price: 2499,
-      origPrice: 6999,
-      condition: 'Excellent',
-      seller: "Marcus T. (Engineering '24)",
-      icon: 'precision_manufacturing',
-      categoryTheme: 'theme-tech',
-      badge: 'Lab Ready',
-      notes: 'Battery + Cable included'
-    },
-    {
-      id: 4,
-      title: 'Botanical Dorm Mist: Cedar & Wild Lavender (50ml)',
-      category: 'Perfumes & Scents',
-      price: 299,
-      origPrice: 499,
-      condition: 'Freshly Crafted',
-      seller: 'Chloe W. (Biochem Maker)',
-      icon: 'local_florist',
-      categoryTheme: 'theme-scents',
-      badge: 'Organic',
-      notes: 'Natural Essential Oils'
-    },
-    {
-      id: 5,
-      title: 'Organic Chemistry as a Second Language (Klein)',
-      category: 'Textbooks & Notes',
-      price: 380,
-      origPrice: 1100,
-      condition: 'Good with notes',
-      seller: "David S. (Pre-Med '25)",
-      icon: 'menu_book',
-      categoryTheme: 'theme-academic',
-      badge: 'Annotated',
-      notes: 'Highlighted Key Concepts'
-    },
-    {
-      id: 6,
-      title: 'Hand-Embroidered Canvas Botanical Tote Bag',
-      category: 'Handmade Crafts',
-      price: 320,
-      origPrice: 599,
-      condition: 'Handmade',
-      seller: 'Aishwarya N. (Design Club)',
-      icon: 'palette',
-      categoryTheme: 'theme-crafts',
-      badge: 'Eco-Craft',
-      notes: '100% Organic Cotton'
-    },
-    {
-      id: 7,
-      title: 'Arduino Robotics Starter Kit + Sensor Shield',
-      category: 'Machinery & Tech',
-      price: 1850,
-      origPrice: 3499,
-      condition: 'Gently Used',
-      seller: 'Devin L. (Robotics Club)',
-      icon: 'precision_manufacturing',
-      categoryTheme: 'theme-tech',
-      badge: 'STEM Kit',
-      notes: 'Complete Sensor Modules'
-    },
-    {
-      id: 8,
-      title: 'Artisanal Solid Perfume: Amberwood & Bergamot',
-      category: 'Perfumes & Scents',
-      price: 249,
-      origPrice: 449,
-      condition: 'Handmade',
-      seller: 'Mira P. (Campus Alchemist)',
-      icon: 'local_florist',
-      categoryTheme: 'theme-scents',
-      badge: 'Pocket Scent',
-      notes: 'Beeswax & Jojoba Base'
-    }
-  ]);
-
-  // Cart state initialized with 2 items (matches badge "2" in the reference design)
+  // Interactive cart state
   const [cartItems, setCartItems] = useState([
     {
-      id: 1,
+      id: 'init-1',
       title: 'Calculus: Early Transcendentals (8th Ed)',
-      category: 'Textbooks & Notes',
       price: 450,
       qty: 1,
-      icon: 'menu_book',
-      categoryTheme: 'theme-academic'
+      icon: 'menu_book'
     },
     {
-      id: 4,
-      title: 'Botanical Dorm Mist: Cedar & Wild Lavender (50ml)',
-      category: 'Perfumes & Scents',
-      price: 299,
+      id: 'init-2',
+      title: 'Handcrafted Ceramic Matcha Mug & Saucer',
+      price: 350,
       qty: 1,
-      icon: 'local_florist',
-      categoryTheme: 'theme-scents'
+      icon: 'palette'
     }
   ]);
 
-  // Category definitions for navigation tabs
-  const categoryMeta = [
-    { name: 'All Categories', icon: 'apps' },
-    { name: 'Textbooks & Notes', icon: 'menu_book' },
-    { name: 'Handmade Crafts', icon: 'palette' },
-    { name: 'Machinery & Tech', icon: 'precision_manufacturing' },
-    { name: 'Perfumes & Scents', icon: 'local_florist' }
-  ];
-
-  // Dynamically calculate category counts based on current products
-  const categories = categoryMeta.map((cat) => {
-    let count = 0;
-    if (cat.name === 'All Categories') {
-      count = products.length;
-    } else {
-      count = products.filter((p) => p.category === cat.name).length;
-    }
-    return {
-      ...cat,
-      count: `${count} item${count === 1 ? '' : 's'}`
-    };
-  });
-
-  // Calculate unread notifications & total cart items
-  const unreadCount = notifications.filter((n) => !n.read).length;
-  const totalCartCount = cartItems.reduce((acc, item) => acc + item.qty, 0);
-  const cartSubtotal = cartItems.reduce((acc, item) => acc + item.price * item.qty, 0);
-
-  // Show floating toast notification with automatic dismissal
-  const triggerToast = (msg) => {
-    setToastMessage(msg);
-    setTimeout(() => {
-      setToastMessage((current) => (current === msg ? null : current));
-    }, 3200);
-  };
-
-  // Close open dropdowns when clicking outside
-  useEffect(() => {
-    const handleOutsideClick = (e) => {
-      if (navActionsRef.current && !navActionsRef.current.contains(e.target)) {
-        setIsNotificationsOpen(false);
-        setIsCartOpen(false);
-        setIsProfileOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleOutsideClick);
-    return () => document.removeEventListener('mousedown', handleOutsideClick);
-  }, []);
-
-  // Filter products by active category and search input
-  const filteredProducts = products.filter((item) => {
-    const matchesCategory =
-      activeCategory === 'All Categories' || item.category === activeCategory;
-    const q = searchQuery.trim().toLowerCase();
-    const matchesSearch =
-      !q ||
-      item.title.toLowerCase().includes(q) ||
-      item.category.toLowerCase().includes(q) ||
-      item.seller.toLowerCase().includes(q) ||
-      (item.notes && item.notes.toLowerCase().includes(q));
-    return matchesCategory && matchesSearch;
-  });
-
-  // Scroll to catalog section helper
-  const scrollToCatalog = () => {
-    if (catalogRef.current) {
-      catalogRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  };
-
-  // Category tab click handler
-  const handleSelectCategory = (catName) => {
-    setActiveCategory(catName);
-    scrollToCatalog();
-  };
-
-  // Search submission / enter handler
-  const handleSearchSubmit = (e) => {
-    if (e) e.preventDefault();
-    scrollToCatalog();
-  };
-
-  // Add item to cart
   const handleAddToCart = (product) => {
     setCartItems((prevItems) => {
       const existing = prevItems.find((i) => i.id === product.id);
       if (existing) {
         return prevItems.map((i) =>
-          i.id === product.id ? { ...i, qty: i.qty + 1 } : i
+          i.id === product.id ? { ...i, qty: (i.qty || 1) + 1 } : i
         );
       }
       return [
@@ -287,21 +132,23 @@ export default function Dashboard({ onGoToLogin }) {
           category: product.category,
           price: product.price,
           qty: 1,
-          icon: product.icon,
-          categoryTheme: product.categoryTheme
+          icon: product.icon || 'shopping_bag'
         }
       ];
     });
-    triggerToast(`Added "${product.title}" to campus cart!`);
+    setAdminAlert({
+      type: 'success',
+      text: `Added "${product.title}" to campus cart!`
+    });
+    setTimeout(() => setAdminAlert(null), 3000);
   };
 
-  // Adjust cart item quantity
   const handleUpdateCartQty = (id, delta) => {
     setCartItems((prev) =>
       prev
         .map((item) => {
           if (item.id === id) {
-            const newQty = item.qty + delta;
+            const newQty = (item.qty || 1) + delta;
             return newQty > 0 ? { ...item, qty: newQty } : null;
           }
           return item;
@@ -310,486 +157,314 @@ export default function Dashboard({ onGoToLogin }) {
     );
   };
 
-  // Remove single item from cart
   const handleRemoveFromCart = (id) => {
     setCartItems((prev) => prev.filter((item) => item.id !== id));
-    triggerToast('Item removed from cart.');
+    setAdminAlert({
+      type: 'info',
+      text: 'Item removed from cart.'
+    });
+    setTimeout(() => setAdminAlert(null), 2500);
   };
 
-  // Checkout order
   const handleCheckout = () => {
     if (cartItems.length === 0) return;
     setCartItems([]);
-    setIsCartOpen(false);
-    triggerToast('Campus meetup order confirmed! Meetup details sent to sellers.');
+    setAdminAlert({
+      type: 'success',
+      text: 'Campus meetup order confirmed! Meetup details sent to sellers.'
+    });
+    setTimeout(() => setAdminAlert(null), 4000);
   };
 
-  // Toggle wishlist
-  const handleToggleWishlist = (id, title) => {
-    if (wishlist.includes(id)) {
-      setWishlist(wishlist.filter((wId) => wId !== id));
-      triggerToast(`Removed "${title}" from wishlist.`);
-    } else {
-      setWishlist([...wishlist, id]);
-      triggerToast(`Saved "${title}" to your wishlist!`);
-    }
-  };
-
-  // Mark all notifications as read
   const handleMarkAllNotificationsRead = () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-    triggerToast('All notifications marked as read.');
-  };
-
-  // Handle new item publication from modal
-  const handleSellSubmit = (e) => {
-    e.preventDefault();
-    const itemCat = newItem.category;
-
-    let theme = 'theme-crafts';
-    let icon = 'palette';
-    let badge = 'Student Listing';
-
-    if (itemCat === 'Textbooks & Notes') {
-      theme = 'theme-academic';
-      icon = 'menu_book';
-      badge = 'Academic Pick';
-    } else if (itemCat === 'Machinery & Tech') {
-      theme = 'theme-tech';
-      icon = 'precision_manufacturing';
-      badge = 'Lab Ready';
-    } else if (itemCat === 'Perfumes & Scents') {
-      theme = 'theme-scents';
-      icon = 'local_florist';
-      badge = 'Artisanal';
-    }
-
-    const priceNum = Number(newItem.price) || 0;
-    const createdProduct = {
-      id: Date.now(),
-      title: newItem.title,
-      category: newItem.category,
-      price: priceNum,
-      origPrice: Math.round(priceNum * 1.35),
-      condition: newItem.condition,
-      seller: 'Satkar (You)',
-      icon: icon,
-      categoryTheme: theme,
-      badge: badge,
-      notes: newItem.description ? newItem.description.slice(0, 32) : 'Central Campus Meetup'
-    };
-
-    setProducts([createdProduct, ...products]);
-    setIsSellModalOpen(false);
-    setActiveCategory('All Categories');
-    triggerToast(`"${newItem.title}" published to UNIMART campus marketplace!`);
-
-    // Reset form
-    setNewItem({
-      title: '',
-      category: 'Handmade Crafts',
-      price: '',
-      condition: 'Brand New',
-      description: '',
-      seller: 'Satkar (You)'
+    setAdminAlert({
+      type: 'info',
+      text: 'All notifications marked as read.'
     });
-
-    scrollToCatalog();
+    setTimeout(() => setAdminAlert(null), 2500);
   };
 
-  // Reset all filters
-  const handleResetFilters = () => {
-    setActiveCategory('All Categories');
-    setSearchQuery('');
+  const handleMarkNotificationRead = (id) => {
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+    );
   };
+
+  const handleSearchSubmit = () => {
+    const catalogEl = document.querySelector('.unimart-subnav') || document.querySelector('.unimart-hero-grid');
+    if (catalogEl) {
+      catalogEl.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  // Listings from Redux store using centralized selectors
+  const visibleListings = useSelector(selectVisibleListings(user));
+  const myListings = useSelector(selectMyListings(user?.id));
+  const rawListings = useSelector((state) => state.listings.items) || [];
+
+  // Form management via custom hook
+  const listingForm = useListingForm({
+    user,
+    productList: rawListings,
+    dispatch,
+    setAdminAlert
+  });
+
+  const handleGoToLogin = () => {
+    if (closeChat) closeChat();
+    if (onGoToLogin) onGoToLogin();
+  };
+
+  // Fetch listings on mount and user change
+  useEffect(() => {
+    dispatch(fetchListings({ currentUser: user }));
+  }, [dispatch, user]);
+
+  // Listen for access denied redirect from /admin route
+  useEffect(() => {
+    if (location.state?.accessDeniedToast) {
+      setAdminAlert({
+        type: 'danger',
+        text: location.state.accessDeniedToast
+      });
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
+
+  // Sync search query when navigating with URL params (?q=)
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(location.search);
+      const q = params.get('q');
+      if (q !== null && q !== undefined) {
+        setSearchQuery((prev) => (prev !== q ? q : prev));
+      }
+    } catch {
+      // ignore
+    }
+  }, [location.search]);
+
+  const [catalogTab, setCatalogTab] = useState(() => {
+    try {
+      if (typeof window !== 'undefined' && window.location.search) {
+        const t = new URLSearchParams(window.location.search).get('tab');
+        if (t === 'my' || t === 'all') return t;
+      }
+    } catch {
+      // ignore
+    }
+    return 'all';
+  });
+
+  // Revert to 'all' if user logs out while on 'my' tab
+  useEffect(() => {
+    if (!user && catalogTab === 'my') {
+      setCatalogTab('all');
+    }
+  }, [user, catalogTab]);
+
+  // Photo carousel navigation on individual cards
+  const handlePrevPhoto = (e, itemId, totalPhotos) => {
+    if (e) e.stopPropagation();
+    setCardPhotoIndex((prev) => ({
+      ...prev,
+      [itemId]: ((prev[itemId] || 0) - 1 + totalPhotos) % totalPhotos
+    }));
+  };
+
+  const handleNextPhoto = (e, itemId, totalPhotos) => {
+    if (e) e.stopPropagation();
+    setCardPhotoIndex((prev) => ({
+      ...prev,
+      [itemId]: ((prev[itemId] || 0) + 1) % totalPhotos
+    }));
+  };
+
+  // Category filter definitions derived from categories.js
+  const categoryDefs = [
+    { key: 'All', name: 'All Categories', icon: 'apps' },
+    ...categories.map((c) => ({
+      key: c.id,
+      name: c.name,
+      icon: c.icon
+    }))
+  ];
+
+  // Active pool of products scoped by catalog tab ('all' vs 'my')
+  const activeScopedProducts = catalogTab === 'my' && user ? myListings : visibleListings;
+  const myListingsCount = myListings.length;
+  const pendingCount = activeScopedProducts.filter((item) => item.status === 'pending').length;
+
+  const getCategoryCount = (key) => {
+    if (key === 'All') return `${activeScopedProducts.length} items`;
+    if (key === 'Pending') return `${pendingCount} items`;
+    const count = activeScopedProducts.filter((item) => {
+      const itemCatId = resolveCategoryId(item);
+      const catObj = categories.find((c) => c.id === key);
+      return itemCatId === key || item.category === key || (catObj && item.category === catObj.name);
+    }).length;
+    return `${count} items`;
+  };
+
+  // Dynamic product filtering by category and live search query
+  const filteredProducts = activeScopedProducts.filter((item) => {
+    const itemCatId = resolveCategoryId(item);
+    const catObj = categories.find((c) => c.id === selectedCategory);
+    const matchesCategory =
+      selectedCategory === 'All'
+        ? true
+        : selectedCategory === 'Pending'
+        ? item.status === 'pending'
+        : itemCatId === selectedCategory ||
+          item.category === selectedCategory ||
+          (catObj && item.category === catObj.name);
+
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return matchesCategory;
+
+    const matchesSearch =
+      (item.title || '').toLowerCase().includes(q) ||
+      (item.category || '').toLowerCase().includes(q) ||
+      (item.seller || '').toLowerCase().includes(q) ||
+      (item.notes && item.notes.toLowerCase().includes(q)) ||
+      (item.badge && item.badge.toLowerCase().includes(q)) ||
+      (item.condition && item.condition.toLowerCase().includes(q)) ||
+      (item.description && item.description.toLowerCase().includes(q)) ||
+      (item.status && item.status.toLowerCase().includes(q));
+
+    return matchesCategory && matchesSearch;
+  });
+
+  const handleDeleteListingClick = (e, item) => {
+    if (e) e.stopPropagation();
+    if (!canManageListing(user, item)) return;
+
+    const confirmed = window.confirm(`Delete '${item.title}'? This can't be undone.`);
+    if (!confirmed) return;
+
+    dispatch(deleteListingAction({ id: item.id, currentUser: user }));
+    setAdminAlert({
+      type: 'success',
+      text: 'Listing deleted'
+    });
+    setTimeout(() => setAdminAlert(null), 3500);
+  };
+
+  const handleToggleSoldClick = (e, item) => {
+    if (e) e.stopPropagation();
+    if (!canManageListing(user, item)) return;
+    const nextStatus = item.status === 'sold' ? 'approved' : 'sold';
+    dispatch(
+      updateListingAction({
+        id: item.id,
+        updates: { status: nextStatus },
+        currentUser: user
+      })
+    );
+    setAdminAlert({
+      type: 'success',
+      text: nextStatus === 'sold' ? `"${item.title}" marked as Sold.` : `"${item.title}" marked as Available.`
+    });
+    setTimeout(() => setAdminAlert(null), 3000);
+  };
+
+  const handleWishlistClick = (e) => {
+    e.stopPropagation();
+    if (!user) {
+      setAdminAlert({
+        type: 'danger',
+        text: 'Please sign in to add items to your wishlist.'
+      });
+      return;
+    }
+    setAdminAlert({
+      type: 'success',
+      text: 'Wishlist feature will be available in Phase 6.'
+    });
+    setTimeout(() => setAdminAlert(null), 2500);
+  };
+
+  const handleChatClick = (e, item) => {
+    e.stopPropagation();
+    if (!user) {
+      setAdminAlert({
+        type: 'danger',
+        text: 'Please sign in to chat with campus sellers.'
+      });
+      return;
+    }
+    if (isUserListingOwner(item, user)) {
+      setAdminAlert({
+        type: 'info',
+        text: 'This is your own listing! You can manage it under "My Listings".'
+      });
+      return;
+    }
+    openChatWithItem(item);
+  };
+
+  const handleBuyClick = (e, item) => {
+    if (e) e.stopPropagation();
+    if (!item) return;
+    handleAddToCart(item);
+  };
+
+  const selectedCategoryObj = categories.find((c) => c.id === listingForm.formData.category_id);
+  const isBooksCategory = selectedCategoryObj?.name === 'Books & Notes' || selectedCategoryObj?.id === 'books-notes';
 
   return (
     <div className="unimart-dashboard-wrap">
-      {/* ================= TOP NAVBAR ================= */}
-      <nav className="unimart-dash-nav">
-        <div className="d-flex align-items-center justify-content-between gap-3">
-          
-          {/* Brand Logo & Onboarding link */}
-          <div className="d-flex align-items-center gap-3">
-            <button
-              type="button"
-              className="unimart-logo-group"
-              onClick={handleResetFilters}
-              title="UNIMART Campus Marketplace - Reset to All"
-            >
-              <div className="unimart-logo-badge">
-                <span className="material-symbols-outlined">local_mall</span>
-              </div>
-              <span>UNIMART</span>
-            </button>
+      {/* Top Navbar */}
+      <Navbar
+        handleGoToLogin={handleGoToLogin}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        categories={categories}
+        selectedCategory={selectedCategory}
+        setSelectedCategory={setSelectedCategory}
+        cartItems={cartItems}
+        onUpdateCartQty={handleUpdateCartQty}
+        onRemoveFromCart={handleRemoveFromCart}
+        onCheckout={handleCheckout}
+        notifications={notifications}
+        onMarkAllNotificationsRead={handleMarkAllNotificationsRead}
+        onMarkNotificationRead={handleMarkNotificationRead}
+        handleSellClick={listingForm.openSellModal}
+        onSearchSubmit={handleSearchSubmit}
+        theme={theme}
+        toggleTheme={toggleTheme}
+        user={user}
+        logout={logout}
+        closeChat={closeChat}
+        navigate={navigate}
+      />
 
-            <button 
-              type="button" 
-              className="btn btn-sm btn-light border rounded-pill d-none d-lg-inline-flex align-items-center gap-1 text-muted"
-              onClick={onGoToLogin}
-              title="Preview onboarding login screen"
-            >
-              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>logout</span>
-              <span style={{ fontSize: '0.8rem' }}>Onboarding Screen</span>
-            </button>
-          </div>
+      {/* Subnav & Mobile Search */}
+      <CategoryBar
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        categoryDefs={categoryDefs}
+        selectedCategory={selectedCategory}
+        setSelectedCategory={setSelectedCategory}
+        getCategoryCount={getCategoryCount}
+        pendingCount={pendingCount}
+      />
 
-          {/* Interactive Search Bar */}
-          <form className="unimart-search-bar d-none d-md-flex" onSubmit={handleSearchSubmit}>
-            <span className="material-symbols-outlined text-muted me-2" style={{ fontSize: '20px' }}>
-              search
-            </span>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search textbooks, handmade crafts, lab tech, perfumes..."
-              className="unimart-search-input"
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                className="unimart-search-clear-btn"
-                onClick={() => setSearchQuery('')}
-                title="Clear search text"
-              >
-                <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>close</span>
-              </button>
-            )}
-            <select
-              className="unimart-search-cat-select"
-              value={activeCategory}
-              onChange={(e) => handleSelectCategory(e.target.value)}
-              title="Filter by category"
-            >
-              {categoryMeta.map((c) => (
-                <option key={c.name} value={c.name}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-            <button type="submit" className="unimart-search-btn" title="Search items">
-              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_forward</span>
-            </button>
-          </form>
-
-          {/* Right Actions: Sell Item, Notifications, Cart, Profile */}
-          <div className="d-flex align-items-center gap-3 position-relative" ref={navActionsRef}>
-            
-            {/* Sell Item Button */}
-            <button
-              type="button"
-              className="unimart-sell-btn"
-              onClick={() => setIsSellModalOpen(true)}
-              title="List an item for sale"
-            >
-              <span className="material-symbols-outlined" style={{ fontSize: '19px' }}>add_circle</span>
-              <span>Sell an Item</span>
-            </button>
-
-            {/* Notification Bell */}
-            <div className="position-relative">
-              <button 
-                type="button" 
-                className={`unimart-icon-action-btn ${isNotificationsOpen ? 'active' : ''}`}
-                onClick={() => {
-                  setIsNotificationsOpen(!isNotificationsOpen);
-                  setIsCartOpen(false);
-                  setIsProfileOpen(false);
-                }}
-                title="Campus alerts & notifications"
-              >
-                <span className="material-symbols-outlined" style={{ fontSize: '21px' }}>notifications</span>
-                {unreadCount > 0 && (
-                  <span className="unimart-badge-count">{unreadCount}</span>
-                )}
-              </button>
-
-              {/* Notification Popover Dropdown */}
-              {isNotificationsOpen && (
-                <div className="unimart-popover-menu unimart-notifications-popover">
-                  <div className="unimart-popover-header">
-                    <div className="fw-bold fs-6">Campus Alerts</div>
-                    {unreadCount > 0 ? (
-                      <button
-                        type="button"
-                        className="btn btn-sm btn-link p-0 text-decoration-none small text-danger fw-semibold"
-                        onClick={handleMarkAllNotificationsRead}
-                      >
-                        Mark all read
-                      </button>
-                    ) : (
-                      <span className="small text-muted">All caught up</span>
-                    )}
-                  </div>
-                  <div>
-                    {notifications.map((notif) => (
-                      <div
-                        key={notif.id}
-                        className={`unimart-notif-item ${notif.read ? '' : 'unread'}`}
-                        onClick={() => {
-                          setNotifications((prev) =>
-                            prev.map((n) => (n.id === notif.id ? { ...n, read: true } : n))
-                          );
-                        }}
-                      >
-                        <div className="unimart-notif-icon-wrap">
-                          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
-                            {notif.icon}
-                          </span>
-                        </div>
-                        <div className="flex-grow-1">
-                          <div className="d-flex justify-content-between align-items-center">
-                            <span className="fw-bold small text-dark">{notif.title}</span>
-                            <span className="text-muted" style={{ fontSize: '0.68rem' }}>{notif.time}</span>
-                          </div>
-                          <p className="mb-0 text-muted small mt-1" style={{ fontSize: '0.78rem', lineHeight: '1.3' }}>
-                            {notif.desc}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Cart Button */}
-            <div className="position-relative">
-              <button 
-                type="button" 
-                className={`unimart-icon-action-btn ${isCartOpen ? 'active' : ''}`}
-                onClick={() => {
-                  setIsCartOpen(!isCartOpen);
-                  setIsNotificationsOpen(false);
-                  setIsProfileOpen(false);
-                }}
-                title="Your Campus Cart"
-              >
-                <span className="material-symbols-outlined" style={{ fontSize: '21px' }}>shopping_cart</span>
-                {totalCartCount > 0 && (
-                  <span className="unimart-badge-count">{totalCartCount}</span>
-                )}
-              </button>
-
-              {/* Cart Popover Drawer */}
-              {isCartOpen && (
-                <div className="unimart-popover-menu unimart-cart-popover">
-                  <div className="d-flex justify-content-between align-items-center pb-2 border-bottom">
-                    <div>
-                      <span className="fw-bold fs-6">Campus Meetup Cart</span>
-                      <span className="badge rounded-pill bg-light text-dark border ms-2 small">
-                        {totalCartCount} item{totalCartCount === 1 ? '' : 's'}
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      className="btn-close"
-                      style={{ fontSize: '0.75rem' }}
-                      onClick={() => setIsCartOpen(false)}
-                    ></button>
-                  </div>
-
-                  {cartItems.length === 0 ? (
-                    <div className="text-center py-4 text-muted">
-                      <span className="material-symbols-outlined d-block mb-2" style={{ fontSize: '32px' }}>
-                        remove_shopping_cart
-                      </span>
-                      <p className="small mb-2">Your cart is currently empty.</p>
-                      <button
-                        type="button"
-                        className="btn btn-sm btn-outline-danger rounded-pill px-3"
-                        onClick={() => {
-                          setIsCartOpen(false);
-                          scrollToCatalog();
-                        }}
-                      >
-                        Explore Marketplace
-                      </button>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="unimart-cart-list">
-                        {cartItems.map((item) => (
-                          <div key={item.id} className="unimart-cart-row">
-                            <div className="unimart-notif-icon-wrap" style={{ width: '38px', height: '38px' }}>
-                              <span className="material-symbols-outlined" style={{ fontSize: '19px' }}>
-                                {item.icon}
-                              </span>
-                            </div>
-                            <div className="flex-grow-1" style={{ minWidth: 0 }}>
-                              <div className="fw-semibold small text-truncate" title={item.title}>
-                                {item.title}
-                              </div>
-                              <div className="text-muted small" style={{ fontSize: '0.72rem' }}>
-                                ₹{item.price.toLocaleString('en-IN')} each
-                              </div>
-                            </div>
-                            <div className="d-flex align-items-center gap-1">
-                              <button
-                                type="button"
-                                className="unimart-cart-qty-btn"
-                                onClick={() => handleUpdateCartQty(item.id, -1)}
-                              >
-                                -
-                              </button>
-                              <span className="px-1 small fw-bold">{item.qty}</span>
-                              <button
-                                type="button"
-                                className="unimart-cart-qty-btn"
-                                onClick={() => handleUpdateCartQty(item.id, 1)}
-                              >
-                                +
-                              </button>
-                              <button
-                                type="button"
-                                className="btn btn-link text-danger p-0 ms-1"
-                                onClick={() => handleRemoveFromCart(item.id)}
-                                title="Remove item"
-                              >
-                                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>delete</span>
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-
-                      <div className="pt-2 border-top">
-                        <div className="d-flex justify-content-between align-items-center mb-3">
-                          <span className="text-muted small">Total Meetup Amount:</span>
-                          <span className="fw-bolder fs-5" style={{ color: 'var(--unimart-maroon)' }}>
-                            ₹{cartSubtotal.toLocaleString('en-IN')}
-                          </span>
-                        </div>
-                        <button
-                          type="button"
-                          className="unimart-sell-btn w-100 justify-content-center py-2"
-                          onClick={handleCheckout}
-                        >
-                          <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>check_circle</span>
-                          <span>Arrange Campus Meetup</span>
-                        </button>
-                        <div className="text-center mt-2">
-                          <span className="text-muted" style={{ fontSize: '0.68rem' }}>
-                            Pay in-person at Central Library via UPI or Cash
-                          </span>
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* User Chip */}
-            <div className="position-relative">
-              <div 
-                className={`unimart-user-chip d-none d-sm-flex ${isProfileOpen ? 'active' : ''}`}
-                onClick={() => {
-                  setIsProfileOpen(!isProfileOpen);
-                  setIsNotificationsOpen(false);
-                  setIsCartOpen(false);
-                }}
-                title="Your student profile & options"
-              >
-                <div className="unimart-avatar">S</div>
-                <div className="d-flex flex-column text-start">
-                  <span className="fw-bold" style={{ fontSize: '0.825rem', lineHeight: '1.2' }}>Satkar</span>
-                  <span className="text-muted" style={{ fontSize: '0.7rem' }}>Central Campus</span>
-                </div>
-              </div>
-
-              {/* Profile Dropdown */}
-              {isProfileOpen && (
-                <div className="unimart-popover-menu unimart-profile-popover">
-                  <div className="d-flex align-items-center gap-3 pb-3 border-bottom">
-                    <div className="unimart-avatar" style={{ width: '40px', height: '40px', fontSize: '1.1rem' }}>
-                      S
-                    </div>
-                    <div>
-                      <div className="fw-bold text-dark">Satkar Sharma</div>
-                      <div className="text-muted small" style={{ fontSize: '0.72rem' }}>CS-2025-014</div>
-                      <div className="text-muted small" style={{ fontSize: '0.72rem' }}>Hostel Block B</div>
-                    </div>
-                  </div>
-                  <div className="py-2">
-                    <div className="d-flex justify-content-between align-items-center py-2 px-1 text-muted small">
-                      <span>Campus Wallet Balance</span>
-                      <span className="fw-bold text-dark">₹1,250</span>
-                    </div>
-                    <div className="d-flex justify-content-between align-items-center py-2 px-1 text-muted small">
-                      <span>Your Active Listings</span>
-                      <span className="fw-bold text-dark">
-                        {products.filter((p) => p.seller.includes('You')).length}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="pt-2 border-top d-flex flex-column gap-1">
-                    <button
-                      type="button"
-                      className="btn btn-sm btn-light w-100 text-start d-flex align-items-center gap-2 text-muted"
-                      onClick={() => {
-                        setIsProfileOpen(false);
-                        setIsSellModalOpen(true);
-                      }}
-                    >
-                      <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add_circle</span>
-                      <span>List another item</span>
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-sm btn-outline-danger w-100 text-start d-flex align-items-center gap-2 mt-1"
-                      onClick={onGoToLogin}
-                    >
-                      <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>logout</span>
-                      <span>Sign Out / Onboarding</span>
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-
-          </div>
-
-        </div>
-      </nav>
-
-      {/* ================= CATEGORY SUB-NAV (FULLY WORKING TABS) ================= */}
-      <div className="unimart-subnav">
-        <div className="unimart-cat-pills">
-          {categories.map((cat) => (
-            <button
-              key={cat.name}
-              type="button"
-              className={`unimart-pill-tab ${activeCategory === cat.name ? 'active' : ''}`}
-              onClick={() => handleSelectCategory(cat.name)}
-              title={`View ${cat.name}`}
-            >
-              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
-                {cat.icon}
-              </span>
-              <span>{cat.name}</span>
-              <span className="unimart-tab-count-tag">{cat.count}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* ================= MAIN DASHBOARD BODY ================= */}
+      {/* Main Dashboard Body */}
       <main className="container-fluid px-lg-5 py-4">
-        
         {/* Welcome Banner */}
         <div className="d-flex justify-content-between align-items-end mb-4 flex-wrap gap-2">
           <div>
             <div className="d-inline-flex align-items-center gap-1 text-muted small fw-semibold mb-1">
               <span className="material-symbols-outlined" style={{ fontSize: '16px', color: 'var(--unimart-maroon)' }}>verified</span>
-              <span>Central Campus Student Exchange</span>
+              <span>Chitkara Campus Student Exchange</span>
             </div>
             <h2 className="fw-bolder mb-1" style={{ letterSpacing: '-0.025em' }}>
-              Hi Satkar! What are you looking for today?
+              {user ? `Hi ${user.name ? user.name.split(' ')[0] : 'there'}!` : 'Hi Guest!'} What are you looking for today?
             </h2>
             <p className="text-muted mb-0">
-              Explore pre-owned textbooks, handmade dorm crafts, campus tech tools, and student-crafted perfumes.
+              Explore pre-owned textbooks, handmade crafts, campus tech tools, and student-crafted products.
             </p>
           </div>
           <div className="d-flex align-items-center gap-2">
@@ -799,237 +474,78 @@ export default function Dashboard({ onGoToLogin }) {
           </div>
         </div>
 
-        {/* ================= HERO SPOTLIGHT CARDS (INTERACTIVE FILTER CARDS) ================= */}
+        {/* Hero Spotlight Cards */}
         <div className="unimart-hero-grid">
-          
-          {/* Card 1: Pre-owned Books (Lime Yellow Palette) */}
-          <div 
-            className="unimart-spotlight-card card-lime-yellow"
-            onClick={() => handleSelectCategory('Textbooks & Notes')}
-            title="Filter by Textbooks & Notes"
-          >
-            <div>
-              <div className="unimart-card-tag">
-                <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>menu_book</span>
-                <span>Pre-owned & Semester Notes</span>
-              </div>
-              <div className="unimart-card-serif-title">
-                Pre-owned books
-              </div>
-              <div className="unimart-card-subtitle">
-                Course textbooks & verified notes starting at just ₹250
-              </div>
-            </div>
+          <SpotlightCard
+            colorClass="card-lime-yellow"
+            categoryKey="books-notes"
+            icon="menu_book"
+            tagName="Books & Notes"
+            serifTitle="Pre-owned books"
+            subtitle="Course textbooks & verified notes starting at just ₹250"
+            collectionLabel="Academic Collection"
+            artIcon="📚"
+            selectedCategory={selectedCategory}
+            onSelectCategory={setSelectedCategory}
+          />
 
-            <div className="unimart-view-all-pill">
-              <span>Academic Collection</span>
-              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_forward</span>
-            </div>
+          <SpotlightCard
+            colorClass="card-soft-pink"
+            categoryKey="handmade-art"
+            icon="palette"
+            tagName="Handmade & Art"
+            serifTitle="Best of student art"
+            subtitle="Canvases, Posters, Crochet & Tote bags from ₹199"
+            collectionLabel="Art Collections"
+            artIcon="🎨"
+            selectedCategory={selectedCategory}
+            onSelectCategory={setSelectedCategory}
+          />
 
-            <span className="unimart-card-art-icon">📚</span>
-          </div>
-
-          {/* Card 2: Student Handmade Crafts & Art (Soft Pink Palette) */}
-          <div 
-            className="unimart-spotlight-card card-soft-pink"
-            onClick={() => handleSelectCategory('Handmade Crafts')}
-            title="Filter by Handmade Crafts"
-          >
-            <div>
-              <div className="unimart-card-tag">
-                <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>palette</span>
-                <span>Campus Makers & Creators</span>
-              </div>
-              <div className="unimart-card-serif-title">
-                Best of student art
-              </div>
-              <div className="unimart-card-subtitle">
-                Ceramics, dorm prints, crochet & tote bags from ₹199
-              </div>
-            </div>
-
-            <div className="unimart-view-all-pill">
-              <span>Artisan Collection</span>
-              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_forward</span>
-            </div>
-
-            <span className="unimart-card-art-icon">🎨</span>
-          </div>
-
-          {/* Card 3: Machinery, Tech & Perfumes (Sky Blue Palette) */}
-          <div 
-            className="unimart-spotlight-card card-sky-blue"
-            onClick={() => handleSelectCategory('Machinery & Tech')}
-            title="Filter by Machinery & Tech"
-          >
-            <div>
-              <div className="unimart-card-tag">
-                <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>precision_manufacturing</span>
-                <span>Tech, Tools & Aromatics</span>
-              </div>
-              <div className="unimart-card-serif-title">
-                Tech & Perfumes
-              </div>
-              <div className="unimart-card-subtitle">
-                Graphing calculators, kits & botanical fragrances from ₹249
-              </div>
-            </div>
-
-            <div className="unimart-view-all-pill">
-              <span>Tech & Fragrance</span>
-              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_forward</span>
-            </div>
-
-            <span className="unimart-card-art-icon">⚙️</span>
-          </div>
-
+          <SpotlightCard
+            colorClass="card-sky-blue"
+            categoryKey="lab-engineering-gear"
+            icon="precision_manufacturing"
+            tagName="Lab & Engineering"
+            serifTitle="Tech & Engineering tools"
+            subtitle="Calculators, robotics kits & lab equipment from ₹450"
+            collectionLabel="Lab & Tech Collection"
+            artIcon="⚙️"
+            selectedCategory={selectedCategory}
+            onSelectCategory={setSelectedCategory}
+          />
         </div>
 
-        {/* ================= FEATURED PRODUCTS SECTION ================= */}
-        <div className="unimart-section-header" ref={catalogRef}>
-          <h3 className="unimart-section-title">
-            <span>Marketplace Catalog</span>
-            <span className="badge rounded-pill bg-light text-muted border fs-6 fw-semibold">
-              {filteredProducts.length} Items Available
-            </span>
-          </h3>
+        {/* Admin Toast Alert */}
+        <ToastAlert toast={adminAlert} onClose={hideAdminAlert} />
 
-          {/* Active Filter Badges */}
-          {(activeCategory !== 'All Categories' || searchQuery) && (
-            <div className="d-flex align-items-center gap-2 flex-wrap">
-              {activeCategory !== 'All Categories' && (
-                <span className="badge bg-light text-dark border px-2 py-1 rounded-pill small d-inline-flex align-items-center gap-1">
-                  Category: <strong>{activeCategory}</strong>
-                  <button
-                    type="button"
-                    className="btn btn-link p-0 text-dark ms-1 text-decoration-none"
-                    onClick={() => setActiveCategory('All Categories')}
-                  >
-                    ×
-                  </button>
-                </span>
-              )}
-              {searchQuery && (
-                <span className="badge bg-light text-dark border px-2 py-1 rounded-pill small d-inline-flex align-items-center gap-1">
-                  Search: "<strong>{searchQuery}</strong>"
-                  <button
-                    type="button"
-                    className="btn btn-link p-0 text-dark ms-1 text-decoration-none"
-                    onClick={() => setSearchQuery('')}
-                  >
-                    ×
-                  </button>
-                </span>
-              )}
-              <button
-                type="button"
-                className="btn btn-sm btn-link p-0 text-danger text-decoration-none small fw-semibold"
-                onClick={handleResetFilters}
-              >
-                Clear all filters
-              </button>
-            </div>
-          )}
-        </div>
+        {/* Catalog & Product Grid */}
+        <ListingGrid
+          filteredProducts={filteredProducts}
+          catalogTab={catalogTab}
+          setCatalogTab={setCatalogTab}
+          myListingsCount={myListingsCount}
+          selectedCategory={selectedCategory}
+          setSelectedCategory={setSelectedCategory}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          categories={categories}
+          user={user}
+          handleGoToLogin={handleGoToLogin}
+          handleSellClick={listingForm.openSellModal}
+          cardPhotoIndex={cardPhotoIndex}
+          handlePrevPhoto={handlePrevPhoto}
+          handleNextPhoto={handleNextPhoto}
+          setCardPhotoIndex={setCardPhotoIndex}
+          handleWishlistClick={handleWishlistClick}
+          handleChatClick={handleChatClick}
+          handleBuyClick={handleBuyClick}
+          handleEditListingClick={listingForm.handleEditListingClick}
+          handleDeleteListingClick={handleDeleteListingClick}
+          onToggleSoldClick={handleToggleSoldClick}
+        />
 
-        {/* Product Cards Grid or Empty State */}
-        {filteredProducts.length === 0 ? (
-          <div className="text-center py-5 bg-white rounded-4 border p-4 mb-5">
-            <span className="material-symbols-outlined text-muted mb-2" style={{ fontSize: '48px' }}>
-              search_off
-            </span>
-            <h4 className="fw-bold mb-1">No items found matching your filters</h4>
-            <p className="text-muted small mb-3">
-              Try adjusting your search query or selecting a different category from the top navigation.
-            </p>
-            <button
-              type="button"
-              className="btn btn-sm btn-dark rounded-pill px-4 py-2"
-              onClick={handleResetFilters}
-            >
-              Reset All Filters
-            </button>
-          </div>
-        ) : (
-          <div className="unimart-products-grid">
-            {filteredProducts.map((item) => {
-              const discountPct = Math.round(((item.origPrice - item.price) / item.origPrice) * 100);
-              const isWishlisted = wishlist.includes(item.id);
-
-              return (
-                <div key={item.id} className="unimart-product-card">
-                  
-                  {/* Graphic placeholder banner with category theme */}
-                  <div className={`unimart-card-placeholder-wrap ${item.categoryTheme}`}>
-                    <div className="unimart-placeholder-icon-box">
-                      <span className="material-symbols-outlined unimart-placeholder-icon">
-                        {item.icon}
-                      </span>
-                    </div>
-                    <span className="unimart-placeholder-label">
-                      {item.notes || item.category}
-                    </span>
-                    
-                    {/* Condition Badge */}
-                    <span className="unimart-condition-badge">{item.condition}</span>
-                    
-                    {/* Interactive Wishlist Button */}
-                    <button 
-                      type="button"
-                      className={`unimart-wishlist-btn ${isWishlisted ? 'active' : ''}`}
-                      onClick={() => handleToggleWishlist(item.id, item.title)}
-                      title={isWishlisted ? 'Remove from wishlist' : 'Save to wishlist'}
-                    >
-                      <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>
-                        {isWishlisted ? 'favorite' : 'favorite_border'}
-                      </span>
-                    </button>
-                  </div>
-
-                  {/* Card Body */}
-                  <div className="unimart-card-body">
-                    <div className="d-flex justify-content-between align-items-center mb-1">
-                      <span className="unimart-card-category">{item.category}</span>
-                      <span className="unimart-badge-chip">{item.badge}</span>
-                    </div>
-
-                    <h6 className="unimart-card-title" title={item.title}>
-                      {item.title}
-                    </h6>
-
-                    <div className="unimart-seller-info">
-                      <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>person</span>
-                      <span>{item.seller}</span>
-                    </div>
-
-                    {/* Pricing in Indian Rupees (₹) */}
-                    <div className="unimart-price-row mt-auto pt-2">
-                      <div className="d-flex align-items-baseline gap-2">
-                        <span className="unimart-current-price">₹{item.price.toLocaleString('en-IN')}</span>
-                        {item.origPrice && (
-                          <span className="unimart-orig-price">₹{item.origPrice.toLocaleString('en-IN')}</span>
-                        )}
-                        <span className="unimart-discount-tag">{discountPct}% OFF</span>
-                      </div>
-
-                      <button 
-                        type="button" 
-                        className="unimart-add-cart-btn"
-                        onClick={() => handleAddToCart(item)}
-                        title="Add to cart"
-                      >
-                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add_shopping_cart</span>
-                      </button>
-                    </div>
-                  </div>
-
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* ================= SELL CTA BANNER ================= */}
+        {/* Sell CTA Banner */}
         <div className="rounded-4 p-4 p-lg-5 mb-5 text-white position-relative overflow-hidden" style={{ background: 'linear-gradient(135deg, var(--unimart-maroon) 0%, var(--unimart-maroon-dark) 100%)' }}>
           <div className="row align-items-center">
             <div className="col-12 col-lg-8">
@@ -1038,12 +554,12 @@ export default function Dashboard({ onGoToLogin }) {
               </span>
               <h2 className="fw-bold mb-2">Have Finished Textbooks or Create Handmade Crafts?</h2>
               <p className="mb-4 text-white-50" style={{ maxWidth: '640px' }}>
-                Listing an item takes under 60 seconds. Connect directly with students from your college for safe on-campus meetups at the library or cafeteria.
+                Listing an item takes under 120 seconds. Connect directly with students from Chitkara for safe on-campus meetups at the library or square 1.
               </p>
               <button 
                 type="button" 
                 className="btn btn-light rounded-pill px-4 py-2 fw-bold text-dark d-inline-flex align-items-center gap-2"
-                onClick={() => setIsSellModalOpen(true)}
+                onClick={listingForm.openSellModal}
               >
                 <span className="material-symbols-outlined">add_circle</span>
                 <span>Sell on Campus</span>
@@ -1054,144 +570,64 @@ export default function Dashboard({ onGoToLogin }) {
             </div>
           </div>
         </div>
-
       </main>
 
-      {/* ================= SELL ITEM MODAL (IN RUPEES) ================= */}
-      {isSellModalOpen && (
-        <div 
-          className="unimart-sell-modal-overlay"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setIsSellModalOpen(false);
-          }}
-        >
-          <div className="unimart-sell-modal-box">
-            <button 
-              type="button" 
-              className="unimart-close-btn" 
-              style={{ position: 'absolute', top: '1.25rem', right: '1.25rem' }}
-              onClick={() => setIsSellModalOpen(false)}
-            >
-              <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>close</span>
-            </button>
+      {/* Sell Item Modal */}
+      <SellListingModal
+        isOpen={listingForm.isSellModalOpen}
+        onClose={listingForm.closeSellModal}
+        isEditing={listingForm.isEditing}
+        currentStep={listingForm.currentStep}
+        setCurrentStep={listingForm.setCurrentStep}
+        isPublishedSuccess={listingForm.isPublishedSuccess}
+        setIsPublishedSuccess={listingForm.setIsPublishedSuccess}
+        editResultType={listingForm.editResultType}
+        formData={listingForm.formData}
+        setFormData={listingForm.setFormData}
+        formErrors={listingForm.formErrors}
+        categories={categories}
+        selectedCategoryObj={selectedCategoryObj}
+        isBooksCategory={isBooksCategory}
+        handleFieldChange={listingForm.handleFieldChange}
+        handleCategoryChange={listingForm.handleCategoryChange}
+        handleBlur={listingForm.handleBlur}
+        handleNextStep={listingForm.handleNextStep}
+        conditionDropdownRef={listingForm.conditionDropdownRef}
+        isConditionOpen={listingForm.isConditionOpen}
+        setIsConditionOpen={listingForm.setIsConditionOpen}
+        handleSelectCondition={listingForm.handleSelectCondition}
+        handleMeetupChange={listingForm.handleMeetupChange}
+        resetForm={listingForm.resetForm}
+        fileInputRef={listingForm.fileInputRef}
+        handlePhotoFiles={listingForm.handlePhotoFiles}
+        isDragging={listingForm.isDragging}
+        setIsDragging={listingForm.setIsDragging}
+        handleAddSamplePhoto={listingForm.handleAddSamplePhoto}
+        handleMovePhoto={listingForm.handleMovePhoto}
+        handleRemovePhoto={listingForm.handleRemovePhoto}
+        handlePublishListing={listingForm.handlePublishListing}
+      />
 
-            <div className="d-flex align-items-center gap-2 mb-3">
-              <div className="unimart-logo-badge" style={{ width: '32px', height: '32px' }}>
-                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>sell</span>
-              </div>
-              <h4 className="fw-bold mb-0">List an Item on UNIMART</h4>
-            </div>
-
-            <p className="text-muted small mb-4">
-              Sell used semester books, handmade dorm crafts, machinery/lab parts, or artisanal fragrances on campus.
-            </p>
-
-            <form onSubmit={handleSellSubmit}>
-              <div className="mb-3">
-                <label className="form-label small fw-semibold">Item Title</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Engineering Mathematics Volume 1 / Handmade Ceramic Mug"
-                  className="form-control rounded-3 py-2"
-                  value={newItem.title}
-                  onChange={(e) => setNewItem({ ...newItem, title: e.target.value })}
-                />
-              </div>
-
-              <div className="row g-3 mb-3">
-                <div className="col-md-6">
-                  <label className="form-label small fw-semibold">Category</label>
-                  <select 
-                    className="form-select rounded-3 py-2"
-                    value={newItem.category}
-                    onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}
-                  >
-                    <option value="Textbooks & Notes">Textbooks & Notes</option>
-                    <option value="Handmade Crafts">Handmade Crafts & Art</option>
-                    <option value="Machinery & Tech">Machinery & Tech Gear</option>
-                    <option value="Perfumes & Scents">Artisanal Perfumes & Scents</option>
-                  </select>
-                </div>
-
-                <div className="col-md-6">
-                  <label className="form-label small fw-semibold">Price (₹ INR)</label>
-                  <div className="input-group">
-                    <span className="input-group-text bg-light text-muted fw-bold">₹</span>
-                    <input
-                      type="number"
-                      required
-                      min="1"
-                      placeholder="e.g. 450"
-                      className="form-control rounded-end-3 py-2"
-                      value={newItem.price}
-                      onChange={(e) => setNewItem({ ...newItem, price: e.target.value })}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="mb-3">
-                <label className="form-label small fw-semibold">Condition</label>
-                <select 
-                  className="form-select rounded-3 py-2"
-                  value={newItem.condition}
-                  onChange={(e) => setNewItem({ ...newItem, condition: e.target.value })}
-                >
-                  <option value="Brand New">Brand New / Unused</option>
-                  <option value="Handmade">Handmade Craft</option>
-                  <option value="Like New">Pre-Owned: Like New</option>
-                  <option value="Gently Used">Pre-Owned: Gently Used</option>
-                  <option value="Good with notes">Pre-Owned: Highlighted / Notes</option>
-                </select>
-              </div>
-
-              <div className="mb-4">
-                <label className="form-label small fw-semibold">Item Description & Campus Pickup Spot</label>
-                <textarea
-                  rows="3"
-                  placeholder="Describe your item, edition/year, notes, or preferred campus meetup spot (e.g. Central Library Gate 2, Student Center)..."
-                  className="form-control rounded-3"
-                  value={newItem.description}
-                  onChange={(e) => setNewItem({ ...newItem, description: e.target.value })}
-                ></textarea>
-              </div>
-
-              <button type="submit" className="unimart-sell-btn w-100 justify-content-center py-2 fs-6">
-                <span>Publish Item to Campus</span>
-                <span className="material-symbols-outlined">check_circle</span>
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* ================= FLOATING TOAST FEEDBACK ================= */}
-      {toastMessage && (
-        <div className="unimart-toast-wrap">
-          <span className="material-symbols-outlined text-success" style={{ fontSize: '20px' }}>
-            check_circle
-          </span>
-          <span>{toastMessage}</span>
-        </div>
-      )}
-
-      {/* ================= FOOTER ================= */}
+      {/* Footer */}
       <footer className="unimart-dash-footer">
         <div className="container-fluid d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
           <div>
             <span className="fw-bold">UNIMART</span> — The Peer-to-Peer College E-Commerce Platform.
           </div>
           <div className="d-flex gap-4">
-            <button type="button" className="btn btn-link p-0 text-muted small text-decoration-none" onClick={onGoToLogin}>
+            <button type="button" className="btn btn-link p-0 text-muted small text-decoration-none" onClick={handleGoToLogin}>
               View Onboarding / Login
             </button>
             <span className="text-muted small">Campus Meetup Safety</span>
             <span className="text-muted small">Student Maker Guidelines</span>
-            <span className="text-muted small">INR (₹) Standard</span>
           </div>
         </div>
       </footer>
+
+      {/* Real-time Campus Marketplace Chat */}
+      <ChatModal />
+      {/* Hide FloatingChatButton while Sell modal is open so it doesn't obstruct or show above backdrop */}
+      {!listingForm.isSellModalOpen && <FloatingChatButton />}
     </div>
   );
 }

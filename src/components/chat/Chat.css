@@ -1,0 +1,1563 @@
+/* ==========================================================================
+   UNIMART CHAT SYSTEM (CENTERED FLOATING WINDOW THEME)
+   ========================================================================== */
+
+/* ----------------- Floating Trigger Button (Bottom Right) ----------------- */
+.unimart-chat-floating-btn {
+  position: fixed;
+  bottom: 24px;
+  right: 24px; /* BOTTOM RIGHT */
+  left: auto;
+  z-index: 1050;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 22px;
+  background: linear-gradient(135deg, #70182c 0%, #4e0f1e 100%);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 9999px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.92rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  box-shadow: 0 8px 26px rgba(112, 24, 44, 0.35), 0 2px 6px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  outline: none;
+  user-select: none;
+}
+
+.unimart-chat-floating-btn:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 14px 34px rgba(112, 24, 44, 0.45), 0 4px 10px rgba(0, 0, 0, 0.12);
+  background: linear-gradient(135deg, #821c33 0%, #5c1223 100%);
+  color: #ffffff;
+}
+
+.unimart-chat-floating-btn:active {
+  transform: translateY(0) scale(0.97);
+}
+
+.unimart-chat-floating-btn .chat-btn-icon-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  transition: transform 0.25s ease;
+}
+
+.unimart-chat-floating-btn:hover .chat-btn-icon-wrap {
+  transform: scale(1.1);
+}
+
+.unimart-chat-floating-btn .chat-btn-label {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.unimart-chat-unread-badge {
+  position: absolute;
+  top: -6px;
+  right: -8px;
+  min-width: 19px;
+  height: 19px;
+  padding: 0 5px;
+  border-radius: 9999px;
+  background: #ef4444;
+  color: #ffffff;
+  font-size: 0.7rem;
+  font-weight: 800;
+  line-height: 19px;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.5);
+  animation: pulseUnread 2s infinite ease-in-out;
+}
+
+@keyframes pulseUnread {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.14); }
+}
+
+/* ----------------- Minimized Floating Bar (Bottom Right) ----------------- */
+.unimart-chat-minimized-bar {
+  position: fixed;
+  bottom: 24px;
+  right: 24px; /* BOTTOM RIGHT */
+  left: auto;
+  z-index: 1050;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 16px;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.16);
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  max-width: 320px;
+}
+
+[data-theme='dark'] .unimart-chat-minimized-bar {
+  background: #1e2229;
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #f1f5f9;
+}
+
+.unimart-chat-minimized-bar:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.2);
+}
+
+/* ==========================================================================
+   CENTERED FLOATING WINDOW CONTAINER
+   ========================================================================== */
+.unimart-airbnb-chat-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.44);
+  backdrop-filter: blur(4px);
+  z-index: 1060;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: backdropFadeIn 0.22s ease-out;
+  transition: padding 0.3s cubic-bezier(0.16, 1, 0.3, 1), background 0.3s ease;
+}
+
+.unimart-airbnb-chat-backdrop.is-fullscreen {
+  padding: 0;
+  background: #ffffff;
+}
+
+[data-theme='dark'] .unimart-airbnb-chat-backdrop.is-fullscreen {
+  background: #14171d;
+}
+
+@keyframes backdropFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ----------------- Floating Cluster Container ----------------- */
+.unimart-chat-floating-cluster {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  max-width: 100%;
+  max-height: 100%;
+  position: relative;
+  transition: gap 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.unimart-chat-floating-cluster.is-fullscreen {
+  width: 100vw;
+  height: 100vh;
+  gap: 0;
+}
+
+.unimart-airbnb-chat-window-card {
+  width: 920px;
+  max-width: 96vw;
+  height: 640px;
+  max-height: 90vh;
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 24px 64px -12px rgba(0, 0, 0, 0.38), 0 8px 24px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  color: #222222;
+  overflow: hidden;
+  position: relative;
+  animation: windowCenterPop 0.26s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transition: width 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+              height 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+              max-width 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+              max-height 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+              border-radius 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.3s ease;
+}
+
+/* When companion listing window is open: window moves smoothly to the left */
+.unimart-airbnb-chat-window-card.with-companion {
+  width: 800px;
+  max-width: calc(96vw - 350px);
+  animation: floatShiftLeft 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.unimart-airbnb-chat-window-card.shifting-back {
+  animation: floatShiftBack 0.26s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes floatShiftLeft {
+  0% {
+    transform: translateX(170px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+@keyframes floatShiftBack {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(170px);
+  }
+}
+
+.unimart-airbnb-chat-window-card.fullscreen {
+  width: 100vw;
+  max-width: 100vw;
+  height: 100vh;
+  max-height: 100vh;
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
+  animation: none;
+  transform: none !important;
+}
+
+[data-theme='dark'] .unimart-airbnb-chat-window-card {
+  background: #14171d;
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 24px 64px -12px rgba(0, 0, 0, 0.75), 0 8px 24px rgba(0, 0, 0, 0.4);
+  color: #f1f5f9;
+}
+
+@keyframes windowCenterPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.95) translateY(14px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* ----------------- Top Navigation Bar (Floating Header) ----------------- */
+.unimart-chat-top-nav {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  border-bottom: 1px solid #ebebeb;
+  background: #ffffff;
+  flex-shrink: 0;
+  transition: border-color 0.2s ease;
+}
+
+[data-theme='dark'] .unimart-chat-top-nav {
+  background: #181c24;
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.unimart-chat-nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  user-select: none;
+}
+
+.unimart-chat-logo-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: #70182c;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.unimart-chat-logo-text {
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  color: #70182c;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+[data-theme='dark'] .unimart-chat-logo-text {
+  color: #f472b6;
+}
+
+.unimart-chat-nav-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.unimart-chat-user-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 6px 3px 8px;
+  border: 1px solid #dddddd;
+  border-radius: 30px;
+  background: #ffffff;
+}
+
+[data-theme='dark'] .unimart-chat-user-pill {
+  background: #242933;
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.unimart-chat-user-badge {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #fce7f3;
+  color: #70182c;
+  font-weight: 700;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+[data-theme='dark'] .unimart-chat-user-badge {
+  background: rgba(244, 114, 182, 0.2);
+  color: #f472b6;
+}
+
+.unimart-chat-menu-btn {
+  background: transparent;
+  border: none;
+  color: #717171;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 3px;
+  border-radius: 50%;
+  transition: transform 0.18s ease, color 0.18s ease, background 0.18s ease;
+}
+
+.unimart-chat-menu-btn:hover {
+  color: #222222;
+  background: #f1f5f9;
+  transform: scale(1.08);
+}
+
+[data-theme='dark'] .unimart-chat-menu-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+}
+
+/* ----------------- Main Split Screen Body ----------------- */
+.unimart-chat-split-body {
+  display: flex;
+  flex: 1;
+  height: calc(100% - 56px);
+  overflow: hidden;
+  position: relative;
+}
+
+/* ----------------- Left Sidebar: Past Conversations ----------------- */
+.unimart-chat-sidebar {
+  width: 320px;
+  max-width: 40%;
+  border-right: 1px solid #ebebeb;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  flex-shrink: 0;
+  transition: border-color 0.2s ease;
+}
+
+[data-theme='dark'] .unimart-chat-sidebar {
+  background: #181c24;
+  border-right-color: rgba(255, 255, 255, 0.08);
+}
+
+.unimart-chat-sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px 12px 16px;
+}
+
+.unimart-chat-back-arrow-btn {
+  background: transparent;
+  border: none;
+  color: #222222;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.18s ease, transform 0.18s ease;
+}
+
+.unimart-chat-back-arrow-btn:hover {
+  background: #f1f5f9;
+  transform: translateX(-2px);
+}
+
+[data-theme='dark'] .unimart-chat-back-arrow-btn {
+  color: #ffffff;
+}
+
+[data-theme='dark'] .unimart-chat-back-arrow-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.unimart-chat-sidebar-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 0;
+  color: #222222;
+  letter-spacing: -0.02em;
+}
+
+[data-theme='dark'] .unimart-chat-sidebar-title {
+  color: #ffffff;
+}
+
+.unimart-chat-circle-icon-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: #f7f7f7;
+  color: #222222;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+[data-theme='dark'] .unimart-chat-circle-icon-btn {
+  background: #242933;
+  color: #f1f5f9;
+}
+
+.unimart-chat-circle-icon-btn:hover {
+  background: #ebebeb;
+  transform: scale(1.05);
+}
+
+.unimart-chat-search-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 14px 10px 14px;
+  padding: 6px 10px;
+  background: #f7f7f7;
+  border-radius: 10px;
+  animation: searchSlideDown 0.2s ease-out;
+}
+
+@keyframes searchSlideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+[data-theme='dark'] .unimart-chat-search-container {
+  background: #242933;
+}
+
+.unimart-chat-search-magnifier {
+  color: #717171;
+  font-size: 16px;
+}
+
+.unimart-chat-search-field {
+  flex: 1;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 0.82rem;
+  font-family: inherit;
+  color: inherit;
+}
+
+.unimart-chat-clear-search {
+  background: transparent;
+  border: none;
+  color: #717171;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.unimart-chat-sidebar-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 6px 14px 6px;
+}
+
+/* Sidebar Item */
+.unimart-chat-sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  margin: 3px 6px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.18s cubic-bezier(0.16, 1, 0.3, 1), transform 0.18s ease;
+  user-select: none;
+}
+
+.unimart-chat-sidebar-item:hover {
+  background: #fafafa;
+  transform: translateX(2px);
+}
+
+[data-theme='dark'] .unimart-chat-sidebar-item:hover {
+  background: #222730;
+}
+
+.unimart-chat-sidebar-item.active {
+  background: #f7f7f7;
+}
+
+[data-theme='dark'] .unimart-chat-sidebar-item.active {
+  background: #252b36;
+}
+
+.unimart-chat-item-thumb-wrap {
+  flex-shrink: 0;
+}
+
+.unimart-chat-item-thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: #e2e8f0;
+}
+
+.unimart-chat-item-fallback-thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  color: #ffffff;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+}
+
+.unimart-chat-item-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.unimart-chat-item-row-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+
+.unimart-chat-item-sublabel {
+  font-size: 0.72rem;
+  color: #717171;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+[data-theme='dark'] .unimart-chat-item-sublabel {
+  color: #94a3b8;
+}
+
+.unimart-chat-item-date {
+  font-size: 0.7rem;
+  color: #717171;
+  flex-shrink: 0;
+}
+
+.unimart-chat-item-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #222222;
+  margin: 0 0 2px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+[data-theme='dark'] .unimart-chat-item-title {
+  color: #ffffff;
+}
+
+.unimart-chat-item-seller-line {
+  font-size: 0.72rem;
+  color: #717171;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+[data-theme='dark'] .unimart-chat-item-seller-line {
+  color: #94a3b8;
+}
+
+.unimart-chat-item-snippet {
+  font-size: 0.75rem;
+  color: #717171;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+[data-theme='dark'] .unimart-chat-item-snippet {
+  color: #94a3b8;
+}
+
+/* Empty Sidebar State (When user has never chatted) */
+.unimart-chat-empty-sidebar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 36px 16px;
+  color: #717171;
+  animation: fadeIn 0.3s ease;
+}
+
+.unimart-chat-empty-icon-wrap {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #f7f7f7;
+  color: #70182c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+[data-theme='dark'] .unimart-chat-empty-icon-wrap {
+  background: #242933;
+  color: #f472b6;
+}
+
+.unimart-chat-empty-title {
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: #222222;
+  margin: 0 0 6px 0;
+}
+
+[data-theme='dark'] .unimart-chat-empty-title {
+  color: #ffffff;
+}
+
+.unimart-chat-empty-text {
+  font-size: 0.78rem;
+  line-height: 1.45;
+  margin: 0 0 10px 0;
+  max-width: 240px;
+}
+
+/* ----------------- Right Column: Active Conversation ----------------- */
+.unimart-chat-main-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: relative;
+  background: #ffffff;
+  min-width: 0;
+}
+
+[data-theme='dark'] .unimart-chat-main-panel {
+  background: #14171d;
+}
+
+/* Panel Header (NO OVERFLOW CLIPPING) */
+.unimart-chat-panel-header {
+  padding: 12px 20px;
+  border-bottom: 1px solid #ebebeb;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-shrink: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+[data-theme='dark'] .unimart-chat-panel-header {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.unimart-chat-panel-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
+}
+
+.unimart-chat-avatar-badge-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.unimart-chat-header-avatar-img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.unimart-chat-header-avatar-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  color: #ffffff;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+}
+
+.unimart-chat-header-badge-tag {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #10b981;
+  color: #ffffff;
+  font-size: 0.62rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #ffffff;
+}
+
+[data-theme='dark'] .unimart-chat-header-badge-tag {
+  border-color: #14171d;
+}
+
+.unimart-chat-header-title-box {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+/* PRODUCT NAME ON MAIN (BOLD) */
+.unimart-chat-header-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0;
+  color: #222222;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+[data-theme='dark'] .unimart-chat-header-title {
+  color: #ffffff;
+}
+
+.unimart-chat-chevron-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: none;
+  background: #f7f7f7;
+  color: #222222;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  flex-shrink: 0;
+}
+
+.unimart-chat-chevron-btn:hover {
+  background: #ebebeb;
+  transform: scale(1.08);
+}
+
+[data-theme='dark'] .unimart-chat-chevron-btn {
+  background: #242933;
+  color: #ffffff;
+}
+
+/* SELLER NAME ON LIGHT TEXT */
+.unimart-chat-header-subrow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.74rem;
+  color: #717171;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+[data-theme='dark'] .unimart-chat-header-subrow {
+  color: #94a3b8;
+}
+
+.unimart-chat-seller-light-name {
+  color: #4b5563;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+[data-theme='dark'] .unimart-chat-seller-light-name {
+  color: #cbd5e1;
+}
+
+.unimart-chat-dot-sep {
+  color: #9ca3af;
+}
+
+/* Right button container - never clipped */
+.unimart-chat-panel-header-right {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+/* "Show listing" Pill Button */
+.unimart-chat-show-reservation-btn {
+  border: 1px solid #222222;
+  border-radius: 24px;
+  padding: 6px 14px;
+  font-weight: 600;
+  font-size: 0.8rem;
+  background: #ffffff;
+  color: #222222;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+[data-theme='dark'] .unimart-chat-show-reservation-btn {
+  background: transparent;
+  border-color: #ffffff;
+  color: #ffffff;
+}
+
+.unimart-chat-show-reservation-btn:hover {
+  background: #f7f7f7;
+  transform: translateY(-1px);
+}
+
+[data-theme='dark'] .unimart-chat-show-reservation-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* ----------------- Message Stream & Smooth Message Pop-In ----------------- */
+.unimart-chat-stream {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.unimart-chat-airbnb-date-divider {
+  display: flex;
+  justify-content: center;
+  margin: 6px 0;
+}
+
+.unimart-chat-airbnb-date-divider span {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: #717171;
+}
+
+[data-theme='dark'] .unimart-chat-airbnb-date-divider span {
+  color: #94a3b8;
+}
+
+/* Start notice when a conversation is opened for the first time */
+.unimart-chat-start-notice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 28px 18px;
+  background: rgba(112, 24, 44, 0.03);
+  border: 1px dashed rgba(112, 24, 44, 0.18);
+  border-radius: 14px;
+  margin: 12px 0;
+  animation: fadeIn 0.3s ease;
+}
+
+[data-theme='dark'] .unimart-chat-start-notice {
+  background: rgba(244, 114, 182, 0.05);
+  border-color: rgba(244, 114, 182, 0.2);
+  color: #f1f5f9;
+}
+
+/* Smooth Message Appearance Animation */
+.unimart-chat-airbnb-msg-wrap {
+  display: flex;
+  flex-direction: column;
+  max-width: 540px;
+  position: relative;
+  animation: messagePopIn 0.26s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes messagePopIn {
+  0% {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.unimart-chat-airbnb-msg-wrap.host-side {
+  align-self: flex-start;
+}
+
+.unimart-chat-airbnb-msg-wrap.user-side {
+  align-self: flex-end;
+  align-items: flex-end;
+}
+
+.unimart-chat-airbnb-msg-header {
+  font-size: 0.72rem;
+  color: #717171;
+  margin-bottom: 4px;
+  padding: 0 4px;
+}
+
+[data-theme='dark'] .unimart-chat-airbnb-msg-header {
+  color: #94a3b8;
+}
+
+/* Message Bubbles */
+.unimart-chat-airbnb-bubble {
+  position: relative;
+  padding: 12px 16px;
+  border-radius: 16px;
+  font-size: 0.9rem;
+  line-height: 1.48;
+  cursor: pointer;
+  white-space: pre-line;
+  word-break: break-word;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.unimart-chat-airbnb-bubble:hover {
+  transform: translateY(-1px);
+}
+
+.unimart-chat-airbnb-bubble.bubble-host {
+  background: #f2f2f2;
+  color: #222222;
+  border-bottom-left-radius: 4px;
+}
+
+[data-theme='dark'] .unimart-chat-airbnb-bubble.bubble-host {
+  background: #232832;
+  color: #f1f5f9;
+}
+
+.unimart-chat-airbnb-bubble.bubble-user {
+  background: #70182c;
+  color: #ffffff;
+  border-bottom-right-radius: 4px;
+}
+
+/* Emoji Reaction Badge with Pop Animation */
+.unimart-chat-reaction-badge-pill {
+  position: absolute;
+  bottom: -8px;
+  right: 12px;
+  background: #ffffff;
+  border: 1px solid #ebebeb;
+  border-radius: 9999px;
+  padding: 2px 6px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.82rem;
+  user-select: none;
+  animation: popReaction 0.28s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes popReaction {
+  0% { transform: scale(0); opacity: 0; }
+  70% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+[data-theme='dark'] .unimart-chat-reaction-badge-pill {
+  background: #242933;
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.unimart-chat-read-receipt-line {
+  font-size: 0.72rem;
+  color: #717171;
+  margin-top: 5px;
+  padding: 0 4px;
+}
+
+[data-theme='dark'] .unimart-chat-read-receipt-line {
+  color: #94a3b8;
+}
+
+.unimart-chat-reaction-picker {
+  display: flex;
+  gap: 6px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  padding: 4px 8px;
+  margin-top: 6px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+  animation: popPicker 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes popPicker {
+  from { opacity: 0; transform: translateY(6px) scale(0.88); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+[data-theme='dark'] .unimart-chat-reaction-picker {
+  background: #242933;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.reaction-pick-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.05rem;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.reaction-pick-btn:hover {
+  transform: scale(1.3);
+}
+
+/* Response Time Notice Pill */
+.unimart-chat-response-notice-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.unimart-chat-response-notice-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  color: #717171;
+}
+
+[data-theme='dark'] .unimart-chat-response-notice-pill {
+  color: #94a3b8;
+}
+
+/* ----------------- Message Input Box (Airbnb Rounded Container) ----------------- */
+.unimart-chat-airbnb-input-box {
+  margin: 0 24px 18px 24px;
+  border: 1px solid #b0b0b0;
+  border-radius: 14px;
+  padding: 10px 16px;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+[data-theme='dark'] .unimart-chat-airbnb-input-box {
+  background: #1e2229;
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.unimart-chat-airbnb-input-box:focus-within {
+  border-color: #222222;
+  box-shadow: 0 0 0 3px rgba(34, 34, 34, 0.08);
+}
+
+[data-theme='dark'] .unimart-chat-airbnb-input-box:focus-within {
+  border-color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+}
+
+.unimart-chat-airbnb-textarea {
+  border: none;
+  outline: none;
+  resize: none;
+  font-family: inherit;
+  font-size: 0.88rem;
+  width: 100%;
+  background: transparent;
+  color: inherit;
+  line-height: 1.45;
+}
+
+.unimart-chat-airbnb-input-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.unimart-chat-input-hint {
+  font-size: 0.7rem;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.unimart-chat-input-hint kbd {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  padding: 1px 4px;
+  font-size: 0.65rem;
+  color: #475569;
+}
+
+[data-theme='dark'] .unimart-chat-input-hint kbd {
+  background: #242933;
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #cbd5e1;
+}
+
+.unimart-chat-airbnb-send-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: #222222;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  margin-left: auto;
+}
+
+.unimart-chat-airbnb-send-btn:hover:not(:disabled) {
+  background: #000000;
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.unimart-chat-airbnb-send-btn:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+[data-theme='dark'] .unimart-chat-airbnb-send-btn {
+  background: #ffffff;
+  color: #14171d;
+}
+
+[data-theme='dark'] .unimart-chat-airbnb-send-btn:hover:not(:disabled) {
+  background: #f1f5f9;
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.25);
+}
+
+.unimart-chat-airbnb-send-btn:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+
+/* Empty Right Panel */
+.unimart-chat-no-conversation-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  padding: 30px;
+  color: #717171;
+  animation: fadeIn 0.3s ease;
+}
+
+.unimart-chat-no-conv-icon-box {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #f7f7f7;
+  color: #70182c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+[data-theme='dark'] .unimart-chat-no-conv-icon-box {
+  background: #242933;
+  color: #f472b6;
+}
+
+.unimart-chat-no-conv-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #222222;
+  margin-bottom: 8px;
+}
+
+[data-theme='dark'] .unimart-chat-no-conv-title {
+  color: #ffffff;
+}
+
+.unimart-chat-no-conv-desc {
+  font-size: 0.82rem;
+  max-width: 380px;
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+
+.unimart-chat-no-conv-tip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #faf7f8;
+  border: 1px solid #edd2d7;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  font-size: 0.78rem;
+  color: #70182c;
+}
+
+[data-theme='dark'] .unimart-chat-no-conv-tip {
+  background: rgba(244, 114, 182, 0.08);
+  border-color: rgba(244, 114, 182, 0.2);
+  color: #f472b6;
+}
+
+/* ----------------- Side Drawer: Show Listing Details ----------------- */
+.unimart-chat-listing-drawer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 320px;
+  border-left: 1px solid #ebebeb;
+  background: #fafafa;
+  overflow-y: auto;
+  padding: 18px;
+  z-index: 20;
+  box-shadow: -4px 0 16px rgba(0, 0, 0, 0.08);
+  animation: slideDrawerRight 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+[data-theme='dark'] .unimart-chat-listing-drawer {
+  background: #181c24;
+  border-left-color: rgba(255, 255, 255, 0.08);
+}
+
+@keyframes slideDrawerRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.unimart-chat-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.unimart-chat-drawer-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.unimart-chat-drawer-img {
+  width: 100%;
+  height: 160px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.unimart-chat-drawer-info-block {
+  padding: 10px 12px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+}
+
+[data-theme='dark'] .unimart-chat-drawer-info-block {
+  background: #242933;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* ==========================================================================
+   COMPANION FLOATING LISTING WINDOW (FLOATING MODE COMPANION)
+   ========================================================================== */
+.unimart-chat-companion-window {
+  width: 330px;
+  height: 640px;
+  max-height: 90vh;
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 24px 64px -12px rgba(0, 0, 0, 0.38), 0 8px 24px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  color: #222222;
+  flex-shrink: 0;
+  animation: companionSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  z-index: 1062;
+}
+
+[data-theme='dark'] .unimart-chat-companion-window {
+  background: #181c24;
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 24px 64px -12px rgba(0, 0, 0, 0.75), 0 8px 24px rgba(0, 0, 0, 0.4);
+  color: #f1f5f9;
+}
+
+@keyframes companionSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateX(50px) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+.unimart-chat-companion-window.companion-exit {
+  animation: companionSlideOut 0.26s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+@keyframes companionSlideOut {
+  0% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(40px) scale(0.96);
+  }
+}
+
+.unimart-chat-companion-header {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 18px;
+  border-bottom: 1px solid #ebebeb;
+  background: #ffffff;
+  flex-shrink: 0;
+}
+
+[data-theme='dark'] .unimart-chat-companion-header {
+  background: #181c24;
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.unimart-chat-companion-title {
+  font-size: 1.02rem;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.unimart-chat-companion-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px;
+}
+
+.unimart-companion-img-wrap {
+  position: relative;
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.unimart-companion-condition-tag {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(4px);
+  color: #ffffff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.02em;
+}
+
+.unimart-companion-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #70182c;
+  flex-shrink: 0;
+}
+
+[data-theme='dark'] .unimart-companion-avatar {
+  background: #242933;
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #f472b6;
+}
+
+.unimart-companion-safety-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  background: rgba(22, 163, 74, 0.07);
+  border: 1px solid rgba(22, 163, 74, 0.18);
+  border-radius: 10px;
+  font-size: 0.74rem;
+  color: #15803d;
+  line-height: 1.45;
+}
+
+[data-theme='dark'] .unimart-companion-safety-note {
+  background: rgba(34, 197, 94, 0.1);
+  border-color: rgba(34, 197, 94, 0.25);
+  color: #4ade80;
+}
+
+/* Quick chat button on item card */
+.unimart-card-quick-chat-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #70182c;
+  background: #faf7f8;
+  border: 1px solid #edd2d7;
+  padding: 3px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+[data-theme='dark'] .unimart-card-quick-chat-btn {
+  background: rgba(244, 114, 182, 0.1);
+  border-color: rgba(244, 114, 182, 0.25);
+  color: #f472b6;
+}
+
+.unimart-card-quick-chat-btn:hover {
+  background: #70182c;
+  color: #ffffff;
+  border-color: #70182c;
+  transform: translateY(-1px);
+}
+
+[data-theme='dark'] .unimart-card-quick-chat-btn:hover {
+  background: #f472b6;
+  color: #181b20;
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+  .unimart-chat-floating-cluster {
+    flex-direction: column;
+    gap: 12px;
+    overflow-y: auto;
+    max-height: 95vh;
+  }
+  .unimart-airbnb-chat-window-card.with-companion {
+    width: 95vw;
+    max-width: 95vw;
+    animation: none;
+  }
+  .unimart-chat-companion-window {
+    width: 95vw;
+    max-width: 95vw;
+    height: auto;
+    max-height: 320px;
+    animation: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .unimart-airbnb-chat-backdrop {
+    padding: 10px;
+  }
+  .unimart-airbnb-chat-window-card {
+    width: 100%;
+    height: 94vh;
+  }
+  .unimart-chat-split-body {
+    flex-direction: column;
+  }
+  .unimart-chat-sidebar {
+    width: 100%;
+    max-width: 100%;
+    height: 38%;
+    border-right: none;
+    border-bottom: 1px solid #ebebeb;
+  }
+  .unimart-chat-stream {
+    padding: 14px;
+  }
+  .unimart-chat-airbnb-input-box {
+    margin: 0 14px 14px 14px;
+  }
+  .unimart-chat-panel-header {
+    padding: 10px 14px;
+  }
+}
