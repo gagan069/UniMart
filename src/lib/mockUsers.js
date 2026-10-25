@@ -36,6 +36,27 @@ export function findUserByCredentials(email, password) {
   );
 }
 
+/**
+ * Look up a user by email only (used by forgot-password flow).
+ * Returns the user object or undefined if not found.
+ */
+export function findUserByEmail(email) {
+  const normalizedEmail = (email || '').trim().toLowerCase();
+  return SEEDED_USERS.find((u) => u.email.toLowerCase() === normalizedEmail);
+}
+
+/**
+ * Reset a user's password in the in-memory store.
+ * Returns true if the user was found and updated, false otherwise.
+ */
+export function resetUserPassword(email, newPassword) {
+  const normalizedEmail = (email || '').trim().toLowerCase();
+  const user = SEEDED_USERS.find((u) => u.email.toLowerCase() === normalizedEmail);
+  if (!user) return false;
+  user.password = newPassword;
+  return true;
+}
+
 export function registerNewStudent({ name, email, studentId, password }) {
   const newStudent = {
     id: `student_${Date.now()}`,
