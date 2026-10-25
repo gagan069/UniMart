@@ -1,13 +1,17 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { authApi } from '../api/authApi.js';
 import { SEEDED_USERS } from '../lib/mockUsers.js';
 import { isAdmin as checkIsAdmin } from '../lib/permissions.js';
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  // Support optional ?as=admin / ?as=priya / ?as=guest for testing, then check localStorage, then default to Student A
+  // First check localStorage session, then URL query param for quick debug, or null
   const [user, setUser] = useState(() => {
     try {
+      const raw = localStorage.getItem('unimart_active_session_user_v1');
+      if (raw) return JSON.parse(raw);
+
       if (typeof window !== 'undefined' && window.location.search) {
         const params = new URLSearchParams(window.location.search);
         const asParam = params.get('as');
@@ -20,47 +24,75 @@ export function AuthProvider({ children }) {
           if (match) return match;
         }
       }
-
-      const savedId = localStorage.getItem('unimart_active_user_id');
-      if (savedId === 'guest') return null;
-      if (savedId) {
-        const found = SEEDED_USERS.find((u) => u.id === savedId || u.email === savedId);
-        if (found) return found;
-      }
-    } catch (e) {}
-    return SEEDED_USERS[1];
+    } catch (_e) {}
+    return null;
   });
 
-  const login = (userData) => {
-    setUser(userData);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    authApi.getCurrentUser().then((res) => {
+      if (mounted && res?.data !== undefined) {
+        setUser(res.data);
+      }
+    });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const login = async (credentialsOrUser) => {
+    setLoading(true);
     try {
-      if (userData?.id) localStorage.setItem('unimart_active_user_id', userData.id);
-    } catch (e) {}
+      // If full user object passed directly (e.g. from Google SSO or seed user)
+      if (credentialsOrUser && credentialsOrUser.email && !credentialsOrUser.password) {
+        authApi.setCurrentUser(credentialsOrUser);
+        setUser(credentialsOrUser);
+        return credentialsOrUser;
+      }
+      // If credentials object passed { email, password }
+      const res = await authApi.login(credentialsOrUser);
+      setUser(res.data);
+      return res.data;
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const logout = () => {
-    setUser(null);
+  const register = async (userData) => {
+    setLoading(true);
     try {
-      localStorage.setItem('unimart_active_user_id', 'guest');
-    } catch (e) {}
+      const res = await authApi.register(userData);
+      setUser(res.data);
+      return res.data;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const logout = async () => {
+    setLoading(true);
+    try {
+      await authApi.logout();
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const switchAccount = (accountKey) => {
     if (accountKey === 'guest' || accountKey === null) {
-      setUser(null);
-      try {
-        localStorage.setItem('unimart_active_user_id', 'guest');
-      } catch (e) {}
+      logout();
       return;
     }
     const found = SEEDED_USERS.find(
       (u) => u.id === accountKey || u.email === accountKey
     );
     if (found) {
-      setUser(found);
-      try {
-        localStorage.setItem('unimart_active_user_id', found.id);
-      } catch (e) {}
+      const { password: _p, ...safeFound } = found;
+      authApi.setCurrentUser(safeFound);
+      setUser(safeFound);
     }
   };
 
@@ -68,9 +100,11 @@ export function AuthProvider({ children }) {
     <AuthContext.Provider
       value={{
         user,
+        loading,
         role: user?.role || 'guest',
         isAdmin: checkIsAdmin(user),
         login,
+        register,
         logout,
         switchAccount,
         seededUsers: SEEDED_USERS
@@ -82,8 +116,9 @@ export function AuthProvider({ children }) {
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext);
-  return context;
+  const ctx = useContext(AuthContext);
+  if (!ctx) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return ctx;
 }
-
-export default AuthContext;

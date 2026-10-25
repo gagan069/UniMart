@@ -1,16 +1,42 @@
-# React + Vite
+# UNIMART — Campus Marketplace
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+A peer-to-peer campus marketplace designed specifically for **Chitkara University** students and faculty. UniMart facilitates transparent buying, selling, and campus handoffs of textbooks, lab equipment, handmade items, hostel essentials, and personal student crafts.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 🏛️ Campus Architecture & Viva Compliance
 
-## React Compiler
+- **Framework**: React 19 + Vite (Fast HMR)
+- **Routing**: React Router v7
+- **Global State Management**:
+  - **Context API**: Authenticated user session (`AuthContext`) and Theme (`ThemeContext`).
+  - **Redux Toolkit**: Marketplace listings (`listingsSlice`), Wishlist (`wishlistSlice`), and Conversations/Chat (`chatSlice`).
+  - **Local State (`useState`)**: Forms, modals, filtering, and search inputs.
+- **Styling**: Vanilla CSS & Custom Design System (Chitkara Maroon `#70182c`, Glassmorphism, Spotlight hover effects, Dark & Light mode).
+- **Backend Simulation**: Simulated REST API (`src/api/`) mimicking MySQL relational tables with network latency (~300ms) and `localStorage` persistence with in-memory fallbacks.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the Oxlint configuration
+## 🚀 Quick Start
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+```bash
+# Install dependencies
+npm install
+
+# Run local development server
+npm run dev
+
+# Run build verification
+npm run build
+
+# Run linting check
+npm run lint
+```
+
+---
+
+## 🔐 Credentials & Roles
+
+- **Admin**: `admin@chitkara.edu.in` / `Unimart@123`
+- **Student**: `satkar0696.becse25@chitkara.edu.in` / `student123`
+- **Guest**: Default unauthenticated mode for first-time visitors
