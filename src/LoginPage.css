@@ -54,7 +54,6 @@ html, body {
 /* Clean Top Navigation (In natural flow, does NOT overlap artwork) */
 .unimart-navbar {
   width: 100%;
-  height: 100px;
   padding: 1.25rem 3rem;
   display: flex;
   align-items: center;
@@ -69,7 +68,7 @@ html, body {
   align-items: center;
   gap: 0.65rem;
   text-decoration: none;
-  font-weight: 1000;
+  font-weight: 800;
   font-size: 1.35rem;
   color: var(--unimart-text-dark);
   letter-spacing: -0.02em;
@@ -122,7 +121,7 @@ html, body {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow:  0 4px 16px rgba(112, 24, 44, 0.1);
+  box-shadow: 0 4px 16px rgba(112, 24, 44, 0.1);
   transition: all 0.2s ease;
   z-index: 30;
 }
@@ -614,10 +613,15 @@ html, body {
   transition: all 0.2s ease;
 }
 
-.unimart-sso-btn:hover {
+.unimart-sso-btn:hover:not(:disabled) {
   background: #fafbfc;
   border-color: var(--unimart-maroon-border);
   color: var(--unimart-maroon);
+}
+
+.unimart-sso-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 /* Clean Footer */
@@ -641,4 +645,357 @@ html, body {
 
 .unimart-page-footer a:hover {
   color: var(--unimart-maroon);
+}
+
+/* --- Dark Theme Landing Page & Auth Modal --- */
+[data-theme="dark"] .unimart-app-shell {
+  background: #090c12;
+}
+
+[data-theme="dark"] .unimart-navbar {
+  background: rgba(9, 12, 18, 0.88);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .unimart-brand-link {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .unimart-theme-toggle-btn {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .unimart-signin-pill {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .unimart-nav-arrow {
+  background: #111622;
+  border-color: rgba(255, 255, 255, 0.14);
+  color: #f8fafc;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .unimart-nav-arrow:hover:not(:disabled) {
+  background: #e11d48;
+  border-color: #e11d48;
+  color: #ffffff;
+}
+
+[data-theme="dark"] .unimart-modal-card {
+  background: #111622;
+  border-color: rgba(255, 255, 255, 0.14);
+  color: #f8fafc;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7);
+}
+
+[data-theme="dark"] .unimart-modal-title {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .unimart-input-wrapper {
+  background: #171f2e;
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+[data-theme="dark"] .unimart-input-wrapper input {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .unimart-input-wrapper:focus-within {
+  border-color: #e11d48;
+  box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.25);
+}
+
+[data-theme="dark"] .unimart-sso-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .unimart-sso-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: #e11d48;
+  color: #fb7185;
+}
+
+[data-theme="dark"] .unimart-page-footer {
+  background: #090c12;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+}
+
+/* ============================================================
+   FORGOT PASSWORD — Styles
+   ============================================================ */
+
+/* Forgot password link button (replaces the old <a> tag) */
+.unimart-forgot-link {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--unimart-maroon);
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-family: inherit;
+  text-decoration: none;
+  transition: color 0.18s ease, opacity 0.18s ease;
+}
+.unimart-forgot-link:hover {
+  color: var(--unimart-maroon-dark);
+  text-decoration: underline;
+}
+
+/* Slightly narrower box for forgot flow */
+.unimart-forgot-box {
+  max-width: 420px;
+}
+
+/* ── Step progress dots ─────────────────────────────────────── */
+.unimart-forgot-steps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 1.25rem;
+}
+
+.unimart-forgot-steps .unimart-forgot-step-dot {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #f1f3f7;
+  border: 2px solid #e2e6ef;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #9aa3b5;
+  transition: background 0.25s, border-color 0.25s, color 0.25s;
+  position: relative;
+}
+
+.unimart-forgot-steps .unimart-forgot-step-dot + .unimart-forgot-step-dot::before {
+  content: '';
+  position: absolute;
+  right: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 2px;
+  background: #e2e6ef;
+  transition: background 0.3s;
+}
+
+.unimart-forgot-steps .unimart-forgot-step-dot.active {
+  background: var(--unimart-maroon);
+  border-color: var(--unimart-maroon);
+  color: #fff;
+  box-shadow: 0 0 0 4px rgba(112, 24, 44, 0.15);
+}
+
+.unimart-forgot-steps .unimart-forgot-step-dot.done {
+  background: #22c55e;
+  border-color: #22c55e;
+  color: #fff;
+}
+
+.unimart-forgot-steps .unimart-forgot-step-dot.done + .unimart-forgot-step-dot::before,
+.unimart-forgot-steps .unimart-forgot-step-dot.active + .unimart-forgot-step-dot::before {
+  background: var(--unimart-maroon);
+}
+
+/* ── Icon circle ────────────────────────────────────────────── */
+.unimart-forgot-icon-circle {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--unimart-maroon-subtle);
+  border: 2px solid var(--unimart-maroon-border);
+  color: var(--unimart-maroon);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.25s, border-color 0.25s, color 0.25s;
+}
+.unimart-forgot-icon-circle.otp {
+  background: #eff8ff;
+  border-color: #bfdbfe;
+  color: #2563eb;
+}
+.unimart-forgot-icon-circle.reset {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+  color: #16a34a;
+}
+
+/* ── Alert banners ──────────────────────────────────────────── */
+.unimart-forgot-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 0.6rem;
+  font-size: 0.82rem;
+  margin-bottom: 0.9rem;
+  line-height: 1.45;
+}
+.unimart-forgot-alert.error {
+  background: #fff1f2;
+  border: 1px solid #fecdd3;
+  color: #be123c;
+}
+.unimart-forgot-alert.success {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #15803d;
+}
+.unimart-forgot-alert.demo {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #92400e;
+}
+
+/* ── OTP demo code highlight ────────────────────────────────── */
+.unimart-otp-demo-code {
+  display: inline-block;
+  font-weight: 800;
+  font-size: 1.1rem;
+  letter-spacing: 0.15em;
+  color: var(--unimart-maroon);
+  background: var(--unimart-maroon-subtle);
+  border-radius: 6px;
+  padding: 0 6px;
+}
+
+/* ── OTP 6-box input row ────────────────────────────────────── */
+.unimart-otp-boxes {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.unimart-otp-box {
+  width: 44px;
+  height: 52px;
+  border-radius: 10px;
+  border: 2px solid #dde1ea;
+  background: #f9fafb;
+  text-align: center;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--unimart-text-dark);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  caret-color: var(--unimart-maroon);
+}
+.unimart-otp-box:focus {
+  border-color: var(--unimart-maroon);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(112, 24, 44, 0.12);
+}
+.unimart-otp-box.filled {
+  border-color: var(--unimart-maroon);
+  background: var(--unimart-maroon-subtle);
+  color: var(--unimart-maroon);
+}
+
+/* ── Back/Resend button ─────────────────────────────────────── */
+.unimart-forgot-back-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  width: 100%;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--unimart-text-muted);
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0.3rem 0;
+  font-family: inherit;
+  transition: color 0.18s;
+}
+.unimart-forgot-back-btn:hover {
+  color: var(--unimart-maroon);
+}
+
+/* ── Dark mode overrides ────────────────────────────────────── */
+[data-theme="dark"] .unimart-forgot-link {
+  color: #f87198;
+}
+[data-theme="dark"] .unimart-forgot-link:hover {
+  color: #fda4af;
+}
+[data-theme="dark"] .unimart-forgot-steps .unimart-forgot-step-dot {
+  background: #1e2130;
+  border-color: #2d3148;
+  color: #6b7280;
+}
+[data-theme="dark"] .unimart-forgot-steps .unimart-forgot-step-dot + .unimart-forgot-step-dot::before {
+  background: #2d3148;
+}
+[data-theme="dark"] .unimart-forgot-steps .unimart-forgot-step-dot.active {
+  background: #8e233b;
+  border-color: #8e233b;
+}
+[data-theme="dark"] .unimart-forgot-icon-circle {
+  background: #1e1520;
+  border-color: #4a1228;
+  color: #f87198;
+}
+[data-theme="dark"] .unimart-forgot-icon-circle.otp {
+  background: #172040;
+  border-color: #1e3a8a;
+  color: #60a5fa;
+}
+[data-theme="dark"] .unimart-forgot-icon-circle.reset {
+  background: #052e16;
+  border-color: #14532d;
+  color: #4ade80;
+}
+[data-theme="dark"] .unimart-forgot-alert.error {
+  background: #2d0a14;
+  border-color: #7f1d1d;
+  color: #fca5a5;
+}
+[data-theme="dark"] .unimart-forgot-alert.success {
+  background: #052e16;
+  border-color: #14532d;
+  color: #86efac;
+}
+[data-theme="dark"] .unimart-forgot-alert.demo {
+  background: #271e09;
+  border-color: #78350f;
+  color: #fcd34d;
+}
+[data-theme="dark"] .unimart-otp-demo-code {
+  color: #f87198;
+  background: #2d0a14;
+}
+[data-theme="dark"] .unimart-otp-box {
+  background: #1a1d28;
+  border-color: #2d3148;
+  color: #e5e7eb;
+}
+[data-theme="dark"] .unimart-otp-box:focus {
+  border-color: #8e233b;
+  background: #1e1520;
+  box-shadow: 0 0 0 3px rgba(142, 35, 59, 0.2);
+}
+[data-theme="dark"] .unimart-otp-box.filled {
+  border-color: #8e233b;
+  background: #1e1520;
+  color: #f87198;
+}
+[data-theme="dark"] .unimart-forgot-back-btn {
+  color: #9ca3af;
+}
+[data-theme="dark"] .unimart-forgot-back-btn:hover {
+  color: #f87198;
 }

@@ -1,9 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useAuth } from './context/AuthContext.jsx';
+import { useTheme } from './context/ThemeContext.jsx';
+import { SEEDED_USERS, findUserByCredentials, findUserByEmail, resetUserPassword, registerNewStudent } from './lib/mockUsers.js';
+import { generateOTP, sendOTPEmail } from './lib/emailService.js';
+import { signInWithGoogleOAuth, initializeGoogleId } from './lib/googleAuth.js';
 import './LoginPage.css';
 import welcomeStudentImg from './assets/welcome_student.jpg';
 import campusParkImg from './assets/campus_park.jpg';
 
 export default function LoginPage({ onGoToDashboard }) {
+  const auth = useAuth();
+  const { theme, toggleTheme } = useTheme();
   // Page 1 = Welcome Screen (Expansive skater artwork)
   // Page 2 = Campus Gateway (Full campus illustration with Login & Register below)
   const [currentPage, setCurrentPage] = useState(1);
@@ -15,13 +22,34 @@ export default function LoginPage({ onGoToDashboard }) {
   // Form states
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [studentId, setStudentId] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [alertInfo, setAlertInfo] = useState(null);
   const [guestNotice, setGuestNotice] = useState(false);
+
+  // ── Forgot Password flow state ──────────────────────────────────────────────
+  // Steps: 'email' → 'otp' → 'reset' → (done, closes modal)
+  const [forgotOpen, setForgotOpen] = useState(false);
+  const [forgotStep, setForgotStep] = useState('email'); // 'email' | 'otp' | 'reset'
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotOtp, setForgotOtp] = useState('')           // generated OTP
+  const [otpInputs, setOtpInputs] = useState(['', '', '', '', '', '']); // 6 boxes
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotError, setForgotError] = useState('');
+  const [forgotSuccess, setForgotSuccess] = useState('');
+  const [simulatedOtp, setSimulatedOtp] = useState('');  // shown on screen in demo mode
+  const [otpExpiry, setOtpExpiry] = useState(null);     // Date when OTP expires
+  const otpInputRefs = useRef([]);
+  // ─────────────────────────────────────────────────────────────────────────────
 
   // Keyboard navigation: Left/Right arrows glide between pages, Escape closes modal
   useEffect(() => {
@@ -43,35 +71,243 @@ export default function LoginPage({ onGoToDashboard }) {
     setIsModalOpen(true);
   };
 
-  const handleDemoFill = () => {
-    setEmail('satkar.student@university.edu');
-    setPassword('student123');
+  // ── Forgot Password handlers ────────────────────────────────────────────────
+  const openForgotPassword = () => {
+    setIsModalOpen(false);
+    setForgotOpen(true);
+    setForgotStep('email');
+    setForgotEmail('');
+    setForgotOtp('');
+    setOtpInputs(['', '', '', '', '', '']);
+    setNewPassword('');
+    setConfirmNewPassword('');
+    setForgotError('');
+    setForgotSuccess('');
+    setSimulatedOtp('');
+    setOtpExpiry(null);
+  };
+
+  const closeForgotPassword = () => {
+    setForgotOpen(false);
+    setForgotStep('email');
+    setForgotError('');
+    setForgotSuccess('');
+    setSimulatedOtp('');
+  };
+
+  // Step 1: Verify email is registered and send OTP
+  const handleForgotEmailSubmit = async (e) => {
+    e.preventDefault();
+    setForgotError('');
+    const trimEmail = forgotEmail.trim().toLowerCase();
+    if (!trimEmail) { setForgotError('Please enter your registered email.'); return; }
+    const user = findUserByEmail(trimEmail);
+    if (!user) {
+      setForgotError('No account found with this email. Please check and try again.');
+      return;
+    }
+    setForgotLoading(true);
+    try {
+      const otp = generateOTP();
+      const result = await sendOTPEmail(trimEmail, user.name, otp);
+      setForgotOtp(otp);
+      setOtpExpiry(new Date(Date.now() + 10 * 60 * 1000)); // 10-min expiry
+      if (result.simulated) {
+        setSimulatedOtp(otp); // show on-screen in demo mode
+      }
+      setForgotStep('otp');
+    } catch (err) {
+      setForgotError(err.message || 'Failed to send OTP. Please try again.');
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  // OTP box input handler (auto-focus next box)
+  const handleOtpInput = (index, value) => {
+    const digit = value.replace(/\D/g, '').slice(-1);
+    const next = [...otpInputs];
+    next[index] = digit;
+    setOtpInputs(next);
+    if (digit && index < 5) {
+      otpInputRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleOtpKeyDown = (index, e) => {
+    if (e.key === 'Backspace' && !otpInputs[index] && index > 0) {
+      otpInputRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handleOtpPaste = (e) => {
+    e.preventDefault();
+    const paste = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+    const next = [...otpInputs];
+    paste.split('').forEach((d, i) => { next[i] = d; });
+    setOtpInputs(next);
+    const nextFocus = Math.min(paste.length, 5);
+    otpInputRefs.current[nextFocus]?.focus();
+  };
+
+  // Step 2: Verify OTP
+  const handleOtpSubmit = (e) => {
+    e.preventDefault();
+    setForgotError('');
+    const entered = otpInputs.join('');
+    if (entered.length < 6) { setForgotError('Please enter the complete 6-digit OTP.'); return; }
+    if (otpExpiry && new Date() > otpExpiry) {
+      setForgotError('OTP has expired. Please go back and request a new one.');
+      return;
+    }
+    if (entered !== forgotOtp) {
+      setForgotError('Incorrect OTP. Please check and try again.');
+      return;
+    }
+    setForgotStep('reset');
+  };
+
+  // Step 3: Set new password
+  const handleResetPasswordSubmit = (e) => {
+    e.preventDefault();
+    setForgotError('');
+    if (!newPassword) { setForgotError('Please enter a new password.'); return; }
+    if (newPassword.length < 6) { setForgotError('Password must be at least 6 characters.'); return; }
+    if (newPassword !== confirmNewPassword) { setForgotError('Passwords do not match.'); return; }
+    setForgotLoading(true);
+    setTimeout(() => {
+      resetUserPassword(forgotEmail.trim().toLowerCase(), newPassword);
+      setForgotLoading(false);
+      setForgotSuccess('Password reset successful! You can now sign in with your new password.');
+      setTimeout(() => {
+        closeForgotPassword();
+        openAuth('login');
+      }, 2000);
+    }, 600);
+  };
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  const handleDemoFill = (userType = 'student_a') => {
+    let target = SEEDED_USERS[1];
+    if (userType === 'student_b') target = SEEDED_USERS[2];
+    if (userType === 'admin') target = SEEDED_USERS[0];
+
+    setEmail(target.email);
+    setPassword(target.password);
+    setFieldErrors({});
     setAlertInfo({
       type: 'info',
-      message: 'Demo credentials populated. Click "Sign In" below.'
+      message: `Populated ${target.name} (${target.role.toUpperCase()}) credentials. Click "Sign In" below.`
     });
+  };
+
+  const validateRegister = () => {
+    const errs = {};
+    if (!fullName.trim()) errs.fullName = 'Full Name is required.';
+    if (!studentId.trim()) errs.studentId = 'Student ID is required.';
+
+    const trimmedEmail = email.trim().toLowerCase();
+    if (!trimmedEmail) {
+      errs.email = 'College email is required.';
+    } else if (!trimmedEmail.endsWith('@chitkara.edu.in')) {
+      errs.email = 'Only official university emails ending in @chitkara.edu.in are allowed.';
+    }
+
+    if (!password) {
+      errs.password = 'Password is required.';
+    } else if (password.length < 6) {
+      errs.password = 'Password must be at least 6 characters.';
+    }
+
+    if (!confirmPassword) {
+      errs.confirmPassword = 'Confirm Password is required.';
+    } else if (confirmPassword !== password) {
+      errs.confirmPassword = 'Passwords do not match.';
+    }
+
+    setFieldErrors(errs);
+    return Object.keys(errs).length === 0;
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    setIsLoading(true);
     setAlertInfo(null);
 
+    if (modalMode === 'register') {
+      const isValid = validateRegister();
+      if (!isValid) return;
+
+      setIsLoading(true);
+      setTimeout(() => {
+        setIsLoading(false);
+        const newStudent = registerNewStudent({
+          name: fullName,
+          email,
+          studentId,
+          password
+        });
+        if (auth?.login) auth.login(newStudent);
+
+        setAlertInfo({
+          type: 'success',
+          message: `Registration successful! Welcome, ${newStudent.name}. Redirecting...`
+        });
+        setTimeout(() => {
+          if (onGoToDashboard) onGoToDashboard();
+        }, 800);
+      }, 700);
+      return;
+    }
+
+    // Login mode
+    if (!email.trim() || !password) {
+      setAlertInfo({
+        type: 'danger',
+        message: 'Please enter both your college email and password.'
+      });
+      return;
+    }
+
+    setIsLoading(true);
     setTimeout(() => {
       setIsLoading(false);
+      const matched = findUserByCredentials(email, password);
+      let sessionUser = matched;
+
+      if (!sessionUser) {
+        // Fallback demo for custom student logins with valid chitkara email
+        if (email.trim().toLowerCase().endsWith('@chitkara.edu.in')) {
+          sessionUser = {
+            id: `student_${Date.now()}`,
+            name: email.split('@')[0],
+            email: email.trim().toLowerCase(),
+            studentId: '2110990696',
+            role: 'student'
+          };
+        } else {
+          setAlertInfo({
+            type: 'danger',
+            message: 'Invalid credentials. Please use seeded accounts (Admin / Student A / Student B) or register with @chitkara.edu.in.'
+          });
+          return;
+        }
+      }
+
+      if (auth?.login) auth.login(sessionUser);
+
       setAlertInfo({
         type: 'success',
-        message: modalMode === 'login'
-          ? `Welcome back, ${email.split('@')[0]}! Redirecting to campus dashboard...`
-          : `Registration complete! Redirecting to UNIMART...`
+        message: `Welcome back, ${sessionUser.name} (${sessionUser.role.toUpperCase()})! Redirecting...`
       });
       setTimeout(() => {
         if (onGoToDashboard) onGoToDashboard();
-      }, 1000);
-    }, 850);
+      }, 700);
+    }, 600);
   };
 
   const handleSkip = () => {
+    // Guest mode: log out any current user so user === null
+    if (auth?.logout) auth.logout();
     if (onGoToDashboard) {
       onGoToDashboard();
     } else {
@@ -79,6 +315,79 @@ export default function LoginPage({ onGoToDashboard }) {
       setTimeout(() => setGuestNotice(false), 3500);
     }
   };
+
+  const handleGoogleSuccess = (profile) => {
+    const normEmail = (profile.email || '').toLowerCase().trim();
+    const existing = findUserByEmail(normEmail);
+    let sessionUser;
+
+    if (existing) {
+      sessionUser = {
+        ...existing,
+        avatar: profile.picture || existing.avatar,
+        name: existing.name || profile.name,
+      };
+    } else {
+      sessionUser = {
+        id: `google_${profile.sub || Date.now()}`,
+        name: profile.name || normEmail.split('@')[0],
+        email: normEmail,
+        studentId: normEmail.split('@')[0].toUpperCase(),
+        role: normEmail.includes('admin') ? 'admin' : 'student',
+        avatar: profile.picture,
+        picture: profile.picture,
+        isGoogleUser: true,
+      };
+      SEEDED_USERS.push(sessionUser);
+    }
+
+    if (auth?.login) {
+      auth.login(sessionUser);
+    }
+
+    setIsGoogleLoading(false);
+    setAlertInfo({
+      type: 'success',
+      message: `Welcome, ${sessionUser.name}! Signed in via Google (${sessionUser.role.toUpperCase()}). Redirecting...`,
+    });
+
+    setTimeout(() => {
+      if (onGoToDashboard) onGoToDashboard();
+    }, 700);
+  };
+
+  const handleGoogleSignIn = async () => {
+    setIsGoogleLoading(true);
+    setAlertInfo({
+      type: 'info',
+      message: 'Opening Google Sign-In account picker...',
+    });
+
+    try {
+      const profile = await signInWithGoogleOAuth();
+      handleGoogleSuccess(profile);
+    } catch (err) {
+      console.error('[UNIMART] Google sign-in failed:', err);
+      setIsGoogleLoading(false);
+      const msg = err?.message || 'Google sign-in was cancelled.';
+      setAlertInfo({
+        type: msg.includes('cancel') ? 'info' : 'danger',
+        message: msg,
+      });
+    }
+  };
+
+  useEffect(() => {
+    // Initialize Google One Tap / Identity Services in the background
+    initializeGoogleId(
+      (profile) => {
+        handleGoogleSuccess(profile);
+      },
+      (err) => {
+        console.warn('[UNIMART] Google One Tap info:', err);
+      }
+    );
+  }, []);
 
   return (
     <div className="unimart-app-shell">
@@ -99,13 +408,39 @@ export default function LoginPage({ onGoToDashboard }) {
         </a>
 
         <div className="d-flex align-items-center gap-2">
+          {/* Theme Toggle Button */}
+          <button
+            type="button"
+            className="unimart-theme-toggle-btn"
+            onClick={toggleTheme}
+            title={theme === 'dark' ? "Switch to light mode" : "Switch to dark mode"}
+            aria-label="Toggle dark/light theme"
+            style={{
+              width: '38px',
+              height: '38px',
+              borderRadius: '50%',
+              border: '1px solid var(--unimart-maroon-border, #e3e6ec)',
+              background: 'rgba(255, 255, 255, 0.85)',
+              color: 'var(--unimart-text-dark, #181b20)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer'
+            }}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: '19px' }}>
+              {theme === 'dark' ? 'light_mode' : 'dark_mode'}
+            </span>
+          </button>
+
           {onGoToDashboard && (
             <button
               type="button"
               className="btn btn-sm btn-light border rounded-pill px-3 fw-semibold text-muted d-none d-sm-inline-flex align-items-center gap-1"
-              onClick={onGoToDashboard}
+              onClick={handleSkip}
+              title="Continue as Guest (View-only mode)"
             >
-              <span>Explore Marketplace</span>
+              <span>Explore as Guest</span>
               <span className="material-symbols-outlined" style={{ fontSize: '17px' }}>arrow_forward</span>
             </button>
           )}
@@ -131,7 +466,7 @@ export default function LoginPage({ onGoToDashboard }) {
         aria-label="Previous Page"
       >
         <span className="material-symbols-outlined">chevron_left</span>
-      </button>₹199
+      </button>
 
       <button
         type="button"
@@ -399,37 +734,47 @@ export default function LoginPage({ onGoToDashboard }) {
             )}
 
             {/* Form */}
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} noValidate>
               {modalMode === 'register' && (
                 <>
                   <div className="mb-3">
-                    <label className="form-label small fw-semibold text-dark mb-1">Full Name</label>
+                    <label className="form-label small fw-semibold text-dark mb-1">
+                      Full Name <span className="text-danger">*</span>
+                    </label>
                     <div className="unimart-input-group">
                       <input
                         type="text"
                         required
-                        className="unimart-form-field"
-                        placeholder="e.g. Satkar Sharma"
+                        className={`unimart-form-field ${fieldErrors.fullName ? 'border-danger' : ''}`}
+                        placeholder="e.g. Satkar Singh"
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
                       />
                       <span className="material-symbols-outlined unimart-input-icon">person</span>
                     </div>
+                    {fieldErrors.fullName && (
+                      <div className="text-danger small mt-1">{fieldErrors.fullName}</div>
+                    )}
                   </div>
 
                   <div className="mb-3">
-                    <label className="form-label small fw-semibold text-dark mb-1">Student ID</label>
+                    <label className="form-label small fw-semibold text-dark mb-1">
+                      Student ID <span className="text-danger">*</span>
+                    </label>
                     <div className="unimart-input-group">
                       <input
                         type="text"
                         required
-                        className="unimart-form-field"
-                        placeholder="e.g. CS-2025-014"
+                        className={`unimart-form-field ${fieldErrors.studentId ? 'border-danger' : ''}`}
+                        placeholder="e.g. 2110990696"
                         value={studentId}
                         onChange={(e) => setStudentId(e.target.value)}
                       />
                       <span className="material-symbols-outlined unimart-input-icon">badge</span>
                     </div>
+                    {fieldErrors.studentId && (
+                      <div className="text-danger small mt-1">{fieldErrors.studentId}</div>
+                    )}
                   </div>
                 </>
               )}
@@ -437,57 +782,79 @@ export default function LoginPage({ onGoToDashboard }) {
               {/* Email */}
               <div className="mb-3">
                 <div className="d-flex justify-content-between align-items-center mb-1">
-                  <label className="form-label small fw-semibold text-dark mb-0">College Email</label>
+                  <label className="form-label small fw-semibold text-dark mb-0">
+                    College Email <span className="text-danger">*</span>
+                  </label>
                   {modalMode === 'login' && (
-                    <button
-                      type="button"
-                      className="unimart-demo-btn"
-                      onClick={handleDemoFill}
-                    >
-                      <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>bolt</span>
-                      <span>Demo Fill</span>
-                    </button>
+                    <div className="d-flex gap-1">
+                      <button
+                        type="button"
+                        className="unimart-demo-btn"
+                        onClick={() => handleDemoFill('student_a')}
+                        title="Fill Student A (Satkar)"
+                      >
+                        <span>Student A</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="unimart-demo-btn"
+                        onClick={() => handleDemoFill('student_b')}
+                        title="Fill Student B (Priya)"
+                      >
+                        <span>Student B</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="unimart-demo-btn"
+                        onClick={() => handleDemoFill('admin')}
+                        title="Fill Admin (Campus Admin)"
+                      >
+                        <span>Admin</span>
+                      </button>
+                    </div>
                   )}
                 </div>
                 <div className="unimart-input-group">
                   <input
                     type="email"
                     required
-                    className="unimart-form-field"
-                    placeholder="student@university.edu"
+                    className={`unimart-form-field ${fieldErrors.email ? 'border-danger' : ''}`}
+                    placeholder="student@chitkara.edu.in"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                   />
                   <span className="material-symbols-outlined unimart-input-icon">mail</span>
                 </div>
+                {fieldErrors.email ? (
+                  <div className="text-danger small mt-1">{fieldErrors.email}</div>
+                ) : modalMode === 'register' ? (
+                  <div className="text-muted small mt-1" style={{ fontSize: '0.75rem' }}>
+                    Must be your verified Chitkara email (@chitkara.edu.in)
+                  </div>
+                ) : null}
               </div>
 
               {/* Password */}
               <div className="mb-3">
                 <div className="d-flex justify-content-between align-items-center mb-1">
-                  <label className="form-label small fw-semibold text-dark mb-0">Password</label>
+                  <label className="form-label small fw-semibold text-dark mb-0">
+                    Password <span className="text-danger">*</span>
+                  </label>
                   {modalMode === 'login' && (
-                    <a
-                      href="#forgot"
-                      className="small text-decoration-none fw-semibold"
-                      style={{ color: 'var(--unimart-maroon)', fontSize: '0.8rem' }}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setAlertInfo({
-                          type: 'info',
-                          message: 'Password reset link sent to your student email.'
-                        });
-                      }}
+                    <button
+                      type="button"
+                      className="unimart-forgot-link"
+                      onClick={openForgotPassword}
                     >
-                      Forgot?
-                    </a>
+                      Forgot password?
+                    </button>
                   )}
                 </div>
                 <div className="unimart-input-group">
                   <input
                     type={showPassword ? 'text' : 'password'}
                     required
-                    className="unimart-form-field"
+                    className={`unimart-form-field ${fieldErrors.password ? 'border-danger' : ''}`}
                     placeholder="Enter password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -504,7 +871,33 @@ export default function LoginPage({ onGoToDashboard }) {
                     </span>
                   </button>
                 </div>
+                {fieldErrors.password && (
+                  <div className="text-danger small mt-1">{fieldErrors.password}</div>
+                )}
               </div>
+
+              {/* Confirm Password (Registration only) */}
+              {modalMode === 'register' && (
+                <div className="mb-3">
+                  <label className="form-label small fw-semibold text-dark mb-1">
+                    Confirm Password <span className="text-danger">*</span>
+                  </label>
+                  <div className="unimart-input-group">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      required
+                      className={`unimart-form-field ${fieldErrors.confirmPassword ? 'border-danger' : ''}`}
+                      placeholder="Confirm password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                    />
+                    <span className="material-symbols-outlined unimart-input-icon">lock_reset</span>
+                  </div>
+                  {fieldErrors.confirmPassword && (
+                    <div className="text-danger small mt-1">{fieldErrors.confirmPassword}</div>
+                  )}
+                </div>
+              )}
 
               {/* Remember me */}
               <div className="form-check mb-3">
@@ -553,33 +946,262 @@ export default function LoginPage({ onGoToDashboard }) {
             <button
               type="button"
               className="unimart-sso-btn"
-              onClick={() => {
-                setAlertInfo({
-                  type: 'info',
-                  message: 'Connecting to Campus Google Workspace...'
-                });
-              }}
+              onClick={handleGoogleSignIn}
+              disabled={isGoogleLoading || isLoading}
             >
-              <svg width="18" height="18" viewBox="0 0 24 24">
-                <path
-                  fill="#4285F4"
-                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                />
-                <path
-                  fill="#34A853"
-                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                />
-                <path
-                  fill="#FBBC05"
-                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                />
-                <path
-                  fill="#EA4335"
-                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                />
-              </svg>
-              <span>Continue with College Google</span>
+              {isGoogleLoading ? (
+                <>
+                  <span className="spinner-border spinner-border-sm text-primary" role="status" aria-hidden="true"></span>
+                  <span>Connecting with Google...</span>
+                </>
+              ) : (
+                <>
+                  <svg width="18" height="18" viewBox="0 0 24 24">
+                    <path
+                      fill="#4285F4"
+                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                    />
+                    <path
+                      fill="#34A853"
+                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                    />
+                    <path
+                      fill="#FBBC05"
+                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                    />
+                    <path
+                      fill="#EA4335"
+                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                    />
+                  </svg>
+                  <span>Continue with College Google</span>
+                </>
+              )}
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* ================= FORGOT PASSWORD MODAL ================= */}
+      {forgotOpen && (
+        <div
+          className="unimart-popup-overlay"
+          onClick={(e) => { if (e.target === e.currentTarget) closeForgotPassword(); }}
+        >
+          <div className="unimart-popup-box unimart-forgot-box">
+            {/* Close */}
+            <button
+              type="button"
+              className="unimart-close-btn"
+              onClick={closeForgotPassword}
+              aria-label="Close"
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>close</span>
+            </button>
+
+            {/* Step indicator */}
+            <div className="unimart-forgot-steps">
+              {['email', 'otp', 'reset'].map((s, i) => (
+                <div key={s} className={`unimart-forgot-step-dot ${forgotStep === s ? 'active' : (['otp','reset'].includes(forgotStep) && i === 0) || (forgotStep === 'reset' && i === 1) ? 'done' : ''}`}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>
+                    {((['otp','reset'].includes(forgotStep) && i === 0) || (forgotStep === 'reset' && i === 1)) ? 'check' : i === 0 ? 'mail' : i === 1 ? 'pin' : 'lock_reset'}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {/* Header */}
+            <div className="text-center mb-3">
+              <div className={`unimart-forgot-icon-circle mb-2 ${ forgotStep === 'otp' ? 'otp' : forgotStep === 'reset' ? 'reset' : '' }`}>
+                <span className="material-symbols-outlined" style={{ fontSize: '26px' }}>
+                  {forgotStep === 'email' ? 'lock_person' : forgotStep === 'otp' ? 'mark_email_read' : 'lock_reset'}
+                </span>
+              </div>
+              <h5 className="fw-bold mb-1" style={{ letterSpacing: '-0.02em', color: 'var(--unimart-text-dark)' }}>
+                {forgotStep === 'email' && 'Forgot Password?'}
+                {forgotStep === 'otp' && 'Enter OTP'}
+                {forgotStep === 'reset' && 'Set New Password'}
+              </h5>
+              <p className="text-muted small mb-0" style={{ fontSize: '0.82rem' }}>
+                {forgotStep === 'email' && "Enter your registered college email and we'll send you a 6-digit OTP."}
+                {forgotStep === 'otp' && (
+                  <>
+                    OTP sent to <strong>{forgotEmail}</strong>.<br />
+                    Valid for <strong>10 minutes</strong>.
+                  </>
+                )}
+                {forgotStep === 'reset' && 'Choose a strong new password for your account.'}
+              </p>
+            </div>
+
+            {/* Error / Success banners */}
+            {forgotError && (
+              <div className="unimart-forgot-alert error">
+                <span className="material-symbols-outlined" style={{ fontSize: '17px' }}>error</span>
+                <span>{forgotError}</span>
+              </div>
+            )}
+            {forgotSuccess && (
+              <div className="unimart-forgot-alert success">
+                <span className="material-symbols-outlined" style={{ fontSize: '17px' }}>check_circle</span>
+                <span>{forgotSuccess}</span>
+              </div>
+            )}
+
+            {/* Demo mode OTP banner */}
+            {simulatedOtp && forgotStep === 'otp' && (
+              <div className="unimart-forgot-alert demo">
+                <span className="material-symbols-outlined" style={{ fontSize: '17px' }}>science</span>
+                <span>
+                  <strong>Demo mode:</strong> Your OTP is{' '}
+                  <span className="unimart-otp-demo-code">{simulatedOtp}</span>
+                  <br />
+                  <span style={{ fontSize: '0.75rem', opacity: 0.8 }}>Configure EmailJS in src/lib/emailService.js to send real emails.</span>
+                </span>
+              </div>
+            )}
+
+            {/* ── STEP 1: Email ── */}
+            {forgotStep === 'email' && !forgotSuccess && (
+              <form onSubmit={handleForgotEmailSubmit} noValidate>
+                <div className="mb-3">
+                  <label className="form-label small fw-semibold text-dark mb-1">
+                    Registered College Email <span className="text-danger">*</span>
+                  </label>
+                  <div className="unimart-input-group">
+                    <input
+                      type="email"
+                      required
+                      autoFocus
+                      className="unimart-form-field"
+                      placeholder="student@chitkara.edu.in"
+                      value={forgotEmail}
+                      onChange={(e) => { setForgotEmail(e.target.value); setForgotError(''); }}
+                    />
+                    <span className="material-symbols-outlined unimart-input-icon">mail</span>
+                  </div>
+                </div>
+                <button
+                  type="submit"
+                  className="unimart-register-pill-btn w-100"
+                  disabled={forgotLoading}
+                >
+                  {forgotLoading ? (
+                    <><span className="spinner-border spinner-border-sm text-white" role="status"></span><span>Sending OTP...</span></>
+                  ) : (
+                    <><span>Send OTP to Email</span><span className="material-symbols-outlined" style={{ fontSize: '18px' }}>send</span></>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  className="unimart-forgot-back-btn mt-2"
+                  onClick={() => { closeForgotPassword(); openAuth('login'); }}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>arrow_back</span>
+                  Back to Sign In
+                </button>
+              </form>
+            )}
+
+            {/* ── STEP 2: OTP ── */}
+            {forgotStep === 'otp' && !forgotSuccess && (
+              <form onSubmit={handleOtpSubmit} noValidate>
+                <div className="mb-3">
+                  <label className="form-label small fw-semibold text-dark mb-2 d-block text-center">
+                    Enter the 6-digit OTP
+                  </label>
+                  <div className="unimart-otp-boxes" onPaste={handleOtpPaste}>
+                    {otpInputs.map((val, i) => (
+                      <input
+                        key={i}
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={1}
+                        className={`unimart-otp-box ${val ? 'filled' : ''}`}
+                        value={val}
+                        ref={(el) => { otpInputRefs.current[i] = el; }}
+                        onChange={(e) => handleOtpInput(i, e.target.value)}
+                        onKeyDown={(e) => handleOtpKeyDown(i, e)}
+                        autoFocus={i === 0}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <button
+                  type="submit"
+                  className="unimart-register-pill-btn w-100"
+                >
+                  <span>Verify OTP</span>
+                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>verified</span>
+                </button>
+                <button
+                  type="button"
+                  className="unimart-forgot-back-btn mt-2"
+                  onClick={() => { setForgotStep('email'); setForgotError(''); setOtpInputs(['','','','','','']); }}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>arrow_back</span>
+                  Resend OTP
+                </button>
+              </form>
+            )}
+
+            {/* ── STEP 3: New Password ── */}
+            {forgotStep === 'reset' && !forgotSuccess && (
+              <form onSubmit={handleResetPasswordSubmit} noValidate>
+                <div className="mb-3">
+                  <label className="form-label small fw-semibold text-dark mb-1">
+                    New Password <span className="text-danger">*</span>
+                  </label>
+                  <div className="unimart-input-group">
+                    <input
+                      type={showNewPassword ? 'text' : 'password'}
+                      required
+                      autoFocus
+                      className="unimart-form-field"
+                      placeholder="At least 6 characters"
+                      value={newPassword}
+                      onChange={(e) => { setNewPassword(e.target.value); setForgotError(''); }}
+                    />
+                    <span className="material-symbols-outlined unimart-input-icon">lock</span>
+                    <button
+                      type="button"
+                      className="unimart-input-toggle"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      title={showNewPassword ? 'Hide' : 'Show'}
+                    >
+                      <span className="material-symbols-outlined">{showNewPassword ? 'visibility_off' : 'visibility'}</span>
+                    </button>
+                  </div>
+                </div>
+                <div className="mb-3">
+                  <label className="form-label small fw-semibold text-dark mb-1">
+                    Confirm New Password <span className="text-danger">*</span>
+                  </label>
+                  <div className="unimart-input-group">
+                    <input
+                      type={showNewPassword ? 'text' : 'password'}
+                      required
+                      className="unimart-form-field"
+                      placeholder="Repeat new password"
+                      value={confirmNewPassword}
+                      onChange={(e) => { setConfirmNewPassword(e.target.value); setForgotError(''); }}
+                    />
+                    <span className="material-symbols-outlined unimart-input-icon">lock_reset</span>
+                  </div>
+                </div>
+                <button
+                  type="submit"
+                  className="unimart-register-pill-btn w-100"
+                  disabled={forgotLoading}
+                >
+                  {forgotLoading ? (
+                    <><span className="spinner-border spinner-border-sm text-white" role="status"></span><span>Resetting...</span></>
+                  ) : (
+                    <><span>Reset Password</span><span className="material-symbols-outlined" style={{ fontSize: '18px' }}>check_circle</span></>
+                  )}
+                </button>
+              </form>
+            )}
           </div>
         </div>
       )}
