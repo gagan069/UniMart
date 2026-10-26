@@ -263,10 +263,7 @@ export default function AdminPage() {
 
           {pendingQueue.length === 0 ? (
             <div className="text-center py-4 px-3">
-              <div
-                className="d-inline-flex align-items-center justify-content-center rounded-circle mb-2"
-                style={{ width: '48px', height: '48px', background: '#ecfdf5', color: '#059669' }}
-              >
+              <div className="unimart-admin-empty-icon icon-success mb-2">
                 <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>task_alt</span>
               </div>
               <h6 className="fw-bold mb-1">All Caught Up!</h6>
@@ -466,10 +463,7 @@ export default function AdminPage() {
 
           {filteredListings.length === 0 ? (
             <div className="text-center py-5">
-              <div
-                className="d-inline-flex align-items-center justify-content-center rounded-circle mb-3"
-                style={{ width: '56px', height: '56px', background: '#fee2e2', color: '#dc2626' }}
-              >
+              <div className="unimart-admin-empty-icon icon-danger mb-3">
                 <span className="material-symbols-outlined" style={{ fontSize: '28px' }}>inventory_2</span>
               </div>
               <h5 className="fw-bold">No Listings Found</h5>
@@ -547,16 +541,7 @@ export default function AdminPage() {
                       {/* Seller */}
                       <td>
                         <div className="d-flex align-items-center gap-2">
-                          <div
-                            className="rounded-circle d-flex align-items-center justify-content-center fw-bold"
-                            style={{
-                              width: '28px',
-                              height: '28px',
-                              background: '#f1f5f9',
-                              color: '#334155',
-                              fontSize: '0.76rem'
-                            }}
-                          >
+                          <div className="unimart-seller-avatar">
                             {item.seller ? item.seller.charAt(0).toUpperCase() : 'S'}
                           </div>
                           <div>

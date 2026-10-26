@@ -647,9 +647,22 @@ html, body {
   color: var(--unimart-maroon);
 }
 
-/* --- Dark Theme Landing Page & Auth Modal --- */
+/* --- Dark Theme Variables, Landing Page & Auth Modal --- */
+[data-theme="dark"] {
+  --unimart-maroon: #e11d48;
+  --unimart-maroon-dark: #be123c;
+  --unimart-maroon-light: #fb7185;
+  --unimart-maroon-subtle: rgba(225, 29, 72, 0.15);
+  --unimart-maroon-border: rgba(225, 29, 72, 0.35);
+  --unimart-maroon-glow: rgba(225, 29, 72, 0.32);
+  --unimart-maroon-ring: rgba(225, 29, 72, 0.25);
+  --unimart-text-dark: #f8fafc;
+  --unimart-text-muted: #94a3b8;
+}
+
 [data-theme="dark"] .unimart-app-shell {
   background: #090c12;
+  color: #f8fafc;
 }
 
 [data-theme="dark"] .unimart-navbar {
@@ -673,6 +686,35 @@ html, body {
   color: #f8fafc;
 }
 
+[data-theme="dark"] .unimart-signin-pill:hover {
+  background: rgba(225, 29, 72, 0.2);
+  border-color: #fb7185;
+  color: #ffffff;
+}
+
+[data-theme="dark"] .unimart-guest-btn,
+[data-theme="dark"] .btn-light.border {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] .unimart-guest-btn:hover,
+[data-theme="dark"] .btn-light.border:hover {
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.22) !important;
+}
+
+[data-theme="dark"] .unimart-guest-toast {
+  background-color: #141c2a !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+}
+
+[data-theme="dark"] .unimart-guest-toast-text {
+  color: #f8fafc !important;
+}
+
 [data-theme="dark"] .unimart-nav-arrow {
   background: #111622;
   border-color: rgba(255, 255, 255, 0.14);
@@ -686,40 +728,214 @@ html, body {
   color: #ffffff;
 }
 
-[data-theme="dark"] .unimart-modal-card {
-  background: #111622;
+/* Page 1 (Welcome Screen) Dark Styles */
+[data-theme="dark"] .unimart-welcome-title {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .unimart-welcome-title .maroon-accent {
+  color: #fb7185;
+}
+
+[data-theme="dark"] .unimart-welcome-text {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .unimart-btn-continue {
+  background: linear-gradient(135deg, #e11d48 0%, #be123c 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 18px rgba(225, 29, 72, 0.35);
+}
+
+[data-theme="dark"] .unimart-btn-continue:hover {
+  background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+  box-shadow: 0 8px 24px rgba(225, 29, 72, 0.45);
+}
+
+/* Page 2 (Campus Gateway) Dark Styles */
+[data-theme="dark"] .unimart-brand-title-serif {
+  color: #fb7185;
+  text-shadow: 0 2px 14px rgba(225, 29, 72, 0.25);
+}
+
+[data-theme="dark"] .unimart-login-pill-btn {
+  background: #131926;
+  border-color: rgba(225, 29, 72, 0.42);
+  color: #fb7185;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .unimart-login-pill-btn:hover {
+  background: rgba(225, 29, 72, 0.18);
+  border-color: #fb7185;
+  color: #ffffff;
+  box-shadow: 0 6px 18px rgba(225, 29, 72, 0.28);
+}
+
+[data-theme="dark"] .unimart-register-pill-btn {
+  background: linear-gradient(135deg, #e11d48 0%, #be123c 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 16px rgba(225, 29, 72, 0.35);
+}
+
+[data-theme="dark"] .unimart-register-pill-btn:hover {
+  background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+  box-shadow: 0 8px 22px rgba(225, 29, 72, 0.45);
+}
+
+[data-theme="dark"] .unimart-skip-btn {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .unimart-skip-btn:hover {
+  color: #f8fafc;
+}
+
+/* Dots and Nav Toolbar Dark Styles */
+[data-theme="dark"] .unimart-page-dot {
+  background-color: #273142;
+}
+
+[data-theme="dark"] .unimart-page-dot.active {
+  background-color: #e11d48;
+  box-shadow: 0 0 10px rgba(225, 29, 72, 0.5);
+}
+
+[data-theme="dark"] .unimart-tiny-arrow {
+  color: #64748b;
+}
+
+[data-theme="dark"] .unimart-tiny-arrow:hover:not(:disabled) {
+  color: #fb7185;
+  background-color: rgba(225, 29, 72, 0.16);
+}
+
+/* Popup Modal (Login & Register) Dark Styles */
+[data-theme="dark"] .unimart-popup-overlay {
+  background: rgba(3, 5, 8, 0.8);
+  backdrop-filter: blur(10px);
+}
+
+[data-theme="dark"] .unimart-popup-box {
+  background: #111724;
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #f8fafc;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(225, 29, 72, 0.15);
+}
+
+[data-theme="dark"] .unimart-close-btn {
+  background: #1a2233;
+  color: #94a3b8;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .unimart-close-btn:hover {
+  background: rgba(225, 29, 72, 0.2);
+  color: #fb7185;
+  border-color: rgba(225, 29, 72, 0.4);
+}
+
+[data-theme="dark"] .unimart-tabs-toggle {
+  background: #172030;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .unimart-tab-btn {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .unimart-tab-btn:hover {
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .unimart-tab-btn.active {
+  background: #232d42;
+  color: #fb7185;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(225, 29, 72, 0.3);
+}
+
+[data-theme="dark"] .unimart-popup-box .form-label.text-dark {
+  color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] .unimart-popup-box .text-muted {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .unimart-form-field {
+  background-color: #172030;
   border-color: rgba(255, 255, 255, 0.14);
   color: #f8fafc;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7);
 }
 
-[data-theme="dark"] .unimart-modal-title {
-  color: #f8fafc;
+[data-theme="dark"] .unimart-form-field::placeholder {
+  color: #64748b;
 }
 
-[data-theme="dark"] .unimart-input-wrapper {
-  background: #171f2e;
-  border-color: rgba(255, 255, 255, 0.14);
-}
-
-[data-theme="dark"] .unimart-input-wrapper input {
-  color: #f8fafc;
-}
-
-[data-theme="dark"] .unimart-input-wrapper:focus-within {
+[data-theme="dark"] .unimart-form-field:focus {
+  background-color: #1c2638;
   border-color: #e11d48;
-  box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.25);
+  box-shadow: 0 0 0 4px rgba(225, 29, 72, 0.25);
+  color: #ffffff;
+}
+
+[data-theme="dark"] .unimart-form-field:focus ~ .unimart-input-icon {
+  color: #fb7185;
+}
+
+[data-theme="dark"] .unimart-input-icon {
+  color: #64748b;
+}
+
+[data-theme="dark"] .unimart-input-toggle {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .unimart-input-toggle:hover {
+  color: #fb7185;
+}
+
+[data-theme="dark"] .unimart-demo-btn {
+  background: rgba(225, 29, 72, 0.12);
+  border: 1px dashed rgba(225, 29, 72, 0.4);
+  color: #fb7185;
+}
+
+[data-theme="dark"] .unimart-demo-btn:hover {
+  background: rgba(225, 29, 72, 0.24);
+  border-color: #fb7185;
+  color: #ffffff;
+}
+
+[data-theme="dark"] .unimart-popup-box hr {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.unimart-divider-badge {
+  background-color: #ffffff;
+}
+
+[data-theme="dark"] .unimart-divider-badge {
+  background-color: #111724 !important;
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .unimart-popup-box .alert.alert-light {
+  background-color: #172030 !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: #e2e8f0 !important;
 }
 
 [data-theme="dark"] .unimart-sso-btn {
-  background: rgba(255, 255, 255, 0.06);
+  background: #172030;
   border-color: rgba(255, 255, 255, 0.12);
   color: #f8fafc;
 }
 
 [data-theme="dark"] .unimart-sso-btn:hover {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: #e11d48;
+  background: #1e2a40;
+  border-color: rgba(225, 29, 72, 0.5);
   color: #fb7185;
 }
 
@@ -727,6 +943,29 @@ html, body {
   background: #090c12;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   color: #94a3b8;
+}
+
+[data-theme="dark"] .unimart-page-footer a {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .unimart-page-footer a:hover {
+  color: #fb7185;
+}
+
+/* Dark Theme Artwork Enhancements */
+[data-theme='dark'] .unimart-welcome-artwork-frame,
+[data-theme='dark'] .unimart-gateway-artwork-frame {
+  background-color: #0b0f17;
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme='dark'] .unimart-welcome-artwork-frame img,
+[data-theme='dark'] .unimart-gateway-artwork-frame img {
+  border-radius: 18px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 /* ============================================================

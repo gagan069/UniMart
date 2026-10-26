@@ -6,18 +6,29 @@ import { generateOTP, sendOTPEmail } from './lib/emailService.js';
 import { signInWithGoogleOAuth, initializeGoogleId } from './lib/googleAuth.js';
 import './LoginPage.css';
 import welcomeStudentImg from './assets/welcome_student.jpg';
+import welcomeStudentDarkImg from './assets/welcome_student_dark.jpg';
 import campusParkImg from './assets/campus_park.jpg';
+import campusParkDarkImg from './assets/campus_park_dark.jpg';
 
-export default function LoginPage({ onGoToDashboard }) {
+export default function LoginPage({
+  onGoToDashboard,
+  initialMode = 'login',
+  initialPage = 1,
+  autoOpenModal = false
+}) {
   const auth = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const isDark = theme === 'dark';
+  const currentWelcomeImg = isDark ? welcomeStudentDarkImg : welcomeStudentImg;
+  const currentCampusImg = isDark ? campusParkDarkImg : campusParkImg;
+
   // Page 1 = Welcome Screen (Expansive skater artwork)
   // Page 2 = Campus Gateway (Full campus illustration with Login & Register below)
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(initialPage);
 
   // Popup Modal states
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState('login'); // 'login' | 'register'
+  const [isModalOpen, setIsModalOpen] = useState(autoOpenModal || initialMode === 'register');
+  const [modalMode, setModalMode] = useState(initialMode); // 'login' | 'register'
 
   // Form states
   const [email, setEmail] = useState('');
@@ -436,7 +447,7 @@ export default function LoginPage({ onGoToDashboard }) {
           {onGoToDashboard && (
             <button
               type="button"
-              className="btn btn-sm btn-light border rounded-pill px-3 fw-semibold text-muted d-none d-sm-inline-flex align-items-center gap-1"
+              className="btn btn-sm btn-light border rounded-pill px-3 fw-semibold text-muted d-none d-sm-inline-flex align-items-center gap-1 unimart-guest-btn"
               onClick={handleSkip}
               title="Continue as Guest (View-only mode)"
             >
@@ -481,10 +492,10 @@ export default function LoginPage({ onGoToDashboard }) {
 
       {/* Guest Mode Toast */}
       {guestNotice && (
-        <div className="position-fixed top-0 start-50 translate-middle-x mt-4 z-3 shadow rounded-4 p-3 bg-white border" style={{ maxWidth: '460px' }}>
+        <div className="position-fixed top-0 start-50 translate-middle-x mt-4 z-3 shadow rounded-4 p-3 border unimart-guest-toast" style={{ maxWidth: '460px' }}>
           <div className="d-flex align-items-center gap-2">
             <span className="material-symbols-outlined text-success">check_circle</span>
-            <span className="small text-dark fw-semibold">Exploring UNIMART in guest mode. You can log in anytime to buy or list items!</span>
+            <span className="small fw-semibold unimart-guest-toast-text">Exploring UNIMART in guest mode. You can log in anytime to buy or list items!</span>
           </div>
         </div>
       )}
@@ -497,7 +508,7 @@ export default function LoginPage({ onGoToDashboard }) {
             {/* Expansive Responsive Banner Frame matching the reference */}
             <div className="unimart-welcome-artwork-frame">
               <img 
-                src={welcomeStudentImg} 
+                src={currentWelcomeImg} 
                 alt="Student jumping with skateboard" 
               />
             </div>
@@ -565,7 +576,7 @@ export default function LoginPage({ onGoToDashboard }) {
             {/* Expansive Artwork Banner with full bench, trees, and path visible */}
             <div className="unimart-gateway-artwork-frame">
               <img 
-                src={campusParkImg} 
+                src={currentCampusImg} 
                 alt="Campus street and park scenery" 
               />
             </div>
@@ -937,7 +948,7 @@ export default function LoginPage({ onGoToDashboard }) {
             {/* Divider */}
             <div className="text-center my-3 position-relative">
               <hr className="my-2" />
-              <span className="bg-white px-2 text-muted small position-absolute top-50 start-50 translate-middle" style={{ fontSize: '0.75rem' }}>
+              <span className="unimart-divider-badge px-2 text-muted small position-absolute top-50 start-50 translate-middle" style={{ fontSize: '0.75rem' }}>
                 or
               </span>
             </div>

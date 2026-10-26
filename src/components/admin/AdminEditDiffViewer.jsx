@@ -73,14 +73,14 @@ export default function AdminEditDiffViewer({ item }) {
 
   return (
     <div
-      className="p-3 my-2 rounded-3 border"
+      className="p-3 my-2 rounded-3 border unimart-diff-viewer-card"
       style={{
         background: 'var(--unimart-diff-bg, rgba(245, 158, 11, 0.04))',
         borderColor: 'rgba(245, 158, 11, 0.25)'
       }}
     >
       <div className="d-flex align-items-center justify-content-between mb-2">
-        <div className="d-flex align-items-center gap-1.5 fw-bold text-dark" style={{ fontSize: '0.84rem' }}>
+        <div className="d-flex align-items-center gap-1.5 fw-bold unimart-diff-title" style={{ fontSize: '0.84rem' }}>
           <span className="material-symbols-outlined text-warning" style={{ fontSize: '18px' }}>
             compare_arrows
           </span>
@@ -92,8 +92,8 @@ export default function AdminEditDiffViewer({ item }) {
       </div>
 
       <div className="table-responsive">
-        <table className="table table-sm align-middle mb-0" style={{ fontSize: '0.8rem' }}>
-          <thead className="table-light text-muted" style={{ fontSize: '0.7rem' }}>
+        <table className="table table-sm align-middle mb-0 unimart-diff-table" style={{ fontSize: '0.8rem' }}>
+          <thead className="unimart-diff-thead text-muted" style={{ fontSize: '0.7rem' }}>
             <tr>
               <th scope="col" style={{ width: '130px' }}>Field</th>
               <th scope="col" style={{ width: '38%' }}>Current (Live)</th>
@@ -109,7 +109,7 @@ export default function AdminEditDiffViewer({ item }) {
                   backgroundColor: field.isChanged ? 'rgba(245, 158, 11, 0.08)' : 'transparent'
                 }}
               >
-                <td className="fw-semibold text-muted">{field.label}</td>
+                <td className="fw-semibold unimart-diff-label">{field.label}</td>
                 <td className={field.isChanged ? 'text-decoration-line-through text-muted' : ''}>
                   {field.current}
                 </td>
