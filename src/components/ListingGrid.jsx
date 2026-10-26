@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import ListingCard from './ListingCard.jsx';
+import Pagination from './Pagination.jsx';
 
 export default function ListingGrid({
   filteredProducts,
@@ -25,6 +26,24 @@ export default function ListingGrid({
   handleDeleteListingClick,
   onToggleSoldClick
 }) {
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 25;
+
+  // Reset to page 1 whenever category, search, or tab changes (render-phase state adjustment)
+  const [prevFilterKey, setPrevFilterKey] = useState(
+    () => `${selectedCategory || ''}__${searchQuery || ''}__${catalogTab || ''}`
+  );
+  const currentFilterKey = `${selectedCategory || ''}__${searchQuery || ''}__${catalogTab || ''}`;
+  if (currentFilterKey !== prevFilterKey) {
+    setPrevFilterKey(currentFilterKey);
+    setCurrentPage(1);
+  }
+
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / PAGE_SIZE));
+  const activePage = Math.min(Math.max(1, currentPage), totalPages);
+  const startIndex = (activePage - 1) * PAGE_SIZE;
+  const paginatedProducts = filteredProducts.slice(startIndex, startIndex + PAGE_SIZE);
+
   return (
     <>
       {/* ================= FEATURED PRODUCTS SECTION (DYNAMIC FILTERING) ================= */}
@@ -170,26 +189,38 @@ export default function ListingGrid({
           </div>
         )
       ) : (
-        <div className="unimart-products-grid">
-          {filteredProducts.map((item) => (
-            <ListingCard
-              key={item.id}
-              item={item}
-              user={user}
-              catalogTab={catalogTab}
-              photoIndex={cardPhotoIndex[item.id] || 0}
-              onPrevPhoto={handlePrevPhoto}
-              onNextPhoto={handleNextPhoto}
-              onSelectPhoto={(id, idx) => setCardPhotoIndex((prev) => ({ ...prev, [id]: idx }))}
-              onWishlistClick={handleWishlistClick}
-              onChatClick={handleChatClick}
-              onBuyClick={handleBuyClick}
-              onEditListingClick={handleEditListingClick}
-              onDeleteListingClick={handleDeleteListingClick}
-              onToggleSoldClick={onToggleSoldClick}
-            />
-          ))}
-        </div>
+        <>
+          <div className="unimart-products-grid">
+            {paginatedProducts.map((item) => (
+              <ListingCard
+                key={item.id}
+                item={item}
+                user={user}
+                catalogTab={catalogTab}
+                photoIndex={cardPhotoIndex[item.id] || 0}
+                onPrevPhoto={handlePrevPhoto}
+                onNextPhoto={handleNextPhoto}
+                onSelectPhoto={(id, idx) => setCardPhotoIndex((prev) => ({ ...prev, [id]: idx }))}
+                onWishlistClick={handleWishlistClick}
+                onChatClick={handleChatClick}
+                onBuyClick={handleBuyClick}
+                onEditListingClick={handleEditListingClick}
+                onDeleteListingClick={handleDeleteListingClick}
+                onToggleSoldClick={onToggleSoldClick}
+              />
+            ))}
+          </div>
+
+          {/* Pagination Controls (25 items per page) */}
+          <Pagination
+            currentPage={activePage}
+            totalItems={filteredProducts.length}
+            pageSize={PAGE_SIZE}
+            onPageChange={setCurrentPage}
+            itemLabel="products"
+            targetScrollId="marketplace-catalog"
+          />
+        </>
       )}
     </>
   );

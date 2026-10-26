@@ -17,6 +17,7 @@ export const SEEDED_USERS = [
     password: 'student123',
     name: 'Satkar Singh',
     studentId: '2110990696',
+    department: 'Computer Science & Engineering',
     role: 'student'
   },
   {
@@ -25,6 +26,7 @@ export const SEEDED_USERS = [
     password: 'student123',
     name: 'Priya K.',
     studentId: '2110990697',
+    department: 'Mathematics',
     role: 'student'
   }
 ];

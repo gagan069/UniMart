@@ -13,6 +13,9 @@ import { useToast } from '../hooks/useToast.js';
 import ToastAlert from '../components/ToastAlert.jsx';
 import AdminConfirmModal from '../components/admin/AdminConfirmModal.jsx';
 import AdminEditDiffViewer from '../components/admin/AdminEditDiffViewer.jsx';
+import AdminPreviewModal from '../components/admin/AdminPreviewModal.jsx';
+import Pagination from '../components/Pagination.jsx';
+import '../Dashboard.css';
 import './AdminPage.css';
 
 export default function AdminPage() {
@@ -27,6 +30,23 @@ export default function AdminPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All'); // 'All' | 'Approved' | 'Pending' | 'Rejected' | 'Sold'
   const [expandedDiffId, setExpandedDiffId] = useState(null);
+
+  // Pagination state (25 listings per page)
+  const [adminPage, setAdminPage] = useState(1);
+  const ADMIN_PAGE_SIZE = 25;
+
+  // Reset page when filter or search changes (render-phase adjustment)
+  const [prevAdminFilterKey, setPrevAdminFilterKey] = useState(
+    () => `${statusFilter}__${searchQuery}`
+  );
+  const currentAdminFilterKey = `${statusFilter}__${searchQuery}`;
+  if (currentAdminFilterKey !== prevAdminFilterKey) {
+    setPrevAdminFilterKey(currentAdminFilterKey);
+    setAdminPage(1);
+  }
+
+  // Preview Modal state
+  const [previewModalItem, setPreviewModalItem] = useState(null);
 
   // Modal confirm state
   const [confirmModal, setConfirmModal] = useState({
@@ -107,6 +127,25 @@ export default function AdminPage() {
     setConfirmModal({ isOpen: false, type: null, item: null });
   };
 
+  // Preview Modal Handlers
+  const handleOpenPreview = (item) => {
+    setPreviewModalItem(item);
+  };
+
+  const handleClosePreview = () => {
+    setPreviewModalItem(null);
+  };
+
+  const handleApproveFromPreview = (item) => {
+    handleClosePreview();
+    requestApprove(item);
+  };
+
+  const handleRejectFromPreview = (item) => {
+    handleClosePreview();
+    requestReject(item);
+  };
+
   const handleModalConfirm = (item) => {
     const { type } = confirmModal;
     closeConfirmModal();
@@ -147,6 +186,12 @@ export default function AdminPage() {
     setExpandedDiffId((prev) => (prev === id ? null : id));
   };
 
+  // Paginated listings slice (25 items per page)
+  const adminTotalPages = Math.max(1, Math.ceil(filteredListings.length / ADMIN_PAGE_SIZE));
+  const activeAdminPage = Math.min(Math.max(1, adminPage), adminTotalPages);
+  const adminStartIndex = (activeAdminPage - 1) * ADMIN_PAGE_SIZE;
+  const paginatedListings = filteredListings.slice(adminStartIndex, adminStartIndex + ADMIN_PAGE_SIZE);
+
   return (
     <div className="unimart-admin-page py-4 px-3 px-lg-5">
       <div className="unimart-admin-container">
@@ -175,7 +220,7 @@ export default function AdminPage() {
           <div className="d-flex align-items-center gap-2">
             <button
               type="button"
-              className="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1.5 d-inline-flex align-items-center gap-1.5"
+              className="unimart-admin-top-btn unimart-admin-btn-outline"
               onClick={toggleTheme}
               title="Toggle theme"
             >
@@ -187,7 +232,7 @@ export default function AdminPage() {
 
             <button
               type="button"
-              className="btn btn-sm btn-dark rounded-pill px-3.5 py-1.5 d-inline-flex align-items-center gap-1.5 shadow-sm"
+              className="unimart-admin-top-btn unimart-admin-btn-primary shadow-sm"
               onClick={() => navigate('/')}
               id="return-to-marketplace-btn"
             >
@@ -216,23 +261,23 @@ export default function AdminPage() {
             <div className="col-lg-7">
               <div className="d-flex align-items-center justify-content-lg-end gap-2.5 flex-wrap">
                 <div className="unimart-stat-card stat-danger flex-grow-1" style={{ minWidth: '110px' }}>
-                  <div className="text-muted small fw-semibold" style={{ fontSize: '0.68rem', letterSpacing: '0.5px' }}>TOTAL</div>
+                  <div className="unimart-stat-card-label">TOTAL</div>
                   <div className="fs-5 fw-bold text-danger">{totalCount}</div>
                 </div>
                 <div className="unimart-stat-card stat-warning flex-grow-1" style={{ minWidth: '110px' }}>
-                  <div className="text-muted small fw-semibold" style={{ fontSize: '0.68rem', letterSpacing: '0.5px' }}>PENDING</div>
+                  <div className="unimart-stat-card-label">PENDING</div>
                   <div className="fs-5 fw-bold text-warning">{pendingCount}</div>
                 </div>
                 <div className="unimart-stat-card stat-success flex-grow-1" style={{ minWidth: '110px' }}>
-                  <div className="text-muted small fw-semibold" style={{ fontSize: '0.68rem', letterSpacing: '0.5px' }}>APPROVED</div>
+                  <div className="unimart-stat-card-label">APPROVED</div>
                   <div className="fs-5 fw-bold text-success">{approvedCount}</div>
                 </div>
                 <div className="unimart-stat-card stat-info flex-grow-1" style={{ minWidth: '110px' }}>
-                  <div className="text-muted small fw-semibold" style={{ fontSize: '0.68rem', letterSpacing: '0.5px' }}>SOLD</div>
+                  <div className="unimart-stat-card-label">SOLD</div>
                   <div className="fs-5 fw-bold text-info">{soldCount}</div>
                 </div>
                 <div className="unimart-stat-card stat-success flex-grow-1" style={{ minWidth: '140px' }}>
-                  <div className="text-muted small fw-semibold" style={{ fontSize: '0.68rem', letterSpacing: '0.5px' }}>APPROVED VALUE</div>
+                  <div className="unimart-stat-card-label">APPROVED VALUE</div>
                   <div className="fs-5 fw-bold text-success">₹{totalMarketValue.toLocaleString('en-IN')}</div>
                 </div>
               </div>
@@ -263,10 +308,10 @@ export default function AdminPage() {
 
           {pendingQueue.length === 0 ? (
             <div className="text-center py-4 px-3">
-              <div className="unimart-admin-empty-icon icon-success mb-2">
+              <div className="unimart-empty-bubble unimart-empty-bubble-success mb-2">
                 <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>task_alt</span>
               </div>
-              <h6 className="fw-bold mb-1">All Caught Up!</h6>
+              <h6 className="fw-bold mb-1 unimart-panel-heading">All Caught Up!</h6>
               <p className="text-muted small mb-0">
                 There are currently no listings or edits pending approval. New submissions and edited products will appear here.
               </p>
@@ -291,7 +336,11 @@ export default function AdminPage() {
 
                     return (
                       <React.Fragment key={item.id}>
-                        <tr className="unimart-pending-row">
+                        <tr
+                          className="unimart-pending-row unimart-clickable-row"
+                          onClick={() => handleOpenPreview(item)}
+                          title="Click row to preview listing & review submission"
+                        >
                           <td className="ps-4 py-3 position-relative">
                             <img src={item.image} alt={item.title} className="unimart-admin-thumb" />
                             {item.photos && item.photos.length > 1 && (
@@ -334,7 +383,10 @@ export default function AdminPage() {
                                   type="button"
                                   className="btn btn-sm btn-outline-secondary rounded-pill px-2 py-0.5 d-inline-flex align-items-center gap-1"
                                   style={{ fontSize: '0.72rem' }}
-                                  onClick={() => toggleViewChanges(item.id)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleViewChanges(item.id);
+                                  }}
                                   title="Compare current and proposed values"
                                   id={`admin-view-changes-btn-${item.id}`}
                                 >
@@ -352,8 +404,15 @@ export default function AdminPage() {
                             )}
                           </td>
                           <td>
-                            <div className="fw-semibold" style={{ fontSize: '0.84rem' }}>{item.seller}</div>
-                            <div className="text-muted" style={{ fontSize: '0.7rem' }}>ID: {item.seller_id || 'N/A'}</div>
+                            <div className="d-flex align-items-center gap-2">
+                              <div className="unimart-seller-avatar">
+                                {item.seller ? item.seller.charAt(0).toUpperCase() : 'S'}
+                              </div>
+                              <div>
+                                <div className="fw-semibold seller-name" style={{ fontSize: '0.84rem' }}>{item.seller}</div>
+                                <div className="text-muted seller-id" style={{ fontSize: '0.7rem' }}>ID: {item.seller_id || 'N/A'}</div>
+                              </div>
+                            </div>
                           </td>
                           <td>
                             <div className="fw-bold text-success" style={{ fontSize: '0.95rem' }}>
@@ -371,7 +430,10 @@ export default function AdminPage() {
                                 type="button"
                                 className="btn btn-sm btn-success rounded-pill px-3 py-1.5 d-inline-flex align-items-center gap-1 shadow-sm"
                                 style={{ fontSize: '0.78rem', fontWeight: 600 }}
-                                onClick={() => requestApprove(item)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  requestApprove(item);
+                                }}
                                 title={`Approve ${item.title}`}
                                 id={`admin-approve-btn-${item.id}`}
                               >
@@ -382,7 +444,10 @@ export default function AdminPage() {
                                 type="button"
                                 className="btn btn-sm btn-outline-danger rounded-pill px-2.5 py-1.5 d-inline-flex align-items-center gap-1"
                                 style={{ fontSize: '0.78rem' }}
-                                onClick={() => requestReject(item)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  requestReject(item);
+                                }}
                                 title={`Reject ${item.title}`}
                                 id={`admin-reject-btn-${item.id}`}
                               >
@@ -424,8 +489,7 @@ export default function AdminPage() {
                 <button
                   key={statusKey}
                   type="button"
-                  className={`btn btn-sm rounded-pill px-3 py-1 fw-semibold ${statusFilter === statusKey ? 'btn-dark' : 'btn-outline-secondary'}`}
-                  style={{ fontSize: '0.78rem' }}
+                  className={`unimart-admin-filter-pill ${statusFilter === statusKey ? 'active' : ''}`}
                   onClick={() => setStatusFilter(statusKey)}
                   id={`admin-filter-${statusKey.toLowerCase()}`}
                 >
@@ -436,8 +500,8 @@ export default function AdminPage() {
             
             {/* Live Search Filter */}
             <div className="d-flex align-items-center gap-2">
-              <div className="input-group input-group-sm" style={{ width: '280px' }}>
-                <span className="input-group-text bg-transparent border-end-0">
+              <div className="input-group input-group-sm unimart-admin-search-wrap">
+                <span className="input-group-text border-end-0">
                   <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>search</span>
                 </span>
                 <input
@@ -451,8 +515,9 @@ export default function AdminPage() {
                 {searchQuery && (
                   <button
                     type="button"
-                    className="btn btn-outline-secondary border-start-0"
+                    className="btn btn-clear border-start-0"
                     onClick={() => setSearchQuery('')}
+                    title="Clear search filter"
                   >
                     ×
                   </button>
@@ -463,10 +528,10 @@ export default function AdminPage() {
 
           {filteredListings.length === 0 ? (
             <div className="text-center py-5">
-              <div className="unimart-admin-empty-icon icon-danger mb-3">
+              <div className="unimart-empty-bubble unimart-empty-bubble-danger mb-3">
                 <span className="material-symbols-outlined" style={{ fontSize: '28px' }}>inventory_2</span>
               </div>
-              <h5 className="fw-bold">No Listings Found</h5>
+              <h5 className="fw-bold unimart-panel-heading">No Listings Found</h5>
               <p className="text-muted small mb-0">
                 {searchQuery
                   ? `No listings match query "${searchQuery}" in ${statusFilter} status.`
@@ -486,7 +551,7 @@ export default function AdminPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredListings.map((item) => (
+                  {paginatedListings.map((item) => (
                     <tr key={item.id}>
                       {/* Photo */}
                       <td className="ps-4 py-3">
@@ -545,8 +610,8 @@ export default function AdminPage() {
                             {item.seller ? item.seller.charAt(0).toUpperCase() : 'S'}
                           </div>
                           <div>
-                            <div className="fw-semibold" style={{ fontSize: '0.84rem' }}>{item.seller}</div>
-                            <div className="text-muted" style={{ fontSize: '0.7rem' }}>ID: {item.seller_id || 'N/A'}</div>
+                            <div className="fw-semibold seller-name" style={{ fontSize: '0.84rem' }}>{item.seller}</div>
+                            <div className="text-muted seller-id" style={{ fontSize: '0.7rem' }}>ID: {item.seller_id || 'N/A'}</div>
                           </div>
                         </div>
                       </td>
@@ -598,6 +663,20 @@ export default function AdminPage() {
               </table>
             </div>
           )}
+
+          {/* Table Pagination (25 items per page) */}
+          {filteredListings.length > 0 && (
+            <div className="px-4 pb-3">
+              <Pagination
+                currentPage={activeAdminPage}
+                totalItems={filteredListings.length}
+                pageSize={ADMIN_PAGE_SIZE}
+                onPageChange={setAdminPage}
+                itemLabel="listings"
+                targetScrollId="admin-listings-table"
+              />
+            </div>
+          )}
         </div>
 
         {/* Small Confirm Modal styled with UNIMART sell modal look */}
@@ -607,6 +686,16 @@ export default function AdminPage() {
           item={confirmModal.item}
           onConfirm={handleModalConfirm}
           onCancel={closeConfirmModal}
+        />
+
+        {/* Full Admin Preview Popup for Pending Queue */}
+        <AdminPreviewModal
+          key={previewModalItem ? `${previewModalItem.id}_${previewModalItem.hasPendingEdit ? 'edit' : 'new'}` : 'none'}
+          isOpen={Boolean(previewModalItem)}
+          item={previewModalItem}
+          onClose={handleClosePreview}
+          onApprove={handleApproveFromPreview}
+          onReject={handleRejectFromPreview}
         />
 
       </div>
