@@ -13,6 +13,8 @@ import { useToast } from '../hooks/useToast.js';
 import ToastAlert from '../components/ToastAlert.jsx';
 import AdminConfirmModal from '../components/admin/AdminConfirmModal.jsx';
 import AdminEditDiffViewer from '../components/admin/AdminEditDiffViewer.jsx';
+import AdminPreviewModal from '../components/admin/AdminPreviewModal.jsx';
+import '../Dashboard.css';
 import './AdminPage.css';
 
 export default function AdminPage() {
@@ -27,6 +29,9 @@ export default function AdminPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All'); // 'All' | 'Approved' | 'Pending' | 'Rejected' | 'Sold'
   const [expandedDiffId, setExpandedDiffId] = useState(null);
+
+  // Preview Modal state
+  const [previewModalItem, setPreviewModalItem] = useState(null);
 
   // Modal confirm state
   const [confirmModal, setConfirmModal] = useState({
@@ -105,6 +110,25 @@ export default function AdminPage() {
 
   const closeConfirmModal = () => {
     setConfirmModal({ isOpen: false, type: null, item: null });
+  };
+
+  // Preview Modal Handlers
+  const handleOpenPreview = (item) => {
+    setPreviewModalItem(item);
+  };
+
+  const handleClosePreview = () => {
+    setPreviewModalItem(null);
+  };
+
+  const handleApproveFromPreview = (item) => {
+    handleClosePreview();
+    requestApprove(item);
+  };
+
+  const handleRejectFromPreview = (item) => {
+    handleClosePreview();
+    requestReject(item);
   };
 
   const handleModalConfirm = (item) => {
@@ -291,7 +315,11 @@ export default function AdminPage() {
 
                     return (
                       <React.Fragment key={item.id}>
-                        <tr className="unimart-pending-row">
+                        <tr
+                          className="unimart-pending-row unimart-clickable-row"
+                          onClick={() => handleOpenPreview(item)}
+                          title="Click row to preview listing & review submission"
+                        >
                           <td className="ps-4 py-3 position-relative">
                             <img src={item.image} alt={item.title} className="unimart-admin-thumb" />
                             {item.photos && item.photos.length > 1 && (
@@ -334,7 +362,10 @@ export default function AdminPage() {
                                   type="button"
                                   className="btn btn-sm btn-outline-secondary rounded-pill px-2 py-0.5 d-inline-flex align-items-center gap-1"
                                   style={{ fontSize: '0.72rem' }}
-                                  onClick={() => toggleViewChanges(item.id)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleViewChanges(item.id);
+                                  }}
                                   title="Compare current and proposed values"
                                   id={`admin-view-changes-btn-${item.id}`}
                                 >
@@ -378,7 +409,10 @@ export default function AdminPage() {
                                 type="button"
                                 className="btn btn-sm btn-success rounded-pill px-3 py-1.5 d-inline-flex align-items-center gap-1 shadow-sm"
                                 style={{ fontSize: '0.78rem', fontWeight: 600 }}
-                                onClick={() => requestApprove(item)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  requestApprove(item);
+                                }}
                                 title={`Approve ${item.title}`}
                                 id={`admin-approve-btn-${item.id}`}
                               >
@@ -389,7 +423,10 @@ export default function AdminPage() {
                                 type="button"
                                 className="btn btn-sm btn-outline-danger rounded-pill px-2.5 py-1.5 d-inline-flex align-items-center gap-1"
                                 style={{ fontSize: '0.78rem' }}
-                                onClick={() => requestReject(item)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  requestReject(item);
+                                }}
                                 title={`Reject ${item.title}`}
                                 id={`admin-reject-btn-${item.id}`}
                               >
@@ -614,6 +651,16 @@ export default function AdminPage() {
           item={confirmModal.item}
           onConfirm={handleModalConfirm}
           onCancel={closeConfirmModal}
+        />
+
+        {/* Full Admin Preview Popup for Pending Queue */}
+        <AdminPreviewModal
+          key={previewModalItem ? `${previewModalItem.id}_${previewModalItem.hasPendingEdit ? 'edit' : 'new'}` : 'none'}
+          isOpen={Boolean(previewModalItem)}
+          item={previewModalItem}
+          onClose={handleClosePreview}
+          onApprove={handleApproveFromPreview}
+          onReject={handleRejectFromPreview}
         />
 
       </div>
