@@ -62,6 +62,13 @@ export default function AdminConfirmModal({
     message = `Are you sure you want to permanently delete "${item.title}"? This cannot be undone.`;
     confirmBtnText = 'Delete Listing';
     confirmBtnClass = 'btn-danger';
+  } else if (type === 'reset_data') {
+    icon = 'restart_alt';
+    iconClass = 'unimart-confirm-icon-reject';
+    title = 'Reset Demo Data & Conversations';
+    message = 'Reset all marketplace listings, approvals, and chat conversations back to pristine factory demo defaults? All test changes and messages will be cleared.';
+    confirmBtnText = 'Reset Everything';
+    confirmBtnClass = 'btn-danger';
   }
 
   return (

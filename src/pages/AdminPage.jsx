@@ -15,6 +15,7 @@ import AdminConfirmModal from '../components/admin/AdminConfirmModal.jsx';
 import AdminEditDiffViewer from '../components/admin/AdminEditDiffViewer.jsx';
 import AdminPreviewModal from '../components/admin/AdminPreviewModal.jsx';
 import Pagination from '../components/Pagination.jsx';
+import { resetDatabase } from '../api/db.js';
 import '../Dashboard.css';
 import './AdminPage.css';
 
@@ -179,7 +180,23 @@ export default function AdminPage() {
         text: `Listing "${item.title}" deleted permanently.`
       });
       if (expandedDiffId === item.id) setExpandedDiffId(null);
+    } else if (type === 'reset_data') {
+      resetDatabase();
+      dispatch(fetchListings());
+      showToast({
+        type: 'success',
+        text: 'All demo listings and conversations have been reset to factory defaults.'
+      });
+      if (expandedDiffId) setExpandedDiffId(null);
     }
+  };
+
+  const handleResetDemoClick = () => {
+    setConfirmModal({
+      isOpen: true,
+      type: 'reset_data',
+      item: { title: 'UniMart Demo Data' }
+    });
   };
 
   const toggleViewChanges = (id) => {
@@ -228,6 +245,16 @@ export default function AdminPage() {
                 {theme === 'dark' ? 'light_mode' : 'dark_mode'}
               </span>
               <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
+            </button>
+
+            <button
+              type="button"
+              className="unimart-admin-top-btn unimart-admin-btn-outline"
+              onClick={handleResetDemoClick}
+              title="Reset all demo listings, edits, and conversations back to factory defaults"
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '18px', color: '#ef4444' }}>restart_alt</span>
+              <span>Reset Demo Data</span>
             </button>
 
             <button

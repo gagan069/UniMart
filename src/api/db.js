@@ -20,7 +20,7 @@ import imgArduinoKit from '../assets/products/arduino_kit.jpg';
 import imgSolidPerfume from '../assets/products/solid_perfume.jpg';
 
 const DB_PREFIX = 'unimart_db_';
-const DB_VERSION = 'v5';
+export const DB_VERSION = 'v6';
 
 // In-memory fallback if localStorage throws in private / restricted browsing
 const memoryStore = {};
@@ -291,7 +291,42 @@ const SEED_LISTING_PHOTOS = [
   { id: 9, listing_id: 8, url: imgSolidPerfume, sort_order: 0 }
 ];
 
+export function resetDatabase() {
+  setTable('users', SEED_USERS);
+  setTable('listings', SEED_LISTINGS);
+  setTable('listing_photos', SEED_LISTING_PHOTOS);
+  setTable('listing_pending_edits', []);
+  setTable('wishlist', []);
+  setTable('conversations', []);
+  setTable('messages', []);
+
+  // Clear chat conversation storage as well
+  try {
+    localStorage.removeItem('unimart_chat_conversations_v4');
+    localStorage.removeItem('unimart_chat_conversations_v5');
+    localStorage.removeItem('unimart_chat_conversations_v6');
+  } catch (_e) {}
+}
+
+export function clearPreviousDbVersions() {
+  try {
+    const toRemove = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (
+        k &&
+        (k.startsWith('unimart_db_') || k.startsWith('unimart_chat_conversations_')) &&
+        !k.includes(DB_VERSION)
+      ) {
+        toRemove.push(k);
+      }
+    }
+    toRemove.forEach((k) => localStorage.removeItem(k));
+  } catch (_e) {}
+}
+
 export function initDatabase() {
+  clearPreviousDbVersions();
   if (!getTable('users')) setTable('users', SEED_USERS);
   if (!getTable('listings')) setTable('listings', SEED_LISTINGS);
   if (!getTable('listing_photos')) setTable('listing_photos', SEED_LISTING_PHOTOS);
@@ -303,3 +338,11 @@ export function initDatabase() {
 
 // Automatically ensure tables exist on module load
 initDatabase();
+
+// Expose on window for easy developer & testing reset
+if (typeof window !== 'undefined') {
+  window.resetUniMartDemoData = () => {
+    resetDatabase();
+    window.location.reload();
+  };
+}

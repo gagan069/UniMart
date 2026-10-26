@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const ChatContext = createContext(null);
 
-const STORAGE_KEY = 'unimart_chat_conversations_v4';
+const STORAGE_KEY = 'unimart_chat_conversations_v6';
 
 // By default, a new user has not chatted ever (empty array)
 const INITIAL_CONVERSATIONS = [];
@@ -195,6 +195,15 @@ export function ChatProvider({ children }) {
     );
   };
 
+  const clearAllChats = () => {
+    setConversations([]);
+    setActiveConversationId(null);
+    setIsOpen(false);
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch (_e) {}
+  };
+
   return (
     <ChatContext.Provider
       value={{
@@ -211,7 +220,8 @@ export function ChatProvider({ children }) {
         toggleChat,
         toggleMinimize,
         sendMessage,
-        toggleReaction
+        toggleReaction,
+        clearAllChats
       }}
     >
       {children}
