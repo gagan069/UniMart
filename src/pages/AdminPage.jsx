@@ -14,6 +14,7 @@ import ToastAlert from '../components/ToastAlert.jsx';
 import AdminConfirmModal from '../components/admin/AdminConfirmModal.jsx';
 import AdminEditDiffViewer from '../components/admin/AdminEditDiffViewer.jsx';
 import AdminPreviewModal from '../components/admin/AdminPreviewModal.jsx';
+import Pagination from '../components/Pagination.jsx';
 import '../Dashboard.css';
 import './AdminPage.css';
 
@@ -29,6 +30,20 @@ export default function AdminPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All'); // 'All' | 'Approved' | 'Pending' | 'Rejected' | 'Sold'
   const [expandedDiffId, setExpandedDiffId] = useState(null);
+
+  // Pagination state (25 listings per page)
+  const [adminPage, setAdminPage] = useState(1);
+  const ADMIN_PAGE_SIZE = 25;
+
+  // Reset page when filter or search changes (render-phase adjustment)
+  const [prevAdminFilterKey, setPrevAdminFilterKey] = useState(
+    () => `${statusFilter}__${searchQuery}`
+  );
+  const currentAdminFilterKey = `${statusFilter}__${searchQuery}`;
+  if (currentAdminFilterKey !== prevAdminFilterKey) {
+    setPrevAdminFilterKey(currentAdminFilterKey);
+    setAdminPage(1);
+  }
 
   // Preview Modal state
   const [previewModalItem, setPreviewModalItem] = useState(null);
@@ -170,6 +185,12 @@ export default function AdminPage() {
   const toggleViewChanges = (id) => {
     setExpandedDiffId((prev) => (prev === id ? null : id));
   };
+
+  // Paginated listings slice (25 items per page)
+  const adminTotalPages = Math.max(1, Math.ceil(filteredListings.length / ADMIN_PAGE_SIZE));
+  const activeAdminPage = Math.min(Math.max(1, adminPage), adminTotalPages);
+  const adminStartIndex = (activeAdminPage - 1) * ADMIN_PAGE_SIZE;
+  const paginatedListings = filteredListings.slice(adminStartIndex, adminStartIndex + ADMIN_PAGE_SIZE);
 
   return (
     <div className="unimart-admin-page py-4 px-3 px-lg-5">
@@ -530,7 +551,7 @@ export default function AdminPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredListings.map((item) => (
+                  {paginatedListings.map((item) => (
                     <tr key={item.id}>
                       {/* Photo */}
                       <td className="ps-4 py-3">
@@ -640,6 +661,20 @@ export default function AdminPage() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+
+          {/* Table Pagination (25 items per page) */}
+          {filteredListings.length > 0 && (
+            <div className="px-4 pb-3">
+              <Pagination
+                currentPage={activeAdminPage}
+                totalItems={filteredListings.length}
+                pageSize={ADMIN_PAGE_SIZE}
+                onPageChange={setAdminPage}
+                itemLabel="listings"
+                targetScrollId="admin-listings-table"
+              />
             </div>
           )}
         </div>
