@@ -25,12 +25,11 @@ export default function AdminConfirmModal({
   const isEdit = Boolean(item.hasPendingEdit);
 
   let icon = 'check_circle';
-  let iconBg = '#ecfdf5';
-  let iconColor = '#059669';
   let title = 'Approve Listing';
   let message = `Approve "${item.title}"? It will go live immediately on the campus marketplace.`;
   let confirmBtnText = 'Approve Listing';
   let confirmBtnClass = 'btn-success';
+  let iconClass = 'unimart-confirm-icon-approve';
 
   if (type === 'approve') {
     if (isEdit) {
@@ -43,8 +42,7 @@ export default function AdminConfirmModal({
     }
   } else if (type === 'reject') {
     icon = isEdit ? 'rule' : 'cancel';
-    iconBg = '#fffbeb';
-    iconColor = '#d97706';
+    iconClass = 'unimart-confirm-icon-reject';
     if (isEdit) {
       title = 'Reject Proposed Edits';
       message = `Reject pending edits for "${item.title}"? The live listing will remain untouched with its existing details.`;
@@ -58,8 +56,7 @@ export default function AdminConfirmModal({
     }
   } else if (type === 'remove') {
     icon = 'delete';
-    iconBg = '#fee2e2';
-    iconColor = '#dc2626';
+    iconClass = 'unimart-confirm-icon-remove';
     title = 'Delete Listing';
     message = `Are you sure you want to permanently delete "${item.title}"? This cannot be undone.`;
     confirmBtnText = 'Delete Listing';
@@ -80,10 +77,7 @@ export default function AdminConfirmModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="d-flex align-items-center justify-content-between mb-3">
-          <div
-            className="d-inline-flex align-items-center justify-content-center rounded-circle"
-            style={{ width: '46px', height: '46px', background: iconBg, color: iconColor }}
-          >
+          <div className={`unimart-confirm-icon-bubble ${iconClass}`}>
             <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>
               {icon}
             </span>

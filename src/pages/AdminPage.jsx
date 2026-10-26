@@ -175,7 +175,7 @@ export default function AdminPage() {
           <div className="d-flex align-items-center gap-2">
             <button
               type="button"
-              className="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1.5 d-inline-flex align-items-center gap-1.5"
+              className="unimart-admin-top-btn unimart-admin-btn-outline"
               onClick={toggleTheme}
               title="Toggle theme"
             >
@@ -187,7 +187,7 @@ export default function AdminPage() {
 
             <button
               type="button"
-              className="btn btn-sm btn-dark rounded-pill px-3.5 py-1.5 d-inline-flex align-items-center gap-1.5 shadow-sm"
+              className="unimart-admin-top-btn unimart-admin-btn-primary shadow-sm"
               onClick={() => navigate('/')}
               id="return-to-marketplace-btn"
             >
@@ -216,23 +216,23 @@ export default function AdminPage() {
             <div className="col-lg-7">
               <div className="d-flex align-items-center justify-content-lg-end gap-2.5 flex-wrap">
                 <div className="unimart-stat-card stat-danger flex-grow-1" style={{ minWidth: '110px' }}>
-                  <div className="text-muted small fw-semibold" style={{ fontSize: '0.68rem', letterSpacing: '0.5px' }}>TOTAL</div>
+                  <div className="unimart-stat-card-label">TOTAL</div>
                   <div className="fs-5 fw-bold text-danger">{totalCount}</div>
                 </div>
                 <div className="unimart-stat-card stat-warning flex-grow-1" style={{ minWidth: '110px' }}>
-                  <div className="text-muted small fw-semibold" style={{ fontSize: '0.68rem', letterSpacing: '0.5px' }}>PENDING</div>
+                  <div className="unimart-stat-card-label">PENDING</div>
                   <div className="fs-5 fw-bold text-warning">{pendingCount}</div>
                 </div>
                 <div className="unimart-stat-card stat-success flex-grow-1" style={{ minWidth: '110px' }}>
-                  <div className="text-muted small fw-semibold" style={{ fontSize: '0.68rem', letterSpacing: '0.5px' }}>APPROVED</div>
+                  <div className="unimart-stat-card-label">APPROVED</div>
                   <div className="fs-5 fw-bold text-success">{approvedCount}</div>
                 </div>
                 <div className="unimart-stat-card stat-info flex-grow-1" style={{ minWidth: '110px' }}>
-                  <div className="text-muted small fw-semibold" style={{ fontSize: '0.68rem', letterSpacing: '0.5px' }}>SOLD</div>
+                  <div className="unimart-stat-card-label">SOLD</div>
                   <div className="fs-5 fw-bold text-info">{soldCount}</div>
                 </div>
                 <div className="unimart-stat-card stat-success flex-grow-1" style={{ minWidth: '140px' }}>
-                  <div className="text-muted small fw-semibold" style={{ fontSize: '0.68rem', letterSpacing: '0.5px' }}>APPROVED VALUE</div>
+                  <div className="unimart-stat-card-label">APPROVED VALUE</div>
                   <div className="fs-5 fw-bold text-success">₹{totalMarketValue.toLocaleString('en-IN')}</div>
                 </div>
               </div>
@@ -263,13 +263,10 @@ export default function AdminPage() {
 
           {pendingQueue.length === 0 ? (
             <div className="text-center py-4 px-3">
-              <div
-                className="d-inline-flex align-items-center justify-content-center rounded-circle mb-2"
-                style={{ width: '48px', height: '48px', background: '#ecfdf5', color: '#059669' }}
-              >
+              <div className="unimart-empty-bubble unimart-empty-bubble-success mb-2">
                 <span className="material-symbols-outlined" style={{ fontSize: '24px' }}>task_alt</span>
               </div>
-              <h6 className="fw-bold mb-1">All Caught Up!</h6>
+              <h6 className="fw-bold mb-1 unimart-panel-heading">All Caught Up!</h6>
               <p className="text-muted small mb-0">
                 There are currently no listings or edits pending approval. New submissions and edited products will appear here.
               </p>
@@ -355,8 +352,15 @@ export default function AdminPage() {
                             )}
                           </td>
                           <td>
-                            <div className="fw-semibold" style={{ fontSize: '0.84rem' }}>{item.seller}</div>
-                            <div className="text-muted" style={{ fontSize: '0.7rem' }}>ID: {item.seller_id || 'N/A'}</div>
+                            <div className="d-flex align-items-center gap-2">
+                              <div className="unimart-seller-avatar">
+                                {item.seller ? item.seller.charAt(0).toUpperCase() : 'S'}
+                              </div>
+                              <div>
+                                <div className="fw-semibold seller-name" style={{ fontSize: '0.84rem' }}>{item.seller}</div>
+                                <div className="text-muted seller-id" style={{ fontSize: '0.7rem' }}>ID: {item.seller_id || 'N/A'}</div>
+                              </div>
+                            </div>
                           </td>
                           <td>
                             <div className="fw-bold text-success" style={{ fontSize: '0.95rem' }}>
@@ -427,8 +431,7 @@ export default function AdminPage() {
                 <button
                   key={statusKey}
                   type="button"
-                  className={`btn btn-sm rounded-pill px-3 py-1 fw-semibold ${statusFilter === statusKey ? 'btn-dark' : 'btn-outline-secondary'}`}
-                  style={{ fontSize: '0.78rem' }}
+                  className={`unimart-admin-filter-pill ${statusFilter === statusKey ? 'active' : ''}`}
                   onClick={() => setStatusFilter(statusKey)}
                   id={`admin-filter-${statusKey.toLowerCase()}`}
                 >
@@ -439,8 +442,8 @@ export default function AdminPage() {
             
             {/* Live Search Filter */}
             <div className="d-flex align-items-center gap-2">
-              <div className="input-group input-group-sm" style={{ width: '280px' }}>
-                <span className="input-group-text bg-transparent border-end-0">
+              <div className="input-group input-group-sm unimart-admin-search-wrap">
+                <span className="input-group-text border-end-0">
                   <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>search</span>
                 </span>
                 <input
@@ -454,8 +457,9 @@ export default function AdminPage() {
                 {searchQuery && (
                   <button
                     type="button"
-                    className="btn btn-outline-secondary border-start-0"
+                    className="btn btn-clear border-start-0"
                     onClick={() => setSearchQuery('')}
+                    title="Clear search filter"
                   >
                     ×
                   </button>
@@ -466,13 +470,10 @@ export default function AdminPage() {
 
           {filteredListings.length === 0 ? (
             <div className="text-center py-5">
-              <div
-                className="d-inline-flex align-items-center justify-content-center rounded-circle mb-3"
-                style={{ width: '56px', height: '56px', background: '#fee2e2', color: '#dc2626' }}
-              >
+              <div className="unimart-empty-bubble unimart-empty-bubble-danger mb-3">
                 <span className="material-symbols-outlined" style={{ fontSize: '28px' }}>inventory_2</span>
               </div>
-              <h5 className="fw-bold">No Listings Found</h5>
+              <h5 className="fw-bold unimart-panel-heading">No Listings Found</h5>
               <p className="text-muted small mb-0">
                 {searchQuery
                   ? `No listings match query "${searchQuery}" in ${statusFilter} status.`
@@ -547,21 +548,12 @@ export default function AdminPage() {
                       {/* Seller */}
                       <td>
                         <div className="d-flex align-items-center gap-2">
-                          <div
-                            className="rounded-circle d-flex align-items-center justify-content-center fw-bold"
-                            style={{
-                              width: '28px',
-                              height: '28px',
-                              background: '#f1f5f9',
-                              color: '#334155',
-                              fontSize: '0.76rem'
-                            }}
-                          >
+                          <div className="unimart-seller-avatar">
                             {item.seller ? item.seller.charAt(0).toUpperCase() : 'S'}
                           </div>
                           <div>
-                            <div className="fw-semibold" style={{ fontSize: '0.84rem' }}>{item.seller}</div>
-                            <div className="text-muted" style={{ fontSize: '0.7rem' }}>ID: {item.seller_id || 'N/A'}</div>
+                            <div className="fw-semibold seller-name" style={{ fontSize: '0.84rem' }}>{item.seller}</div>
+                            <div className="text-muted seller-id" style={{ fontSize: '0.7rem' }}>ID: {item.seller_id || 'N/A'}</div>
                           </div>
                         </div>
                       </td>
